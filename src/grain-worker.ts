@@ -71,9 +71,9 @@ class GrainProcessor {
       const point = activeList[randomIndex];
       let found = false;
       
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 50; i++) { // Increased attempts from 30 to 50
         const angle = Math.random() * 2 * Math.PI;
-        const radius = minDistance + Math.random() * minDistance;
+        const radius = minDistance * (1 + Math.random()); // Reduced minimum radius multiplier
         const newPoint = {
           x: point.x + Math.cos(angle) * radius,
           y: point.y + Math.sin(angle) * radius
@@ -125,6 +125,27 @@ class GrainProcessor {
     return points;
   }
 
+  // Fallback grain generation for better coverage
+  private generateFallbackGrains(existingGrains: Point2D[], targetCount: number): Point2D[] {
+    const fallbackGrains: Point2D[] = [...existingGrains];
+    const gridSize = Math.max(8, Math.sqrt(this.width * this.height / targetCount));
+    
+    // Add grains in a regular grid pattern with random offset
+    for (let y = gridSize / 2; y < this.height && fallbackGrains.length < targetCount; y += gridSize) {
+      for (let x = gridSize / 2; x < this.width && fallbackGrains.length < targetCount; x += gridSize) {
+        // Add random offset to avoid perfect grid
+        const offsetX = (Math.random() - 0.5) * gridSize * 0.8;
+        const offsetY = (Math.random() - 0.5) * gridSize * 0.8;
+        const newX = Math.max(0, Math.min(this.width - 1, x + offsetX));
+        const newY = Math.max(0, Math.min(this.height - 1, y + offsetY));
+        
+        fallbackGrains.push({ x: newX, y: newY });
+      }
+    }
+    
+    return fallbackGrains;
+  }
+
   // Convert RGB to LAB color space
   private rgbToLab(r: number, g: number, b: number): LabColor {
     // Normalize RGB values
@@ -169,13 +190,27 @@ class GrainProcessor {
 
   // Generate grain structure
   private generateGrainStructure(): GrainPoint[] {
-    const baseGrainSize = Math.max(1, this.settings.iso / 100);
-    const grainDensity = Math.min(10000, this.settings.iso * 2);
-    const minDistance = baseGrainSize * 0.5;
+    const baseGrainSize = Math.max(0.5, this.settings.iso / 200);
+    const imageArea = this.width * this.height;
+    // Scale grain density based on image size and ISO
+    const densityFactor = Math.min(0.01, this.settings.iso / 10000); // Density as percentage of image area
+    const grainDensity = Math.floor(imageArea * densityFactor);
+    const minDistance = Math.max(1, baseGrainSize * 0.3);
     
     const grainPoints = this.generatePoissonDiskSampling(minDistance, grainDensity);
     
-    return grainPoints.map((point, index) => {
+    // If we didn't generate enough grains, use fallback method
+    let finalGrainPoints = grainPoints;
+    if (grainPoints.length < grainDensity * 0.5) { // If we have less than 50% of target grains
+      finalGrainPoints = this.generateFallbackGrains(grainPoints, grainDensity);
+    }
+    
+    // Debug information
+    console.log(`Grain generation - Image: ${this.width}x${this.height}, ISO: ${this.settings.iso}`);
+    console.log(`Base grain size: ${baseGrainSize}, Min distance: ${minDistance}`);
+    console.log(`Target density: ${grainDensity}, Generated points: ${finalGrainPoints.length}`);
+    
+    return finalGrainPoints.map((point, index) => {
       const sizeVariation = this.seededRandom(index * 123.456);
       const sensitivityVariation = this.seededRandom(index * 789.012);
       const shapeVariation = this.seededRandom(index * 345.678);
@@ -345,7 +380,7 @@ class GrainProcessor {
     // Apply grain shape variation
     const shapeModifier = 0.7 + grain.shape * 0.6;
     
-    return finalStrength * shapeModifier * 0.25; // Increased multiplier for visibility
+    return finalStrength * shapeModifier * 0.5; // Increased multiplier for better visibility
   }
 }
 
