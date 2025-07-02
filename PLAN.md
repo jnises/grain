@@ -121,4 +121,6 @@ The conversion process models how photographic exposure and development translat
 *   **Emulsion Thickness Effects:** Grains at different depths have different focus characteristics (front grains sharper, back grains softer).
 *   **Chemical Development Variations:** Over-development increases grain contrast and bridging, while under-development creates more gray, less defined grains. Temperature and time also affect grain characteristics.
 
-This approach creates grain that is truly integrated with the image content, producing results that respond naturally to the underlying photograph's exposure and tonal distribution.
+### 8. Coding instructions
+1. Start by adding ui elements to upload, view, zoom and download an image
+2. Add the algorithm described above. Do it using a worker to avoid blocking the main thread.
