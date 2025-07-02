@@ -8,6 +8,31 @@ interface GrainSettings {
   upscaleFactor: number;
 }
 
+interface Point2D {
+  x: number;
+  y: number;
+}
+
+interface LabColor {
+  l: number;
+  a: number;
+  b: number;
+}
+
+interface RgbEffect {
+  r: number;
+  g: number;
+  b: number;
+}
+
+interface GrainPoint {
+  x: number;
+  y: number;
+  size: number;
+  sensitivity: number;
+  shape: number;
+}
+
 interface ProcessMessage {
   type: 'process';
   imageData: ImageData;
@@ -62,12 +87,12 @@ class GrainProcessor {
   }
 
   // Generate Poisson disk sampling for grain placement
-  private generatePoissonDiskSampling(minDistance: number, maxSamples: number): Array<{x: number, y: number}> {
-    const points: Array<{x: number, y: number}> = [];
+  private generatePoissonDiskSampling(minDistance: number, maxSamples: number): Point2D[] {
+    const points: Point2D[] = [];
     const cellSize = minDistance / Math.sqrt(2);
     const gridWidth = Math.ceil(this.width / cellSize);
     const gridHeight = Math.ceil(this.height / cellSize);
-    const grid: Array<Array<{x: number, y: number} | null>> = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(null));
+    const grid: Array<Array<Point2D | null>> = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(null));
     
     // Start with random point
     const initialPoint = {
@@ -139,7 +164,7 @@ class GrainProcessor {
   }
 
   // Convert RGB to LAB color space
-  private rgbToLab(r: number, g: number, b: number): {l: number, a: number, b: number} {
+  private rgbToLab(r: number, g: number, b: number): LabColor {
     // Normalize RGB values
     r /= 255;
     g /= 255;
@@ -181,13 +206,7 @@ class GrainProcessor {
   }
 
   // Generate grain structure
-  private generateGrainStructure(): Array<{
-    x: number, 
-    y: number, 
-    size: number, 
-    sensitivity: number,
-    shape: number
-  }> {
+  private generateGrainStructure(): GrainPoint[] {
     const baseGrainSize = Math.max(1, this.settings.iso / 100);
     const grainDensity = Math.min(10000, this.settings.iso * 2);
     const minDistance = baseGrainSize * 0.5;
@@ -235,7 +254,7 @@ class GrainProcessor {
         const luminance = lab.l / 100;
         
         // Calculate grain effect for this pixel
-        let grainEffect = { r: 0, g: 0, b: 0 };
+        let grainEffect: RgbEffect = { r: 0, g: 0, b: 0 };
         let totalWeight = 0;
         
         // Find nearby grains and calculate their influence
@@ -293,7 +312,7 @@ class GrainProcessor {
   }
 
   // Calculate grain strength based on luminance and grain properties
-  private calculateGrainStrength(luminance: number, grain: any, x: number, y: number): number {
+  private calculateGrainStrength(luminance: number, grain: GrainPoint, x: number, y: number): number {
     // Grain is most visible in mid-tones and shadows
     const luminanceResponse = luminance < 0.5 
       ? 1.2 - luminance * 0.6  // Stronger in shadows
