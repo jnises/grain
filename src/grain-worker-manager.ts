@@ -134,61 +134,61 @@ export const FILM_PRESETS: Record<string, GrainSettings> = {
   'kodak-100': {
     iso: 100,
     filmType: 'kodak',
-    grainIntensity: 0.3,
+    grainIntensity: 0.8,
     upscaleFactor: 2
   },
   'kodak-400': {
     iso: 400,
     filmType: 'kodak',
-    grainIntensity: 0.6,
+    grainIntensity: 1.2,
     upscaleFactor: 2
   },
   'kodak-800': {
     iso: 800,
     filmType: 'kodak',
-    grainIntensity: 0.8,
+    grainIntensity: 1.6,
     upscaleFactor: 3
   },
   'kodak-1600': {
     iso: 1600,
     filmType: 'kodak',
-    grainIntensity: 1.0,
+    grainIntensity: 2.0,
     upscaleFactor: 3
   },
   'fuji-100': {
     iso: 100,
     filmType: 'fuji',
-    grainIntensity: 0.25,
+    grainIntensity: 0.7,
     upscaleFactor: 2
   },
   'fuji-400': {
     iso: 400,
     filmType: 'fuji',
-    grainIntensity: 0.55,
+    grainIntensity: 1.1,
     upscaleFactor: 2
   },
   'fuji-800': {
     iso: 800,
     filmType: 'fuji',
-    grainIntensity: 0.75,
+    grainIntensity: 1.5,
     upscaleFactor: 3
   },
   'ilford-100': {
     iso: 100,
     filmType: 'ilford',
-    grainIntensity: 0.35,
+    grainIntensity: 0.9,
     upscaleFactor: 2
   },
   'ilford-400': {
     iso: 400,
     filmType: 'ilford',
-    grainIntensity: 0.65,
+    grainIntensity: 1.3,
     upscaleFactor: 2
   },
   'ilford-800': {
     iso: 800,
     filmType: 'ilford',
-    grainIntensity: 0.85,
+    grainIntensity: 1.7,
     upscaleFactor: 3
   }
 };

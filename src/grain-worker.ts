@@ -296,25 +296,25 @@ class GrainProcessor {
   private calculateGrainStrength(luminance: number, grain: any, x: number, y: number): number {
     // Grain is most visible in mid-tones and shadows
     const luminanceResponse = luminance < 0.5 
-      ? 1.0 - luminance * 0.5  // Stronger in shadows
-      : 0.5 + (1.0 - luminance) * 0.5; // Weaker in highlights
+      ? 1.2 - luminance * 0.6  // Stronger in shadows
+      : 0.6 + (1.0 - luminance) * 0.8; // Moderate in highlights
     
-    // Add noise for grain texture
-    const noiseValue = this.noise(x * 0.1, y * 0.1) * 0.5 + 
-                      this.noise(x * 0.05, y * 0.05) * 0.3 + 
-                      this.noise(x * 0.02, y * 0.02) * 0.2;
+    // Add noise for grain texture with multiple octaves
+    const noiseValue = this.noise(x * 0.15, y * 0.15) * 0.6 + 
+                      this.noise(x * 0.08, y * 0.08) * 0.3 + 
+                      this.noise(x * 0.03, y * 0.03) * 0.1;
     
     // Film characteristic curve
     const filmResponse = this.filmCurve(luminance);
     
     // Combine all factors
     const baseStrength = grain.sensitivity * luminanceResponse * filmResponse;
-    const finalStrength = baseStrength * (0.5 + noiseValue * 0.5);
+    const finalStrength = baseStrength * (0.3 + Math.abs(noiseValue) * 0.7);
     
     // Apply grain shape variation
-    const shapeModifier = 0.8 + grain.shape * 0.4;
+    const shapeModifier = 0.7 + grain.shape * 0.6;
     
-    return finalStrength * shapeModifier * 0.1; // Scale down for subtle effect
+    return finalStrength * shapeModifier * 0.25; // Increased multiplier for visibility
   }
 }
 

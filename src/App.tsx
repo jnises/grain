@@ -15,6 +15,7 @@ function App() {
   const [selectedPreset, setSelectedPreset] = useState('kodak-400')
   const [customSettings, setCustomSettings] = useState<GrainSettings>(FILM_PRESETS['kodak-400'])
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showOriginal, setShowOriginal] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
@@ -29,6 +30,21 @@ function App() {
       grainWorkerRef.current?.terminate()
     }
   }, [])
+
+  // Keyboard shortcuts for comparison
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (processedImage && (event.key === ' ' || event.key === 'c')) {
+        event.preventDefault()
+        setShowOriginal(prev => !prev)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress)
+    }
+  }, [processedImage])
 
   const processFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
@@ -204,7 +220,7 @@ function App() {
     }
   }
 
-  const displayImage = processedImage || image
+  const displayImage = showOriginal ? image : (processedImage || image)
 
   return (
     <div className="app">
@@ -279,8 +295,21 @@ function App() {
               </button>
             </div>
 
+            {processedImage && (
+              <div className="comparison-controls">
+                <button 
+                  onClick={() => setShowOriginal(!showOriginal)} 
+                  className={`btn ${showOriginal ? 'btn-accent' : 'btn-secondary'}`}
+                  title="Press SPACE or C to toggle"
+                >
+                  {showOriginal ? '📷 Original' : '🎬 Grain'}
+                </button>
+                <span className="keyboard-hint">Press SPACE or C to toggle</span>
+              </div>
+            )}
+
             <button onClick={handleDownload} className="btn btn-success">
-              💾 Download {processedImage ? 'Processed' : 'Original'}
+              💾 Download {processedImage ? (showOriginal ? 'Original' : 'Grain') : 'Image'}
             </button>
           </>
         )}
@@ -365,7 +394,7 @@ function App() {
           </div>
         ) : (
           <div 
-            className="image-viewer"
+            className={`image-viewer ${processedImage ? 'comparison-available' : ''}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -375,7 +404,8 @@ function App() {
             <img
               ref={imageRef}
               src={displayImage || ''}
-              alt="Uploaded image"
+              alt={showOriginal ? "Original image" : "Processed image with grain"}
+              key={showOriginal ? 'original' : 'processed'} // Force re-render for transition
               style={{
                 transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
                 transformOrigin: 'center center',
@@ -393,7 +423,7 @@ function App() {
         <div className="image-info">
           <p>
             {processedImage 
-              ? '✨ Grain processing complete! Use zoom to inspect the grain structure closely.' 
+              ? `✨ ${showOriginal ? 'Showing original image' : 'Showing processed image with grain'}. Use the toggle button to compare versions and zoom to inspect grain structure closely.`
               : 'Image loaded. Select a film preset and click "Add Grain" to process.'
             }
           </p>

@@ -45,6 +45,7 @@
   gap: 1rem;
   padding: 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 80px; /* Prevent layout shift */
 }
 
 .btn {
@@ -212,12 +213,14 @@
   padding: 1rem;
   background: rgba(0, 0, 0, 0.3);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
 .image-info p {
   margin: 0;
   color: #4ecdc4;
   font-style: italic;
+  line-height: 1.4;
 }
 
 .grain-controls {
@@ -354,6 +357,70 @@
   font-size: 0.9rem;
 }
 
+/* Image comparison controls */
+.comparison-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  flex-wrap: wrap;
+  justify-content: center;
+  min-width: 280px; /* Ensure consistent width */
+}
+
+.keyboard-hint {
+  font-size: 0.75rem;
+  color: #888;
+  font-style: italic;
+  margin-left: 0.5rem;
+  white-space: nowrap; /* Prevent text wrapping */
+  flex-shrink: 0; /* Don't shrink this element */
+}
+
+.comparison-controls .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  position: relative;
+  min-width: 120px;
+  text-align: center;
+}
+
+.comparison-controls .btn-accent {
+  background: linear-gradient(45deg, #4ecdc4, #44a08d);
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+  transform: scale(1.05);
+}
+
+.comparison-controls .btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #cccccc;
+}
+
+.comparison-controls .btn:hover {
+  transform: translateY(-1px) scale(1.05);
+}
+
+.comparison-controls .btn-accent:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+}
+
+/* Visual feedback for comparison mode */
+.comparison-available {
+  border: 1px solid rgba(78, 205, 196, 0.3);
+  box-shadow: 0 0 15px rgba(78, 205, 196, 0.1);
+}
+
+.comparison-active {
+  border: 2px solid rgba(78, 205, 196, 0.5);
+  box-shadow: 0 0 20px rgba(78, 205, 196, 0.2);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .app-header h1 {
@@ -363,15 +430,32 @@
   .controls {
     flex-direction: column;
     gap: 0.5rem;
+    min-height: 120px; /* Adjust for mobile */
   }
   
   .zoom-controls {
     order: -1;
   }
   
+  .comparison-controls {
+    min-width: 250px; /* Adjust min-width for mobile */
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .keyboard-hint {
+    margin-left: 0;
+    margin-top: 0.25rem;
+    text-align: center;
+  }
+  
   .btn {
     width: 100%;
     max-width: 250px;
+  }
+  
+  .comparison-controls .btn {
+    width: 200px; /* Fixed width for mobile */
   }
   
   .image-viewer {
