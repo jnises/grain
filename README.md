@@ -1,12 +1,9 @@
-# React + Vite
+## Working with the Gemini CLI Agent
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+When working with the Gemini CLI agent, please follow this workflow:
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1.  **Run the development server yourself:** In a separate terminal, navigate to the project root and run `npm run dev`. Keep this terminal open to see real-time HMR updates in your browser.
+2.  **Request changes from the agent:** Use the Gemini CLI terminal to ask the agent to modify code, add features, or fix bugs.
+3.  **Agent will verify changes:** After making changes, the agent will automatically run `npm run build` or `npx tsc` to check for compilation or type errors. If errors occur, the agent will attempt to fix them.
+4.  **Observe HMR updates:** Your browser, running `npm run dev`, will automatically reflect the agent's changes via HMR once they are successfully applied and verified.
+5.  **Report errors to the agent:** If you encounter any runtime errors in your browser or in the terminal running `npm run dev`, please copy and paste the full error message to the agent for analysis and resolution.
