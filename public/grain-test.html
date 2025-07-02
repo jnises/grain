@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grain Distribution Tests</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 5px;
+        }
+        .test-output {
+            background-color: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .grain-map {
+            font-family: monospace;
+            font-size: 10px;
+            line-height: 1;
+            background-color: #000;
+            color: #fff;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Grain Distribution Test Suite</h1>
+    <p>This page tests the grain generation algorithms to debug distribution issues.</p>
+    
+    <div class="test-section">
+        <h2>Basic Tests</h2>
+        <button onclick="runBasicTests()">Run Basic Grain Generation Test</button>
+        <button onclick="runDistributionTests()">Run Distribution Tests</button>
+        <button onclick="runParameterAnalysis()">Run Parameter Analysis</button>
+        <button onclick="clearOutput()">Clear Output</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Output</h2>
+        <div id="output" class="test-output">
+            Click a test button to see results...
+        </div>
+    </div>
+
+    <script type="module">
+        // Import test functions
+        import { runGrainDistributionTests, testBasicGrainGeneration } from './src/grain-worker-test.ts';
+        
+        // Make functions available globally
+        window.runBasicTests = () => {
+            clearOutput();
+            appendOutput('Running basic grain generation test...\n');
+            
+            // Capture console.log output
+            const originalLog = console.log;
+            console.log = (...args) => {
+                appendOutput(args.join(' ') + '\n');
+                originalLog(...args);
+            };
+            
+            try {
+                testBasicGrainGeneration();
+            } catch (error) {
+                appendOutput(`Error: ${error.message}\n`);
+            }
+            
+            console.log = originalLog;
+        };
+        
+        window.runDistributionTests = () => {
+            clearOutput();
+            appendOutput('Running grain distribution tests...\n');
+            
+            // Capture console.log output
+            const originalLog = console.log;
+            console.log = (...args) => {
+                appendOutput(args.join(' ') + '\n');
+                originalLog(...args);
+            };
+            
+            try {
+                runGrainDistributionTests();
+            } catch (error) {
+                appendOutput(`Error: ${error.message}\n`);
+            }
+            
+            console.log = originalLog;
+        };
+        
+        window.runParameterAnalysis = () => {
+            clearOutput();
+            appendOutput('Running parameter analysis...\n');
+            
+            // Test different parameter combinations
+            const testCases = [
+                { iso: 100, desc: "Low ISO (100)" },
+                { iso: 400, desc: "Medium ISO (400)" },
+                { iso: 800, desc: "High ISO (800)" },
+                { iso: 1600, desc: "Very High ISO (1600)" }
+            ];
+            
+            for (const testCase of testCases) {
+                appendOutput(`\n--- ${testCase.desc} ---\n`);
+                
+                const baseGrainSize = Math.max(0.5, testCase.iso / 200);
+                const imageArea = 400 * 300; // 120,000 pixels
+                const densityFactor = Math.min(0.01, testCase.iso / 10000);
+                const grainDensity = Math.floor(imageArea * densityFactor);
+                const minDistance = Math.max(1, baseGrainSize * 0.3);
+                
+                appendOutput(`Base grain size: ${baseGrainSize}\n`);
+                appendOutput(`Density factor: ${densityFactor}\n`);
+                appendOutput(`Target grain count: ${grainDensity}\n`);
+                appendOutput(`Min distance: ${minDistance}\n`);
+                appendOutput(`Grain density per 1000 pixels: ${(grainDensity / imageArea * 1000).toFixed(2)}\n`);
+                
+                // Calculate theoretical maximum grains based on min distance
+                const theoreticalMax = Math.floor(imageArea / (Math.PI * minDistance * minDistance));
+                appendOutput(`Theoretical max grains: ${theoreticalMax}\n`);
+                appendOutput(`Target vs theoretical: ${(grainDensity / theoreticalMax * 100).toFixed(1)}%\n`);
+            }
+        };
+        
+        window.clearOutput = () => {
+            document.getElementById('output').textContent = 'Output cleared...\n';
+        };
+        
+        function appendOutput(text) {
+            const output = document.getElementById('output');
+            output.textContent += text;
+            output.scrollTop = output.scrollHeight;
+        }
+    </script>
+</body>
+</html>

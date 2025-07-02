@@ -1,0 +1,4 @@
+- `npm run test` seems to run in watch mode, should it be named something else?
+- `grain-worker-test.ts` seems to contain redundant implementations of functionality from the non-test files. That seems like bad practice?
+- Add agent instructions to avoid duplicating functionality.
+- Update readme with new test instructions.

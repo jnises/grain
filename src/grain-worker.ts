@@ -73,7 +73,7 @@ class GrainProcessor {
       
       for (let i = 0; i < 50; i++) { // Increased attempts from 30 to 50
         const angle = Math.random() * 2 * Math.PI;
-        const radius = minDistance * (1 + Math.random()); // Reduced minimum radius multiplier
+        const radius = minDistance + Math.random() * minDistance; // Changed back to ensure minimum distance
         const newPoint = {
           x: point.x + Math.cos(angle) * radius,
           y: point.y + Math.sin(angle) * radius
@@ -128,18 +128,32 @@ class GrainProcessor {
   // Fallback grain generation for better coverage
   private generateFallbackGrains(existingGrains: Point2D[], targetCount: number): Point2D[] {
     const fallbackGrains: Point2D[] = [...existingGrains];
-    const gridSize = Math.max(8, Math.sqrt(this.width * this.height / targetCount));
+    const remainingCount = targetCount - existingGrains.length;
     
-    // Add grains in a regular grid pattern with random offset
-    for (let y = gridSize / 2; y < this.height && fallbackGrains.length < targetCount; y += gridSize) {
-      for (let x = gridSize / 2; x < this.width && fallbackGrains.length < targetCount; x += gridSize) {
-        // Add random offset to avoid perfect grid
-        const offsetX = (Math.random() - 0.5) * gridSize * 0.8;
-        const offsetY = (Math.random() - 0.5) * gridSize * 0.8;
-        const newX = Math.max(0, Math.min(this.width - 1, x + offsetX));
-        const newY = Math.max(0, Math.min(this.height - 1, y + offsetY));
+    if (remainingCount <= 0) {
+      return fallbackGrains;
+    }
+    
+    // Calculate grid size to fit approximately the target number of grains
+    const gridSize = Math.sqrt(this.width * this.height / targetCount);
+    const cols = Math.ceil(this.width / gridSize);
+    const rows = Math.ceil(this.height / gridSize);
+    
+    // Generate grains in grid pattern
+    for (let row = 0; row < rows && fallbackGrains.length < targetCount; row++) {
+      for (let col = 0; col < cols && fallbackGrains.length < targetCount; col++) {
+        // Calculate base position
+        const baseX = (col + 0.5) * gridSize;
+        const baseY = (row + 0.5) * gridSize;
         
-        fallbackGrains.push({ x: newX, y: newY });
+        // Add random offset to avoid perfect grid
+        const offsetX = (Math.random() - 0.5) * gridSize * 0.6;
+        const offsetY = (Math.random() - 0.5) * gridSize * 0.6;
+        
+        const x = Math.max(0, Math.min(this.width - 1, baseX + offsetX));
+        const y = Math.max(0, Math.min(this.height - 1, baseY + offsetY));
+        
+        fallbackGrains.push({ x, y });
       }
     }
     
@@ -188,27 +202,95 @@ class GrainProcessor {
     return 1 / (1 + Math.exp(-contrast * (input - midpoint)));
   }
 
+  // Analyze grain distribution (simple version for worker)
+  private analyzeDistribution(grains: Point2D[]): {
+    quadrants: { topLeft: number; topRight: number; bottomLeft: number; bottomRight: number };
+  } {
+    const quadrants = {
+      topLeft: 0,
+      topRight: 0,
+      bottomLeft: 0,
+      bottomRight: 0
+    };
+    
+    const midX = this.width / 2;
+    const midY = this.height / 2;
+    
+    for (const grain of grains) {
+      if (grain.x < midX && grain.y < midY) {
+        quadrants.topLeft++;
+      } else if (grain.x >= midX && grain.y < midY) {
+        quadrants.topRight++;
+      } else if (grain.x < midX && grain.y >= midY) {
+        quadrants.bottomLeft++;
+      } else {
+        quadrants.bottomRight++;
+      }
+    }
+    
+    return { quadrants };
+  }
+
   // Generate grain structure
   private generateGrainStructure(): GrainPoint[] {
     const baseGrainSize = Math.max(0.5, this.settings.iso / 200);
     const imageArea = this.width * this.height;
     // Scale grain density based on image size and ISO
-    const densityFactor = Math.min(0.01, this.settings.iso / 10000); // Density as percentage of image area
+    const densityFactor = Math.min(0.05, this.settings.iso / 10000); // Increased max from 0.01 to 0.05
     const grainDensity = Math.floor(imageArea * densityFactor);
     const minDistance = Math.max(1, baseGrainSize * 0.3);
     
     const grainPoints = this.generatePoissonDiskSampling(minDistance, grainDensity);
     
-    // If we didn't generate enough grains, use fallback method
     let finalGrainPoints = grainPoints;
-    if (grainPoints.length < grainDensity * 0.5) { // If we have less than 50% of target grains
+    
+    // Always check distribution and prefer fallback if needed
+    if (grainPoints.length >= grainDensity * 0.5) {
+      const analysis = this.analyzeDistribution(grainPoints);
+      const totalGrains = grainPoints.length;
+      const maxQuadrant = Math.max(
+        analysis.quadrants.topLeft,
+        analysis.quadrants.topRight,
+        analysis.quadrants.bottomLeft,
+        analysis.quadrants.bottomRight
+      );
+      
+      // If any quadrant has too many grains (> 50% of total), use fallback
+      if (maxQuadrant > totalGrains * 0.5) {
+        finalGrainPoints = this.generateFallbackGrains([], grainDensity);
+      }
+    } else {
+      // Not enough grains, use fallback
       finalGrainPoints = this.generateFallbackGrains(grainPoints, grainDensity);
     }
     
     // Debug information
-    console.log(`Grain generation - Image: ${this.width}x${this.height}, ISO: ${this.settings.iso}`);
-    console.log(`Base grain size: ${baseGrainSize}, Min distance: ${minDistance}`);
-    console.log(`Target density: ${grainDensity}, Generated points: ${finalGrainPoints.length}`);
+    console.log(`=== Grain Generation Debug ===`);
+    console.log(`Image: ${this.width}x${this.height} (${this.width * this.height} pixels)`);
+    console.log(`ISO: ${this.settings.iso}, Intensity: ${this.settings.grainIntensity}`);
+    console.log(`Base grain size: ${baseGrainSize.toFixed(3)}`);
+    console.log(`Density factor: ${densityFactor.toFixed(6)}`);
+    console.log(`Target density: ${grainDensity}`);
+    console.log(`Min distance: ${minDistance.toFixed(3)}`);
+    console.log(`Poisson generated: ${grainPoints.length}`);
+    console.log(`Final grain count: ${finalGrainPoints.length}`);
+    console.log(`Grain density: ${(finalGrainPoints.length / (this.width * this.height) * 1000).toFixed(2)} per 1000 pixels`);
+    
+    // Test distribution
+    if (finalGrainPoints.length > 0) {
+      const quadrants = { tl: 0, tr: 0, bl: 0, br: 0 };
+      const midX = this.width / 2;
+      const midY = this.height / 2;
+      
+      for (const point of finalGrainPoints) {
+        if (point.x < midX && point.y < midY) quadrants.tl++;
+        else if (point.x >= midX && point.y < midY) quadrants.tr++;
+        else if (point.x < midX && point.y >= midY) quadrants.bl++;
+        else quadrants.br++;
+      }
+      
+      console.log(`Distribution: TL=${quadrants.tl}, TR=${quadrants.tr}, BL=${quadrants.bl}, BR=${quadrants.br}`);
+    }
     
     return finalGrainPoints.map((point, index) => {
       const sizeVariation = this.seededRandom(index * 123.456);
@@ -271,9 +353,13 @@ class GrainProcessor {
     // Step 3: Process each pixel
     postMessage({ type: 'progress', progress: 30, stage: 'Processing pixels...' } as ProgressMessage);
     
+    let grainEffectCount = 0;
+    let totalPixels = 0;
+    
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const pixelIndex = (y * this.width + x) * 4;
+        totalPixels++;
         
         const r = data[pixelIndex];
         const g = data[pixelIndex + 1];
@@ -304,6 +390,12 @@ class GrainProcessor {
           }
         }
         
+        // Debug: Sample a few pixels to see grain processing
+        const shouldDebug = (x === 100 && y === 100) || (x === 200 && y === 150) || (x === 300 && y === 200);
+        if (shouldDebug) {
+          console.log(`Pixel (${x},${y}): Found ${nearbyGrains.length} nearby grains in grid (${pixelGridX},${pixelGridY})`);
+        }
+        
         // Process only nearby grains
         for (const grain of nearbyGrains) {
           const distance = Math.sqrt(
@@ -321,10 +413,15 @@ class GrainProcessor {
             grainEffect.b += grainStrength * weight * 1.0; // Blue channel most affected
             
             totalWeight += weight;
+            
+            if (shouldDebug) {
+              console.log(`  Grain at (${grain.x.toFixed(1)},${grain.y.toFixed(1)}): dist=${distance.toFixed(2)}, size=${grain.size.toFixed(2)}, strength=${grainStrength.toFixed(4)}, weight=${weight.toFixed(4)}`);
+            }
           }
         }
         
         if (totalWeight > 0) {
+          grainEffectCount++;
           grainEffect.r /= totalWeight;
           grainEffect.g /= totalWeight;
           grainEffect.b /= totalWeight;
@@ -340,6 +437,12 @@ class GrainProcessor {
           result.data[pixelIndex + 1] = Math.max(0, Math.min(255, g + grainEffect.g * 255));
           result.data[pixelIndex + 2] = Math.max(0, Math.min(255, b + grainEffect.b * 255));
           result.data[pixelIndex + 3] = a;
+          
+          if (shouldDebug) {
+            console.log(`  Final effect: r=${grainEffect.r.toFixed(4)}, g=${grainEffect.g.toFixed(4)}, b=${grainEffect.b.toFixed(4)}`);
+          }
+        } else if (shouldDebug) {
+          console.log(`  No grain effect applied`);
         }
       }
       
@@ -353,6 +456,11 @@ class GrainProcessor {
         } as ProgressMessage);
       }
     }
+    
+    console.log(`=== Processing Summary ===`);
+    console.log(`Total pixels processed: ${totalPixels}`);
+    console.log(`Pixels with grain effect: ${grainEffectCount}`);
+    console.log(`Grain effect coverage: ${(grainEffectCount / totalPixels * 100).toFixed(2)}%`);
     
     postMessage({ type: 'progress', progress: 100, stage: 'Complete!' } as ProgressMessage);
     return result;

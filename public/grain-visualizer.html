@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grain Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            background-color: #000;
+            margin: 10px 0;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 5px;
+        }
+        .controls label {
+            display: inline-block;
+            width: 120px;
+            margin-right: 10px;
+        }
+        .controls input {
+            margin: 5px 10px 5px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .output {
+            background-color: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Grain Distribution Visualizer</h1>
+    
+    <div class="controls">
+        <div>
+            <label>Width:</label>
+            <input type="number" id="width" value="400" min="100" max="1200">
+            
+            <label>Height:</label>
+            <input type="number" id="height" value="300" min="100" max="800">
+            
+            <label>ISO:</label>
+            <input type="number" id="iso" value="400" min="100" max="3200">
+        </div>
+        <div>
+            <button onclick="generateGrains()">Generate Grains</button>
+            <button onclick="testPoisson()">Test Poisson Only</button>
+            <button onclick="testFallback()">Test Fallback Only</button>
+            <button onclick="clearCanvas()">Clear</button>
+        </div>
+    </div>
+    
+    <canvas id="grainCanvas" width="400" height="300"></canvas>
+    
+    <div class="output" id="output">
+        Click "Generate Grains" to see grain distribution visualization...
+    </div>
+
+    <script>
+        // Grain processor simplified for visualization
+        class GrainVisualizer {
+            constructor(width, height, iso) {
+                this.width = width;
+                this.height = height;
+                this.iso = iso;
+            }
+            
+            seededRandom(seed) {
+                const x = Math.sin(seed) * 10000;
+                return x - Math.floor(x);
+            }
+            
+            generatePoissonDiskSampling(minDistance, maxSamples) {
+                const points = [];
+                const cellSize = minDistance / Math.sqrt(2);
+                const gridWidth = Math.ceil(this.width / cellSize);
+                const gridHeight = Math.ceil(this.height / cellSize);
+                const grid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(null));
+                
+                log(`Poisson: cellSize=${cellSize.toFixed(2)}, grid=${gridWidth}x${gridHeight}`);
+                
+                // Start with random point
+                const initialPoint = {
+                    x: Math.random() * this.width,
+                    y: Math.random() * this.height
+                };
+                points.push(initialPoint);
+                
+                const activeList = [initialPoint];
+                grid[Math.floor(initialPoint.x / cellSize)][Math.floor(initialPoint.y / cellSize)] = initialPoint;
+                
+                let attempts = 0;
+                const maxAttempts = maxSamples * 100;
+                
+                while (activeList.length > 0 && points.length < maxSamples && attempts < maxAttempts) {
+                    attempts++;
+                    const randomIndex = Math.floor(Math.random() * activeList.length);
+                    const point = activeList[randomIndex];
+                    let found = false;
+                    
+                    for (let i = 0; i < 50; i++) {
+                        const angle = Math.random() * 2 * Math.PI;
+                        const radius = minDistance * (1 + Math.random());
+                        const newPoint = {
+                            x: point.x + Math.cos(angle) * radius,
+                            y: point.y + Math.sin(angle) * radius
+                        };
+                        
+                        if (newPoint.x >= 0 && newPoint.x < this.width && 
+                            newPoint.y >= 0 && newPoint.y < this.height) {
+                            
+                            const gridX = Math.floor(newPoint.x / cellSize);
+                            const gridY = Math.floor(newPoint.y / cellSize);
+                            
+                            let valid = true;
+                            for (let dx = -1; dx <= 1; dx++) {
+                                for (let dy = -1; dy <= 1; dy++) {
+                                    const checkX = gridX + dx;
+                                    const checkY = gridY + dy;
+                                    if (checkX >= 0 && checkX < gridWidth && 
+                                        checkY >= 0 && checkY < gridHeight && 
+                                        grid[checkX][checkY]) {
+                                        const existingPoint = grid[checkX][checkY];
+                                        const distance = Math.sqrt(
+                                            Math.pow(newPoint.x - existingPoint.x, 2) + 
+                                            Math.pow(newPoint.y - existingPoint.y, 2)
+                                        );
+                                        if (distance < minDistance) {
+                                            valid = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!valid) break;
+                            }
+                            
+                            if (valid) {
+                                points.push(newPoint);
+                                activeList.push(newPoint);
+                                grid[gridX][gridY] = newPoint;
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!found) {
+                        activeList.splice(randomIndex, 1);
+                    }
+                }
+                
+                log(`Poisson result: ${attempts} attempts, ${points.length}/${maxSamples} points`);
+                return points;
+            }
+            
+            generateFallbackGrains(existingGrains, targetCount) {
+                const fallbackGrains = [...existingGrains];
+                const gridSize = Math.max(8, Math.sqrt(this.width * this.height / targetCount));
+                
+                log(`Fallback: gridSize=${gridSize.toFixed(2)}, target=${targetCount}`);
+                
+                let addedCount = 0;
+                for (let y = gridSize / 2; y < this.height && fallbackGrains.length < targetCount; y += gridSize) {
+                    for (let x = gridSize / 2; x < this.width && fallbackGrains.length < targetCount; x += gridSize) {
+                        const offsetX = (Math.random() - 0.5) * gridSize * 0.8;
+                        const offsetY = (Math.random() - 0.5) * gridSize * 0.8;
+                        const newX = Math.max(0, Math.min(this.width - 1, x + offsetX));
+                        const newY = Math.max(0, Math.min(this.height - 1, y + offsetY));
+                        
+                        fallbackGrains.push({ x: newX, y: newY });
+                        addedCount++;
+                    }
+                }
+                
+                log(`Fallback result: added ${addedCount}, total ${fallbackGrains.length}`);
+                return fallbackGrains;
+            }
+            
+            generateGrains() {
+                const baseGrainSize = Math.max(0.5, this.iso / 200);
+                const imageArea = this.width * this.height;
+                const densityFactor = Math.min(0.01, this.iso / 10000);
+                const grainDensity = Math.floor(imageArea * densityFactor);
+                const minDistance = Math.max(1, baseGrainSize * 0.3);
+                
+                log(`=== Grain Generation ===`);
+                log(`Image: ${this.width}x${this.height} (${imageArea} pixels)`);
+                log(`ISO: ${this.iso}`);
+                log(`Base size: ${baseGrainSize.toFixed(3)}`);
+                log(`Density factor: ${densityFactor.toFixed(6)}`);
+                log(`Target density: ${grainDensity}`);
+                log(`Min distance: ${minDistance.toFixed(3)}`);
+                
+                const poissonPoints = this.generatePoissonDiskSampling(minDistance, grainDensity);
+                
+                let finalPoints = poissonPoints;
+                if (poissonPoints.length < grainDensity * 0.5) {
+                    log(`Using fallback: ${poissonPoints.length} < ${grainDensity * 0.5}`);
+                    finalPoints = this.generateFallbackGrains(poissonPoints, grainDensity);
+                }
+                
+                log(`Final count: ${finalPoints.length}`);
+                log(`Density: ${(finalPoints.length / imageArea * 1000).toFixed(2)} per 1000 pixels`);
+                
+                return finalPoints;
+            }
+        }
+        
+        function log(message) {
+            const output = document.getElementById('output');
+            output.textContent += message + '\n';
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+        }
+        
+        function clearCanvas() {
+            const canvas = document.getElementById('grainCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            clearOutput();
+        }
+        
+        function drawGrains(points, color = '#ffffff', size = 1) {
+            const canvas = document.getElementById('grainCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = color;
+            for (const point of points) {
+                ctx.fillRect(Math.floor(point.x), Math.floor(point.y), size, size);
+            }
+        }
+        
+        function generateGrains() {
+            clearOutput();
+            
+            const width = parseInt(document.getElementById('width').value);
+            const height = parseInt(document.getElementById('height').value);
+            const iso = parseInt(document.getElementById('iso').value);
+            
+            // Update canvas size
+            const canvas = document.getElementById('grainCanvas');
+            canvas.width = width;
+            canvas.height = height;
+            clearCanvas();
+            
+            const visualizer = new GrainVisualizer(width, height, iso);
+            const grains = visualizer.generateGrains();
+            
+            drawGrains(grains, '#00ff00', 2);
+            
+            // Analyze distribution
+            const quadrants = { tl: 0, tr: 0, bl: 0, br: 0 };
+            const midX = width / 2;
+            const midY = height / 2;
+            
+            for (const grain of grains) {
+                if (grain.x < midX && grain.y < midY) quadrants.tl++;
+                else if (grain.x >= midX && grain.y < midY) quadrants.tr++;
+                else if (grain.x < midX && grain.y >= midY) quadrants.bl++;
+                else quadrants.br++;
+            }
+            
+            log(`\n=== Distribution Analysis ===`);
+            log(`Top-left: ${quadrants.tl} (${(quadrants.tl/grains.length*100).toFixed(1)}%)`);
+            log(`Top-right: ${quadrants.tr} (${(quadrants.tr/grains.length*100).toFixed(1)}%)`);
+            log(`Bottom-left: ${quadrants.bl} (${(quadrants.bl/grains.length*100).toFixed(1)}%)`);
+            log(`Bottom-right: ${quadrants.br} (${(quadrants.br/grains.length*100).toFixed(1)}%)`);
+        }
+        
+        function testPoisson() {
+            clearOutput();
+            
+            const width = parseInt(document.getElementById('width').value);
+            const height = parseInt(document.getElementById('height').value);
+            const iso = parseInt(document.getElementById('iso').value);
+            
+            const canvas = document.getElementById('grainCanvas');
+            canvas.width = width;
+            canvas.height = height;
+            clearCanvas();
+            
+            const visualizer = new GrainVisualizer(width, height, iso);
+            
+            const baseGrainSize = Math.max(0.5, iso / 200);
+            const imageArea = width * height;
+            const densityFactor = Math.min(0.01, iso / 10000);
+            const grainDensity = Math.floor(imageArea * densityFactor);
+            const minDistance = Math.max(1, baseGrainSize * 0.3);
+            
+            const points = visualizer.generatePoissonDiskSampling(minDistance, grainDensity);
+            drawGrains(points, '#ff0000', 2);
+        }
+        
+        function testFallback() {
+            clearOutput();
+            
+            const width = parseInt(document.getElementById('width').value);
+            const height = parseInt(document.getElementById('height').value);
+            const iso = parseInt(document.getElementById('iso').value);
+            
+            const canvas = document.getElementById('grainCanvas');
+            canvas.width = width;
+            canvas.height = height;
+            clearCanvas();
+            
+            const visualizer = new GrainVisualizer(width, height, iso);
+            
+            const imageArea = width * height;
+            const densityFactor = Math.min(0.01, iso / 10000);
+            const grainDensity = Math.floor(imageArea * densityFactor);
+            
+            const points = visualizer.generateFallbackGrains([], grainDensity);
+            drawGrains(points, '#0000ff', 2);
+        }
+        
+        // Generate initial grains on load
+        window.onload = function() {
+            generateGrains();
+        };
+    </script>
+</body>
+</html>
