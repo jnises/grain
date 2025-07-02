@@ -190,6 +190,34 @@ class GrainProcessor {
     });
   }
 
+  // Create spatial grid for grain acceleration
+  private createGrainGrid(grains: GrainPoint[]): Map<string, GrainPoint[]> {
+    const maxGrainSize = Math.max(...grains.map(g => g.size));
+    const gridSize = Math.max(8, Math.floor(maxGrainSize * 2)); // Grid cell size based on grain influence radius
+    const grainGrid = new Map<string, GrainPoint[]>();
+    
+    for (const grain of grains) {
+      const influenceRadius = grain.size * 2;
+      const minGridX = Math.floor((grain.x - influenceRadius) / gridSize);
+      const maxGridX = Math.floor((grain.x + influenceRadius) / gridSize);
+      const minGridY = Math.floor((grain.y - influenceRadius) / gridSize);
+      const maxGridY = Math.floor((grain.y + influenceRadius) / gridSize);
+      
+      // Add grain to all grid cells it can influence
+      for (let gridX = minGridX; gridX <= maxGridX; gridX++) {
+        for (let gridY = minGridY; gridY <= maxGridY; gridY++) {
+          const key = `${gridX},${gridY}`;
+          if (!grainGrid.has(key)) {
+            grainGrid.set(key, []);
+          }
+          grainGrid.get(key)!.push(grain);
+        }
+      }
+    }
+    
+    return grainGrid;
+  }
+
   // Apply grain to image
   public async processImage(imageData: ImageData): Promise<ImageData> {
     const data = new Uint8ClampedArray(imageData.data);
@@ -199,7 +227,13 @@ class GrainProcessor {
     postMessage({ type: 'progress', progress: 10, stage: 'Generating grain structure...' } as ProgressMessage);
     const grains = this.generateGrainStructure();
     
-    // Step 2: Process each pixel
+    // Step 2: Create spatial acceleration grid
+    postMessage({ type: 'progress', progress: 20, stage: 'Creating spatial grid...' } as ProgressMessage);
+    const grainGrid = this.createGrainGrid(grains);
+    const maxGrainSize = Math.max(...grains.map(g => g.size));
+    const gridSize = Math.max(8, Math.floor(maxGrainSize * 2));
+    
+    // Step 3: Process each pixel
     postMessage({ type: 'progress', progress: 30, stage: 'Processing pixels...' } as ProgressMessage);
     
     for (let y = 0; y < this.height; y++) {
@@ -219,8 +253,24 @@ class GrainProcessor {
         let grainEffect: RgbEffect = { r: 0, g: 0, b: 0 };
         let totalWeight = 0;
         
-        // Find nearby grains and calculate their influence
-        for (const grain of grains) {
+        // Get grains from nearby grid cells only
+        const pixelGridX = Math.floor(x / gridSize);
+        const pixelGridY = Math.floor(y / gridSize);
+        const nearbyGrains: GrainPoint[] = [];
+        
+        // Check surrounding grid cells (3x3 neighborhood)
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const gridKey = `${pixelGridX + dx},${pixelGridY + dy}`;
+            const cellGrains = grainGrid.get(gridKey);
+            if (cellGrains) {
+              nearbyGrains.push(...cellGrains);
+            }
+          }
+        }
+        
+        // Process only nearby grains
+        for (const grain of nearbyGrains) {
           const distance = Math.sqrt(
             Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2)
           );
