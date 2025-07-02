@@ -1,21 +1,41 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { GrainWorkerManager, FILM_PRESETS, GrainSettings, GrainProcessingProgress } from './grain-worker-manager'
 import './App.css'
 
 function App() {
   const [image, setImage] = useState<string | null>(null)
+  const [processedImage, setProcessedImage] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [isDragOver, setIsDragOver] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processingProgress, setProcessingProgress] = useState<GrainProcessingProgress>({ progress: 0, stage: '' })
+  const [selectedPreset, setSelectedPreset] = useState('kodak-400')
+  const [customSettings, setCustomSettings] = useState<GrainSettings>(FILM_PRESETS['kodak-400'])
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const grainWorkerRef = useRef<GrainWorkerManager | null>(null)
+
+  // Initialize grain worker
+  useEffect(() => {
+    grainWorkerRef.current = new GrainWorkerManager()
+    
+    return () => {
+      grainWorkerRef.current?.terminate()
+    }
+  }, [])
 
   const processFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader()
       reader.onload = (e) => {
         setImage(e.target?.result as string)
+        setProcessedImage(null)
         setZoom(1)
         setPan({ x: 0, y: 0 })
       }
@@ -89,19 +109,107 @@ function App() {
     setIsDragging(false)
   }
 
+  const handlePresetChange = (presetKey: string) => {
+    setSelectedPreset(presetKey)
+    setCustomSettings(FILM_PRESETS[presetKey])
+  }
+
+  const handleCustomSettingChange = (key: keyof GrainSettings, value: any) => {
+    setCustomSettings(prev => ({
+      ...prev,
+      [key]: value
+    }))
+  }
+
+  const extractImageData = (imageUrl: string): Promise<ImageData> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        const canvas = canvasRef.current || document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'))
+          return
+        }
+
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img, 0, 0)
+        
+        const imageData = ctx.getImageData(0, 0, img.width, img.height)
+        resolve(imageData)
+      }
+      img.onerror = () => reject(new Error('Failed to load image'))
+      img.src = imageUrl
+    })
+  }
+
+  const imageDataToDataUrl = (imageData: ImageData): string => {
+    const canvas = canvasRef.current || document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return ''
+
+    canvas.width = imageData.width
+    canvas.height = imageData.height
+    ctx.putImageData(imageData, 0, 0)
+    
+    return canvas.toDataURL('image/jpeg', 0.9)
+  }
+
+  const handleProcessGrain = async () => {
+    if (!image || !grainWorkerRef.current || isProcessing) return
+
+    setIsProcessing(true)
+    setProcessingProgress({ progress: 0, stage: 'Starting...' })
+
+    try {
+      // Extract image data from the uploaded image
+      const imageData = await extractImageData(image)
+      
+      // Process with grain algorithm
+      const result = await grainWorkerRef.current.processImage(
+        imageData,
+        customSettings,
+        (progress) => {
+          setProcessingProgress(progress)
+        }
+      )
+
+      if (result.success) {
+        const processedDataUrl = imageDataToDataUrl(result.imageData)
+        setProcessedImage(processedDataUrl)
+        setProcessingProgress({ progress: 100, stage: 'Complete!' })
+      } else {
+        console.error('Grain processing failed:', result.error)
+        setProcessingProgress({ progress: 0, stage: `Error: ${result.error}` })
+      }
+    } catch (error) {
+      console.error('Error processing image:', error)
+      setProcessingProgress({ progress: 0, stage: 'Error occurred during processing' })
+    }
+
+    setIsProcessing(false)
+  }
+
   const handleDownload = () => {
-    if (image) {
+    const imageToDownload = processedImage || image
+    if (imageToDownload) {
       const link = document.createElement('a')
-      link.href = image
-      link.download = 'grain-processed-image.jpg'
+      link.href = imageToDownload
+      link.download = processedImage ? 'grain-processed-image.jpg' : 'original-image.jpg'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
     }
   }
 
+  const displayImage = processedImage || image
+
   return (
     <div className="app">
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      
       <header className="app-header">
         <h1>Analog Film Grain Simulator</h1>
         <p>Upload an image to add physically plausible analog film grain</p>
@@ -122,6 +230,42 @@ function App() {
 
         {image && (
           <>
+            <div className="grain-controls">
+              <select 
+                value={selectedPreset} 
+                onChange={(e) => handlePresetChange(e.target.value)}
+                className="preset-select"
+                disabled={isProcessing}
+              >
+                <option value="kodak-100">Kodak 100 (Fine Grain)</option>
+                <option value="kodak-400">Kodak 400 (Medium Grain)</option>
+                <option value="kodak-800">Kodak 800 (Visible Grain)</option>
+                <option value="kodak-1600">Kodak 1600 (Heavy Grain)</option>
+                <option value="fuji-100">Fuji 100 (Fine Grain)</option>
+                <option value="fuji-400">Fuji 400 (Medium Grain)</option>
+                <option value="fuji-800">Fuji 800 (Visible Grain)</option>
+                <option value="ilford-100">Ilford 100 (Fine Grain)</option>
+                <option value="ilford-400">Ilford 400 (Medium Grain)</option>
+                <option value="ilford-800">Ilford 800 (Visible Grain)</option>
+              </select>
+
+              <button 
+                onClick={handleProcessGrain} 
+                className="btn btn-accent"
+                disabled={isProcessing}
+              >
+                {isProcessing ? '⚙️ Processing...' : '🎬 Add Grain'}
+              </button>
+
+              <button 
+                onClick={() => setShowAdvanced(!showAdvanced)} 
+                className="btn btn-secondary"
+                disabled={isProcessing}
+              >
+                ⚙️ Advanced
+              </button>
+            </div>
+
             <div className="zoom-controls">
               <button onClick={handleZoomOut} className="btn btn-secondary">
                 🔍−
@@ -136,11 +280,71 @@ function App() {
             </div>
 
             <button onClick={handleDownload} className="btn btn-success">
-              💾 Download
+              💾 Download {processedImage ? 'Processed' : 'Original'}
             </button>
           </>
         )}
       </div>
+
+      {showAdvanced && image && (
+        <div className="advanced-controls">
+          <h3>Advanced Settings</h3>
+          <div className="control-group">
+            <label>
+              ISO: {customSettings.iso}
+              <input 
+                type="range" 
+                min="50" 
+                max="3200" 
+                step="50"
+                value={customSettings.iso}
+                onChange={(e) => handleCustomSettingChange('iso', parseInt(e.target.value))}
+                disabled={isProcessing}
+              />
+            </label>
+          </div>
+          <div className="control-group">
+            <label>
+              Grain Intensity: {Math.round(customSettings.grainIntensity * 100)}%
+              <input 
+                type="range" 
+                min="0" 
+                max="2" 
+                step="0.1"
+                value={customSettings.grainIntensity}
+                onChange={(e) => handleCustomSettingChange('grainIntensity', parseFloat(e.target.value))}
+                disabled={isProcessing}
+              />
+            </label>
+          </div>
+          <div className="control-group">
+            <label>
+              Film Type:
+              <select 
+                value={customSettings.filmType}
+                onChange={(e) => handleCustomSettingChange('filmType', e.target.value)}
+                disabled={isProcessing}
+              >
+                <option value="kodak">Kodak</option>
+                <option value="fuji">Fuji</option>
+                <option value="ilford">Ilford</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {isProcessing && (
+        <div className="processing-indicator">
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${processingProgress.progress}%` }}
+            ></div>
+          </div>
+          <p>{processingProgress.stage}</p>
+        </div>
+      )}
 
       <div 
         className="image-container"
@@ -170,7 +374,7 @@ function App() {
           >
             <img
               ref={imageRef}
-              src={image}
+              src={displayImage || ''}
               alt="Uploaded image"
               style={{
                 transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
@@ -187,7 +391,12 @@ function App() {
 
       {image && (
         <div className="image-info">
-          <p>Image loaded successfully. Grain processing will be added in the next step.</p>
+          <p>
+            {processedImage 
+              ? '✨ Grain processing complete! Use zoom to inspect the grain structure closely.' 
+              : 'Image loaded. Select a film preset and click "Add Grain" to process.'
+            }
+          </p>
         </div>
       )}
     </div>

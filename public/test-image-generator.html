@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Image Generator</title>
+</head>
+<body>
+    <canvas id="testCanvas" width="400" height="300"></canvas>
+    <br>
+    <button onclick="downloadImage()">Download Test Image</button>
+    
+    <script>
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Create a gradient background
+        const gradient = ctx.createLinearGradient(0, 0, 400, 300);
+        gradient.addColorStop(0, '#2c3e50');
+        gradient.addColorStop(0.5, '#34495e');
+        gradient.addColorStop(1, '#2c3e50');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 400, 300);
+        
+        // Add some geometric shapes for testing grain
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(50, 50, 100, 100);
+        
+        ctx.fillStyle = '#f39c12';
+        ctx.beginPath();
+        ctx.arc(300, 100, 50, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.fillStyle = '#27ae60';
+        ctx.fillRect(100, 200, 200, 50);
+        
+        // Add some text
+        ctx.fillStyle = '#ecf0f1';
+        ctx.font = '24px Arial';
+        ctx.fillText('Test Image for Grain', 50, 280);
+        
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = 'test-image.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>
