@@ -1,22 +1,17 @@
 // Utility for managing the grain processing worker
 
-export interface GrainSettings {
-  iso: number;
-  filmType: 'kodak' | 'fuji' | 'ilford';
-  grainIntensity: number;
-  upscaleFactor: number;
-}
+import type {
+  GrainSettings,
+  GrainProcessingResult,
+  GrainProcessingProgress
+} from './types';
 
-export interface GrainProcessingResult {
-  imageData: ImageData;
-  success: boolean;
-  error?: string;
-}
-
-export interface GrainProcessingProgress {
-  progress: number;
-  stage: string;
-}
+// Re-export shared types for consumers
+export type {
+  GrainSettings,
+  GrainProcessingResult,
+  GrainProcessingProgress
+} from './types';
 
 export class GrainWorkerManager {
   private worker: Worker | null = null;

@@ -1,54 +1,16 @@
 // Web Worker for Film Grain Processing
 // Implements physically plausible analog film grain algorithm
 
-interface GrainSettings {
-  iso: number;
-  filmType: 'kodak' | 'fuji' | 'ilford';
-  grainIntensity: number;
-  upscaleFactor: number;
-}
-
-interface Point2D {
-  x: number;
-  y: number;
-}
-
-interface LabColor {
-  l: number;
-  a: number;
-  b: number;
-}
-
-interface RgbEffect {
-  r: number;
-  g: number;
-  b: number;
-}
-
-interface GrainPoint {
-  x: number;
-  y: number;
-  size: number;
-  sensitivity: number;
-  shape: number;
-}
-
-interface ProcessMessage {
-  type: 'process';
-  imageData: ImageData;
-  settings: GrainSettings;
-}
-
-interface ProgressMessage {
-  type: 'progress';
-  progress: number;
-  stage: string;
-}
-
-interface ResultMessage {
-  type: 'result';
-  imageData: ImageData;
-}
+import type {
+  GrainSettings,
+  Point2D,
+  LabColor,
+  RgbEffect,
+  GrainPoint,
+  ProcessMessage,
+  ProgressMessage,
+  ResultMessage
+} from './types';
 
 // Utility functions for grain generation
 class GrainProcessor {
