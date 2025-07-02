@@ -1,6 +1,6 @@
-## Working with the Gemini CLI Agent
+## Working with a coding agent
 
-When working with the Gemini CLI agent, please follow this workflow:
+When working with a coding agent, please follow this workflow:
 
 1.  **Run the development server yourself:** In a separate terminal, navigate to the project root and run `npm run dev`. Keep this terminal open to see real-time HMR updates in your browser.
 2.  **Request changes from the agent:** Use the Gemini CLI terminal to ask the agent to modify code, add features, or fix bugs.
