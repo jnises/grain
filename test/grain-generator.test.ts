@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
+import { assert, assertPositiveInteger, assertObject } from '../src/utils';
 
 describe('GrainGenerator', () => {
   let generator: GrainGenerator;
@@ -16,9 +17,137 @@ describe('GrainGenerator', () => {
     generator = new GrainGenerator(400, 300, settings);
   });
 
+  describe('Constructor Error Handling', () => {
+    it('should throw on invalid width', () => {
+      expect(() => new GrainGenerator(0, 300, settings)).toThrow(/width must be a positive integer/);
+      expect(() => new GrainGenerator(-10, 300, settings)).toThrow(/width must be a positive integer/);
+      expect(() => new GrainGenerator(1.5, 300, settings)).toThrow(/width must be a positive integer/);
+    });
+
+    it('should throw on invalid height', () => {
+      expect(() => new GrainGenerator(400, 0, settings)).toThrow(/height must be a positive integer/);
+      expect(() => new GrainGenerator(400, -10, settings)).toThrow(/height must be a positive integer/);
+      expect(() => new GrainGenerator(400, 1.5, settings)).toThrow(/height must be a positive integer/);
+    });
+
+    it('should throw on null/undefined settings', () => {
+      expect(() => new GrainGenerator(400, 300, null as any)).toThrow(/settings must be.*object/);
+      expect(() => new GrainGenerator(400, 300, undefined as any)).toThrow(/settings must be.*object/);
+    });
+
+    it('should throw on invalid settings object', () => {
+      expect(() => new GrainGenerator(400, 300, 'invalid' as any)).toThrow(/settings must be.*object/);
+      expect(() => new GrainGenerator(400, 300, 123 as any)).toThrow(/settings must be.*object/);
+    });
+
+    it('should throw on invalid ISO values', () => {
+      expect(() => new GrainGenerator(400, 300, { ...settings, iso: 0 })).toThrow(/iso.*positive.*finite.*number/i);
+      expect(() => new GrainGenerator(400, 300, { ...settings, iso: -100 })).toThrow(/iso.*positive.*finite.*number/i);
+      expect(() => new GrainGenerator(400, 300, { ...settings, iso: 'invalid' as any })).toThrow(/iso.*positive.*finite.*number/i);
+    });
+
+    it('should throw on invalid grain intensity', () => {
+      expect(() => new GrainGenerator(400, 300, { ...settings, grainIntensity: -1 })).toThrow(/grainintensity.*non-negative.*finite.*number/i);
+      expect(() => new GrainGenerator(400, 300, { ...settings, grainIntensity: 'invalid' as any })).toThrow(/grainintensity.*non-negative.*finite.*number/i);
+    });
+
+    it('should throw on invalid upscale factor', () => {
+      expect(() => new GrainGenerator(400, 300, { ...settings, upscaleFactor: 0 })).toThrow(/upscalefactor.*positive.*finite.*number/i);
+      expect(() => new GrainGenerator(400, 300, { ...settings, upscaleFactor: -1 })).toThrow(/upscalefactor.*positive.*finite.*number/i);
+      expect(() => new GrainGenerator(400, 300, { ...settings, upscaleFactor: 'invalid' as any })).toThrow(/upscalefactor.*positive.*finite.*number/i);
+    });
+
+    it('should throw on invalid film type', () => {
+      expect(() => new GrainGenerator(400, 300, { ...settings, filmType: 'invalid' as any })).toThrow(/filmtype.*kodak.*fuji.*ilford/i);
+      expect(() => new GrainGenerator(400, 300, { ...settings, filmType: 123 as any })).toThrow(/filmtype.*kodak.*fuji.*ilford/i);
+    });
+  });
+
+  describe('Method Input Validation', () => {
+    it('should validate generatePoissonDiskSampling parameters', () => {
+      expect(() => generator.generatePoissonDiskSampling(0, 100)).toThrow(/mindistance.*positive.*finite.*number/i);
+      expect(() => generator.generatePoissonDiskSampling(-5, 100)).toThrow(/mindistance.*positive.*finite.*number/i);
+      expect(() => generator.generatePoissonDiskSampling(10, 0)).toThrow(/maxsamples.*positive.*integer/i);
+      expect(() => generator.generatePoissonDiskSampling(10, -5)).toThrow(/maxsamples.*positive.*integer/i);
+      expect(() => generator.generatePoissonDiskSampling(10, 1.5)).toThrow(/maxsamples.*positive.*integer/i);
+    });
+
+    it('should validate generateFallbackGrains parameters', () => {
+      expect(() => generator.generateFallbackGrains(null as any, 100)).toThrow(/existinggrains.*array/i);
+      expect(() => generator.generateFallbackGrains('invalid' as any, 100)).toThrow(/existinggrains.*array/i);
+      expect(() => generator.generateFallbackGrains([], 0)).not.toThrow(); // 0 is valid (returns empty array)
+      expect(() => generator.generateFallbackGrains([], -5)).toThrow(/targetcount.*non-negative.*finite.*number/i);
+      expect(() => generator.generateFallbackGrains([], 1.5)).toThrow(/targetcount.*integer/i);
+    });
+
+    it('should validate analyzeDistribution parameters', () => {
+      expect(() => generator.analyzeDistribution(null as any)).toThrow(/grains.*array/);
+      expect(() => generator.analyzeDistribution('invalid' as any)).toThrow(/grains.*array/);
+      expect(() => generator.analyzeDistribution([])).not.toThrow(); // Empty array is valid
+    });
+
+    it('should validate createGrainGrid parameters', () => {
+      const validGrains = [{ x: 10, y: 10, size: 2, sensitivity: 1.0, shape: 0.5 }];
+      expect(() => generator.createGrainGrid(null as any)).toThrow(/grains.*array/);
+      expect(() => generator.createGrainGrid('invalid' as any)).toThrow(/grains.*array/);
+      expect(() => generator.createGrainGrid(validGrains)).not.toThrow();
+    });
+  });
+
+  describe('Method Precondition Validation', () => {
+    it('should validate grain objects in arrays', () => {
+      const invalidGrains = [
+        { x: 10, y: 10, size: 2, sensitivity: 1.0 }, // missing shape
+        { x: 10, y: 10, size: 2, shape: 0.5 }, // missing sensitivity
+        { x: 10, y: 10, sensitivity: 1.0, shape: 0.5 }, // missing size
+        { x: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // missing y
+        { y: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // missing x
+        { x: 'invalid', y: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // invalid x type
+        { x: 10, y: 'invalid', size: 2, sensitivity: 1.0, shape: 0.5 }, // invalid y type
+        { x: 10, y: 10, size: 'invalid', sensitivity: 1.0, shape: 0.5 }, // invalid size type
+        { x: 10, y: 10, size: 2, sensitivity: 'invalid', shape: 0.5 }, // invalid sensitivity type
+        { x: 10, y: 10, size: 2, sensitivity: 1.0, shape: 'invalid' }, // invalid shape type
+        { x: -10, y: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // negative x
+        { x: 10, y: -10, size: 2, sensitivity: 1.0, shape: 0.5 }, // negative y
+        { x: 10, y: 10, size: 0, sensitivity: 1.0, shape: 0.5 }, // zero size
+        { x: 10, y: 10, size: 2, sensitivity: -1.0, shape: 0.5 }, // negative sensitivity
+        { x: 10, y: 10, size: 2, sensitivity: 1.0, shape: -1.0 }, // negative shape
+      ];
+
+      for (const invalidGrain of invalidGrains) {
+        expect(() => generator.createGrainGrid([invalidGrain as any])).toThrow();
+      }
+    });
+
+    it('should validate grain coordinates are within bounds', () => {
+      const outOfBoundsGrains = [
+        { x: 500, y: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // x >= width
+        { x: 10, y: 400, size: 2, sensitivity: 1.0, shape: 0.5 }, // y >= height
+        { x: -1, y: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // x < 0
+        { x: 10, y: -1, size: 2, sensitivity: 1.0, shape: 0.5 }, // y < 0
+      ];
+
+      for (const grain of outOfBoundsGrains) {
+        expect(() => generator.createGrainGrid([grain])).toThrow();
+      }
+    });
+  });
+
   describe('Parameter Calculations', () => {
     it('should calculate grain parameters correctly for ISO 400', () => {
       const params = generator.calculateGrainParameters();
+      
+      // Use assertions to validate calculation results
+      assert(typeof params.baseGrainSize === 'number' && params.baseGrainSize > 0, 
+        'Base grain size must be a positive number', { params });
+      assert(typeof params.imageArea === 'number' && params.imageArea > 0, 
+        'Image area must be a positive number', { params });
+      assert(typeof params.densityFactor === 'number' && params.densityFactor >= 0, 
+        'Density factor must be a non-negative number', { params });
+      assert(typeof params.grainDensity === 'number' && params.grainDensity >= 0, 
+        'Grain density must be a non-negative number', { params });
+      assert(typeof params.minDistance === 'number' && params.minDistance > 0, 
+        'Min distance must be a positive number', { params });
       
       expect(params.baseGrainSize).toBe(2); // 400 / 200
       expect(params.imageArea).toBe(120000); // 400 * 300
@@ -31,6 +160,11 @@ describe('GrainGenerator', () => {
       const lowIsoGenerator = new GrainGenerator(400, 300, { ...settings, iso: 100 });
       const params = lowIsoGenerator.calculateGrainParameters();
       
+      // Validate all parameters are reasonable
+      assert(params.baseGrainSize >= 0.5, 'Base grain size should have minimum value', { params });
+      assert(params.densityFactor > 0, 'Density factor should be positive for valid ISO', { params });
+      assert(params.grainDensity > 0, 'Grain density should be positive', { params });
+      
       expect(params.baseGrainSize).toBe(0.5); // Math.max(0.5, 100 / 200)
       expect(params.densityFactor).toBe(0.01); // 100 / 10000
       expect(params.grainDensity).toBe(1200); // Math.floor(120000 * 0.01)
@@ -39,6 +173,11 @@ describe('GrainGenerator', () => {
     it('should handle high ISO values correctly', () => {
       const highIsoGenerator = new GrainGenerator(400, 300, { ...settings, iso: 1600 });
       const params = highIsoGenerator.calculateGrainParameters();
+      
+      // Validate high ISO doesn't produce unreasonable values
+      assert(params.baseGrainSize > 0, 'Base grain size should be positive', { params });
+      assert(params.densityFactor <= 0.05, 'Density factor should be capped', { params });
+      assert(params.grainDensity > 0, 'Grain density should be positive', { params });
       
       expect(params.baseGrainSize).toBe(8); // 1600 / 200
       expect(params.densityFactor).toBe(0.05); // Math.min(0.05, 1600 / 10000) = Math.min(0.05, 0.16) = 0.05
@@ -49,6 +188,14 @@ describe('GrainGenerator', () => {
       const largeGenerator = new GrainGenerator(800, 600, settings);
       const params = largeGenerator.calculateGrainParameters();
       
+      // Validate scaling behavior
+      assert(params.imageArea === 800 * 600, 'Image area should match dimensions', { params });
+      assert(params.grainDensity > generator.calculateGrainParameters().grainDensity, 
+        'Larger image should have more grains', { 
+          smallGrains: generator.calculateGrainParameters().grainDensity,
+          largeGrains: params.grainDensity 
+        });
+      
       expect(params.imageArea).toBe(480000); // 800 * 600
       expect(params.grainDensity).toBe(19200); // Math.floor(480000 * 0.04)
     });
@@ -58,7 +205,16 @@ describe('GrainGenerator', () => {
     it('should generate points within image bounds', () => {
       const points = generator.generatePoissonDiskSampling(10, 100);
       
+      // Validate result is an array
+      assert(Array.isArray(points), 'Points must be an array', { points });
+      
       for (const point of points) {
+        // Validate each point structure (Point2D only has x and y)
+        assert(typeof point === 'object' && point !== null, 'Point must be an object', { point });
+        assert(typeof point.x === 'number', 'Point x must be a number', { point });
+        assert(typeof point.y === 'number', 'Point y must be a number', { point });
+        
+        // Validate bounds
         expect(point.x).toBeGreaterThanOrEqual(0);
         expect(point.x).toBeLessThan(400);
         expect(point.y).toBeGreaterThanOrEqual(0);
@@ -69,6 +225,9 @@ describe('GrainGenerator', () => {
     it('should respect minimum distance constraint for most points', () => {
       const minDistance = 20;
       const points = generator.generatePoissonDiskSampling(minDistance, 50);
+      
+      assert(Array.isArray(points), 'Points must be an array', { points });
+      assert(points.length > 0, 'Should generate at least one point', { points });
       
       let validDistances = 0;
       let totalDistances = 0;
@@ -88,18 +247,22 @@ describe('GrainGenerator', () => {
       }
       
       // At least 90% of distances should respect the minimum distance constraint
-      const validRatio = validDistances / totalDistances;
-      expect(validRatio).toBeGreaterThanOrEqual(0.9);
+      if (totalDistances > 0) {
+        const validRatio = validDistances / totalDistances;
+        expect(validRatio).toBeGreaterThanOrEqual(0.9);
+      }
     });
 
     it('should generate at least one point', () => {
       const points = generator.generatePoissonDiskSampling(5, 1000);
+      assert(Array.isArray(points), 'Points must be an array', { points });
       expect(points.length).toBeGreaterThan(0);
     });
 
     it('should not exceed maximum samples', () => {
       const maxSamples = 10;
       const points = generator.generatePoissonDiskSampling(1, maxSamples);
+      assert(Array.isArray(points), 'Points must be an array', { points });
       expect(points.length).toBeLessThanOrEqual(maxSamples);
     });
 

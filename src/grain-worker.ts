@@ -12,6 +12,13 @@ import type {
   ProgressMessage,
   ResultMessage
 } from './types';
+import { 
+  assertPositiveInteger, 
+  assertObject, 
+  assertImageData, 
+  assertInRange,
+  assert
+} from './utils';
 
 // File-level constants shared across methods
 const RGB_MAX_VALUE = 255;
@@ -24,10 +31,34 @@ class GrainProcessor {
   private grainGenerator: GrainGenerator;
 
   constructor(width: number, height: number, settings: GrainSettings) {
+    // Validate input parameters with custom assertions that provide type narrowing
+    assertPositiveInteger(width, 'width');
+    assertPositiveInteger(height, 'height');
+    assertObject(settings, 'settings');
+
+    // Type guard for settings object using custom assertion
+    assert(
+      this.isValidGrainSettings(settings),
+      'Invalid grain settings provided',
+      { settings, requiredProperties: ['iso', 'filmType', 'grainIntensity', 'upscaleFactor'] }
+    );
+
+    console.log(`Initializing GrainProcessor: ${width}x${height}, ISO: ${settings.iso}`);
+
     this.width = width;
     this.height = height;
     this.settings = settings;
     this.grainGenerator = new GrainGenerator(width, height, settings);
+  }
+
+  // Type guard for GrainSettings
+  private isValidGrainSettings(settings: any): settings is GrainSettings {
+    return settings &&
+           typeof settings.iso === 'number' && settings.iso > 0 &&
+           typeof settings.filmType === 'string' &&
+           ['kodak', 'fuji', 'ilford'].includes(settings.filmType) &&
+           typeof settings.grainIntensity === 'number' && settings.grainIntensity >= 0 &&
+           typeof settings.upscaleFactor === 'number' && settings.upscaleFactor > 0;
   }
 
   // 2D Perlin noise implementation
@@ -55,6 +86,11 @@ class GrainProcessor {
 
   // Convert RGB to LAB color space
   private rgbToLab(r: number, g: number, b: number): LabColor {
+    // Validate input parameters with custom assertions
+    assertInRange(r, 0, 255, 'r');
+    assertInRange(g, 0, 255, 'g');
+    assertInRange(b, 0, 255, 'b');
+
     // Color space conversion constants
     const RGB_GAMMA_THRESHOLD = 0.04045;
     const RGB_GAMMA_LINEAR_DIVISOR = 12.92;
@@ -102,16 +138,44 @@ class GrainProcessor {
     y /= D65_ILLUMINANT.y;
     z /= D65_ILLUMINANT.z;
 
+    // Validate XYZ values with custom assertion
+    assert(
+      Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z),
+      'Color space conversion produced invalid XYZ values',
+      { 
+        xyz: { x, y, z }, 
+        originalRGB: { r: r * 255, g: g * 255, b: b * 255 },
+        finite: { x: Number.isFinite(x), y: Number.isFinite(y), z: Number.isFinite(z) }
+      }
+    );
+
     // Convert to LAB
     x = x > LAB_EPSILON ? Math.pow(x, 1/3) : (LAB_KAPPA * x + LAB_DELTA);
     y = y > LAB_EPSILON ? Math.pow(y, 1/3) : (LAB_KAPPA * y + LAB_DELTA);
     z = z > LAB_EPSILON ? Math.pow(z, 1/3) : (LAB_KAPPA * z + LAB_DELTA);
 
-    return {
+    const labResult = {
       l: LAB_L_MULTIPLIER * y - LAB_L_OFFSET,
       a: LAB_A_MULTIPLIER * (x - y),
       b: LAB_B_MULTIPLIER * (y - z)
     };
+
+    // Validate LAB result with custom assertion
+    assert(
+      Number.isFinite(labResult.l) && Number.isFinite(labResult.a) && Number.isFinite(labResult.b),
+      'Color space conversion produced invalid LAB values',
+      { 
+        lab: labResult, 
+        originalRGB: { r: r * 255, g: g * 255, b: b * 255 },
+        finite: { 
+          l: Number.isFinite(labResult.l), 
+          a: Number.isFinite(labResult.a), 
+          b: Number.isFinite(labResult.b) 
+        }
+      }
+    );
+
+    return labResult;
   }
 
   // Film characteristic curve (S-curve)
@@ -368,18 +432,46 @@ class GrainProcessor {
 
 // Worker message handler
 self.onmessage = async function(e: MessageEvent<ProcessMessage>) {
-  const { type, imageData, settings } = e.data;
-  
-  if (type === 'process') {
-    try {
-      const processor = new GrainProcessor(imageData.width, imageData.height, settings);
-      const result = await processor.processImage(imageData);
-      
-      postMessage({ type: 'result', imageData: result } as ResultMessage);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      postMessage({ type: 'error', error: errorMessage });
+  try {
+    // Validate message structure with custom assertion
+    assertObject(e.data, 'worker message data');
+
+    const { type, imageData, settings } = e.data;
+    
+    // Validate message type
+    assert(
+      type === 'process',
+      'Worker received unknown message type',
+      { type, expectedType: 'process' }
+    );
+
+    // Validate imageData and settings with custom assertions
+    assertImageData(imageData, 'worker imageData');
+    assertObject(settings, 'worker settings');
+
+    console.log(`Worker processing image: ${imageData.width}x${imageData.height}, ISO: ${settings.iso}`);
+
+    const processor = new GrainProcessor(imageData.width, imageData.height, settings);
+    const result = await processor.processImage(imageData);
+    
+    // Validate result with custom assertion
+    assertImageData(result, 'processing result');
+
+    postMessage({ type: 'result', imageData: result } as ResultMessage);
+  } catch (error) {
+    console.error('Worker processing error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred during processing';
+    
+    // Log additional error context for debugging
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
     }
+    
+    postMessage({ type: 'error', error: errorMessage });
   }
 };
 

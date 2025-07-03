@@ -2,13 +2,20 @@
 - [x] Check to make sure the `Compositing Multiple Grain Layers` section of `ALGORITHM_DESIGN.md` makes sense.
 - [x] Remove the legacy algorithm
 - [x] Go through the code and make sure it follows the instructions in `copilot-instructions.md`
-- [ ] Add instruction for agent to assert any assumption it makes.
+- [x] Add instruction for agent to assert any assumption it makes.
+- [ ] Create custom assert function what does narrowing and such.
 - [ ] Go through the code and make sure assertions are added where it makes sense.
+- [ ] Ask why all the custom assertion functions are needed.
+- [ ] Create a separate assert util for slow checks that is only run when in dev mode.
+- [ ] Update agent instructions on how to use the asserts.
+- [ ] Update hot code to use the dev assert.
 - [ ] Optimize or simplify the `multiple grain layers` feature. It is currently very slow.
 - [ ] Go through `ALGORITHM_DESIGN.md` and compare against the current implementation. Describe what has been implemented and what hasn't any why.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate adjusting the enlargement factor of the image in a darkroom. (Or will this have the same effect as adjusting the iso?)
 - [ ] Add debug page that can visualize separate parts of the algorithm, such as raw grains before they are combined with the image. This page should only be visible in dev mode.
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense.
 - [ ] Optimize the algorithm
-- [ ] Is it possible to parallelize the algorithm? Or move parts of it to the gpu using webgpu?
 - [ ] Clean up unused files and debug utils such as `public/grain-test.html`
+- [ ] Clean up old agent-generated analysis and summary md files.
+- [ ] Update dependencies.
+- [ ] Is it possible to parallelize the algorithm? Or move parts of it to the gpu using webgpu?

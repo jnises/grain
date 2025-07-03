@@ -3,6 +3,7 @@
 
 import { GrainGenerator } from './grain-generator';
 import type { GrainSettings, Point2D } from './types';
+import { assertPositiveInteger, assertPositiveNumber, assertArray, assertPoint2D, assertObject, assert } from './utils';
 
 // Test functions that use the main GrainGenerator class
 export function testPoissonDistribution(
@@ -11,6 +12,12 @@ export function testPoissonDistribution(
   minDistance: number,
   maxSamples: number
 ): Point2D[] {
+  // Validate input parameters with custom assertions
+  assertPositiveInteger(width, 'width');
+  assertPositiveInteger(height, 'height');
+  assertPositiveNumber(minDistance, 'minDistance');
+  assertPositiveInteger(maxSamples, 'maxSamples');
+
   const settings: GrainSettings = {
     iso: 400,
     filmType: 'kodak',
@@ -27,12 +34,43 @@ export function testGrainGeneration(
   height: number,
   settings: GrainSettings
 ): Point2D[] {
+  // Validate input parameters with custom assertions
+  assertPositiveInteger(width, 'width');
+  assertPositiveInteger(height, 'height');
+  assertObject(settings, 'settings');
+
+  // Type guard for settings using custom assertion
+  assert(
+    isValidGrainSettings(settings),
+    'Invalid grain settings structure',
+    { settings, requiredProperties: ['iso', 'filmType', 'grainIntensity', 'upscaleFactor'] }
+  );
+
   const generator = new GrainGenerator(width, height, settings);
   const params = generator.calculateGrainParameters();
   return generator.generatePoissonDiskSampling(params.minDistance, params.grainDensity);
 }
 
+// Type guard helper
+function isValidGrainSettings(settings: any): settings is GrainSettings {
+  return settings &&
+         typeof settings.iso === 'number' && settings.iso > 0 &&
+         typeof settings.filmType === 'string' &&
+         ['kodak', 'fuji', 'ilford'].includes(settings.filmType) &&
+         typeof settings.grainIntensity === 'number' && settings.grainIntensity >= 0 &&
+         typeof settings.upscaleFactor === 'number' && settings.upscaleFactor > 0;
+}
+
 export function validatePointDistribution(points: Point2D[], minDistance: number): boolean {
+  // Validate input parameters with custom assertions
+  assertArray(points, 'points');
+  assertPositiveNumber(minDistance, 'minDistance');
+
+  // Type guard for points array using custom assertion
+  points.forEach((point, index) => {
+    assertPoint2D(point, `points[${index}]`);
+  });
+
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
       const distance = Math.sqrt(
@@ -49,6 +87,16 @@ export function validatePointDistribution(points: Point2D[], minDistance: number
 
 // Debug function to analyze grain distribution
 export function analyzeGrainDistribution(points: Point2D[], width: number, height: number) {
+  // Validate input parameters with custom assertions
+  assertArray(points, 'points');
+  assertPositiveInteger(width, 'width');
+  assertPositiveInteger(height, 'height');
+
+  // Type guard for points array using custom assertion
+  points.forEach((point, index) => {
+    assertPoint2D(point, `points[${index}]`);
+  });
+
   console.log(`Generated ${points.length} grain points`);
   console.log(`Canvas size: ${width}x${height} (${width * height} pixels)`);
   console.log(`Grain density: ${((points.length / (width * height)) * 10000).toFixed(2)} grains per 10k pixels`);

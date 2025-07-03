@@ -3,6 +3,18 @@
 
 import type { GrainSettings, Point2D, GrainPoint, GrainLayer } from './types';
 import { SEEDED_RANDOM_MULTIPLIER } from './constants';
+import { 
+  assertPositiveInteger, 
+  assertObject, 
+  assertPositiveNumber, 
+  assertArray, 
+  assertPoint2D,
+  assertValidGridCoordinates,
+  assertNonNegativeNumber,
+  assertInRange,
+  assertFiniteNumber,
+  assert
+} from './utils';
 
 // File-level constants shared across multiple methods
 const ISO_TO_GRAIN_SIZE_DIVISOR = 200;
@@ -25,6 +37,23 @@ export class GrainGenerator {
   private settings: GrainSettings;
 
   constructor(width: number, height: number, settings: GrainSettings) {
+    // Validate input parameters with custom assertions that provide type narrowing
+    assertPositiveInteger(width, 'width');
+    assertPositiveInteger(height, 'height');
+    assertObject(settings, 'settings');
+    
+    // Validate settings properties
+    assertPositiveNumber(settings.iso, 'settings.iso');
+    assertNonNegativeNumber(settings.grainIntensity, 'settings.grainIntensity');
+    assertPositiveNumber(settings.upscaleFactor, 'settings.upscaleFactor');
+    
+    // Validate film type
+    assert(
+      ['kodak', 'fuji', 'ilford'].includes(settings.filmType),
+      'settings.filmType must be one of: kodak, fuji, ilford',
+      { filmType: settings.filmType, validTypes: ['kodak', 'fuji', 'ilford'] }
+    );
+
     this.width = width;
     this.height = height;
     this.settings = settings;
@@ -38,6 +67,13 @@ export class GrainGenerator {
 
   // Generate Poisson disk sampling for grain placement
   public generatePoissonDiskSampling(minDistance: number, maxSamples: number): Point2D[] {
+    // Validate input parameters with custom assertions
+    assertPositiveNumber(minDistance, 'minDistance');
+    assertPositiveInteger(maxSamples, 'maxSamples');
+
+    // Log parameters for debugging
+    console.log(`Generating Poisson disk sampling: minDistance=${minDistance}, maxSamples=${maxSamples}, imageSize=${this.width}x${this.height}`);
+
     // Poisson disk sampling constants
     const POISSON_GRID_SQRT_2 = Math.sqrt(2);
     const POISSON_MAX_ATTEMPTS_MULTIPLIER = 100;
@@ -47,6 +83,21 @@ export class GrainGenerator {
     const cellSize = minDistance / POISSON_GRID_SQRT_2;
     const gridWidth = Math.ceil(this.width / cellSize);
     const gridHeight = Math.ceil(this.height / cellSize);
+    
+    // Validate grid dimensions with custom assertion
+    assert(
+      gridWidth > 0 && gridHeight > 0,
+      'Invalid grid dimensions calculated',
+      { 
+        gridWidth, 
+        gridHeight, 
+        cellSize, 
+        minDistance, 
+        imageSize: `${this.width}x${this.height}`,
+        calculation: `ceil(${this.width}/${cellSize}) x ceil(${this.height}/${cellSize})`
+      }
+    );
+
     const grid: Array<Array<Point2D | null>> = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(null));
     
     // Start with random point
@@ -57,7 +108,19 @@ export class GrainGenerator {
     points.push(initialPoint);
     
     const activeList = [initialPoint];
-    grid[Math.floor(initialPoint.x / cellSize)][Math.floor(initialPoint.y / cellSize)] = initialPoint;
+    const initialGridX = Math.floor(initialPoint.x / cellSize);
+    const initialGridY = Math.floor(initialPoint.y / cellSize);
+    
+    // Validate grid coordinates with custom assertion
+    assertValidGridCoordinates(
+      initialGridX, 
+      initialGridY, 
+      gridWidth, 
+      gridHeight, 
+      'initial point placement'
+    );
+    
+    grid[initialGridX][initialGridY] = initialPoint;
     
     let attempts = 0;
     const maxAttempts = maxSamples * POISSON_MAX_ATTEMPTS_MULTIPLIER; // Prevent infinite loops
@@ -81,6 +144,17 @@ export class GrainGenerator {
           
           const gridX = Math.floor(newPoint.x / cellSize);
           const gridY = Math.floor(newPoint.y / cellSize);
+          
+          // Validate grid coordinates before accessing with better error context
+          if (gridX < 0 || gridX >= gridWidth || gridY < 0 || gridY >= gridHeight) {
+            console.error('Grid coordinates out of bounds - skipping candidate point', {
+              point: newPoint,
+              gridCoords: { x: gridX, y: gridY },
+              gridBounds: { width: gridWidth, height: gridHeight },
+              cellSize
+            });
+            continue; // Skip this candidate point
+          }
           
           let valid = true;
           for (let dx = -1; dx <= 1; dx++) {
@@ -119,11 +193,30 @@ export class GrainGenerator {
       }
     }
     
+    // Log final results for debugging
+    console.log(`Poisson disk sampling completed: generated ${points.length}/${maxSamples} points after ${attempts} attempts`);
+    
     return points;
   }
 
   // Fallback grain generation for better coverage
   public generateFallbackGrains(existingGrains: Point2D[], targetCount: number): Point2D[] {
+    // Validate input parameters with custom assertions
+    assertArray(existingGrains, 'existingGrains');
+    assertNonNegativeNumber(targetCount, 'targetCount');
+    assert(
+      Number.isInteger(targetCount),
+      'targetCount must be an integer',
+      { targetCount, isInteger: Number.isInteger(targetCount) }
+    );
+
+    // Type guard for existing grains array
+    existingGrains.forEach((grain, index) => {
+      assertPoint2D(grain, `existingGrains[${index}]`);
+    });
+
+    console.log(`Generating fallback grains: ${existingGrains.length} existing, ${targetCount} target`);
+
     // Fallback grid generation constants
     const FALLBACK_GRID_CENTER_OFFSET = 0.5;
     const FALLBACK_GRID_RANDOMNESS = 0.6;
@@ -132,13 +225,30 @@ export class GrainGenerator {
     const remainingCount = targetCount - existingGrains.length;
     
     if (remainingCount <= 0) {
+      console.log(`No additional grains needed: ${existingGrains.length} >= ${targetCount}`);
       return fallbackGrains;
     }
     
     // Calculate grid size to fit approximately the target number of grains
     const gridSize = Math.sqrt(this.width * this.height / targetCount);
+    
+    // Validate grid size with custom assertion
+    assertFiniteNumber(gridSize, 'gridSize');
+    assert(
+      gridSize > 0,
+      'Grid size must be positive',
+      { 
+        gridSize, 
+        imageArea: this.width * this.height, 
+        targetCount,
+        calculation: `sqrt(${this.width * this.height} / ${targetCount})`
+      }
+    );
+    
     const cols = Math.ceil(this.width / gridSize);
     const rows = Math.ceil(this.height / gridSize);
+    
+    console.log(`Fallback grid: ${cols}x${rows} cells, gridSize=${gridSize.toFixed(2)}`);
     
     // Generate grains in grid pattern
     for (let row = 0; row < rows && fallbackGrains.length < targetCount; row++) {
@@ -150,13 +260,18 @@ export class GrainGenerator {
         // Add random offset to avoid perfect grid
         const offsetX = (Math.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
         const offsetY = (Math.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
-        
-        const x = Math.max(0, Math.min(this.width - 1, baseX + offsetX));
+         const x = Math.max(0, Math.min(this.width - 1, baseX + offsetX));
         const y = Math.max(0, Math.min(this.height - 1, baseY + offsetY));
         
+        // Validate final coordinates with custom assertion
+        assertInRange(x, 0, this.width - 1, 'fallback grain x coordinate');
+        assertInRange(y, 0, this.height - 1, 'fallback grain y coordinate');
+
         fallbackGrains.push({ x, y });
       }
     }
+    
+    console.log(`Fallback generation completed: ${fallbackGrains.length} total grains (${fallbackGrains.length - existingGrains.length} new)`);
     
     return fallbackGrains;
   }
@@ -245,6 +360,9 @@ export class GrainGenerator {
     maxDistance?: number;
     medianDistance?: number;
   } {
+    // Validate input
+    assert(Array.isArray(grains), 'grains must be an array', { grains });
+    
     const quadrants = {
       topLeft: 0,
       topRight: 0,
@@ -307,6 +425,28 @@ export class GrainGenerator {
 
   // Create spatial grid for grain acceleration
   public createGrainGrid(grains: GrainPoint[]): Map<string, GrainPoint[]> {
+    // Validate input
+    assert(Array.isArray(grains), 'grains must be an array', { grains });
+    
+    if (grains.length === 0) {
+      return new Map<string, GrainPoint[]>();
+    }
+    
+    // Validate grain structure
+    for (const grain of grains) {
+      assertObject(grain, 'grain must be an object');
+      assert(typeof grain.x === 'number', 'grain.x must be a number', { grain });
+      assert(typeof grain.y === 'number', 'grain.y must be a number', { grain });
+      assert(typeof grain.size === 'number', 'grain.size must be a number', { grain });
+      assert(typeof grain.sensitivity === 'number', 'grain.sensitivity must be a number', { grain });
+      assert(typeof grain.shape === 'number', 'grain.shape must be a number', { grain });
+      assert(grain.x >= 0 && grain.x < this.width, 'grain.x must be within bounds', { grain, width: this.width });
+      assert(grain.y >= 0 && grain.y < this.height, 'grain.y must be within bounds', { grain, height: this.height });
+      assert(grain.size > 0, 'grain.size must be positive', { grain });
+      assert(grain.sensitivity >= 0, 'grain.sensitivity must be non-negative', { grain });
+      assert(grain.shape >= 0, 'grain.shape must be non-negative', { grain });
+    }
+    
     const maxGrainSize = Math.max(...grains.map(g => g.size));
     const gridSize = Math.max(8, Math.floor(maxGrainSize * 2));
     const grainGrid = new Map<string, GrainPoint[]>();

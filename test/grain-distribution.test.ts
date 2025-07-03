@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
+import { assert, assertPositiveInteger, assertObject } from '../src/utils';
 
 describe('Grain Distribution Bug Tests', () => {
   let settings: GrainSettings;
@@ -14,10 +15,48 @@ describe('Grain Distribution Bug Tests', () => {
     };
   });
 
+  describe('Error Handling and Validation', () => {
+    it('should validate generator construction parameters', () => {
+      expect(() => new GrainGenerator(0, 300, settings)).toThrow(/width must be a positive integer/);
+      expect(() => new GrainGenerator(400, 0, settings)).toThrow(/height must be a positive integer/);
+      expect(() => new GrainGenerator(400, 300, null as any)).toThrow(/settings must be.*object/);
+    });
+
+    it('should validate analysis method inputs', () => {
+      const generator = new GrainGenerator(400, 300, settings);
+      
+      expect(() => generator.analyzeDistribution(null as any)).toThrow(/grains.*array/);
+      expect(() => generator.analyzeDistribution('invalid' as any)).toThrow(/grains.*array/);
+      expect(() => generator.analyzeDistribution([])).not.toThrow(); // Empty array is valid
+    });
+
+    it('should validate fallback grain generation parameters', () => {
+      const generator = new GrainGenerator(400, 300, settings);
+      
+      expect(() => generator.generateFallbackGrains(null as any, 100)).toThrow(/existinggrains.*array/i);
+      expect(() => generator.generateFallbackGrains('invalid' as any, 100)).toThrow(/existinggrains.*array/i);
+      expect(() => generator.generateFallbackGrains([], -5)).toThrow(/targetcount.*non-negative.*finite.*number/i);
+      expect(() => generator.generateFallbackGrains([], 1.5)).toThrow(/targetcount.*integer/i);
+    });
+
+    it('should validate grain structure in analysis', () => {
+      const generator = new GrainGenerator(400, 300, settings);
+      
+      // The analyzeDistribution method operates on Point2D[] not full GrainPoint[]
+      // so it doesn't validate grain structure extensively like createGrainGrid does
+      const validGrains = [{ x: 10, y: 10 }];
+      expect(() => generator.analyzeDistribution(validGrains)).not.toThrow();
+    });
+  });
+
   describe('Distribution Coverage Tests', () => {
     it('should distribute grains across entire image area', () => {
       const generator = new GrainGenerator(400, 300, settings);
       const grains = generator.generateGrainStructure();
+      
+      // Validate the grain generation result
+      assert(Array.isArray(grains), 'Grains must be an array', { grains });
+      assert(grains.length > 0, 'Should generate at least some grains', { grains });
       
       // Test that grains are found in all regions of the image
       const regions = {
@@ -37,6 +76,13 @@ describe('Grain Distribution Bug Tests', () => {
       );
 
       for (const grain of grains) {
+        // Validate each grain structure
+        assertObject(grain, 'Grain must be an object');
+        assert(typeof grain.x === 'number', 'Grain x must be a number', { grain });
+        assert(typeof grain.y === 'number', 'Grain y must be a number', { grain });
+        assert(grain.x >= 0 && grain.x < 400, 'Grain x must be within bounds', { grain });
+        assert(grain.y >= 0 && grain.y < 300, 'Grain y must be within bounds', { grain });
+        
         for (const [regionName, bounds] of Object.entries(regions)) {
           if (grain.x >= bounds.minX && grain.x < bounds.maxX &&
               grain.y >= bounds.minY && grain.y < bounds.maxY) {
@@ -65,6 +111,10 @@ describe('Grain Distribution Bug Tests', () => {
       const generator = new GrainGenerator(400, 300, settings);
       const grains = generator.generateGrainStructure();
       
+      // Validate grain generation result
+      assert(Array.isArray(grains), 'Grains must be an array', { grains });
+      assert(grains.length > 0, 'Should generate at least some grains', { grains });
+      
       // Define corner and edge regions (10% of image size)
       const cornerSize = 40; // 10% of 400
       const edgeSize = 30; // 10% of 300
@@ -73,6 +123,11 @@ describe('Grain Distribution Bug Tests', () => {
       let centerGrains = 0;
       
       for (const grain of grains) {
+        // Validate grain structure before processing
+        assertObject(grain, 'Grain must be an object');
+        assert(typeof grain.x === 'number' && typeof grain.y === 'number', 
+          'Grain coordinates must be numbers', { grain });
+        
         const isInCorner = 
           (grain.x < cornerSize && grain.y < edgeSize) || // top-left
           (grain.x > 400 - cornerSize && grain.y < edgeSize) || // top-right

@@ -5,6 +5,7 @@ import type {
   GrainProcessingResult,
   GrainProcessingProgress
 } from './types';
+import { assertImageData, assertObject, assertPositiveNumber, assert } from './utils';
 
 // Re-export shared types for consumers
 export type {
@@ -28,8 +29,17 @@ export class GrainWorkerManager {
         new URL('./grain-worker.ts', import.meta.url),
         { type: 'module' }
       );
+      console.log('Grain worker initialized successfully');
     } catch (error) {
       console.error('Failed to initialize grain worker:', error);
+      // Log detailed error context for debugging
+      if (error instanceof Error) {
+        console.error('Worker initialization error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        });
+      }
     }
   }
 
@@ -38,7 +48,23 @@ export class GrainWorkerManager {
     settings: GrainSettings,
     onProgress?: (progress: GrainProcessingProgress) => void
   ): Promise<GrainProcessingResult> {
+    // Validate input parameters with custom assertions that provide type narrowing
+    assertImageData(imageData, 'imageData');
+    assertObject(settings, 'settings');
+    
+    // Validate settings properties
+    assertPositiveNumber(settings.iso, 'settings.iso');
+    assert(
+      ['kodak', 'fuji', 'ilford'].includes(settings.filmType),
+      'settings.filmType must be one of: kodak, fuji, ilford',
+      { filmType: settings.filmType, validTypes: ['kodak', 'fuji', 'ilford'] }
+    );
+
+    // Log processing parameters for debugging
+    console.log(`Processing image: ${imageData.width}x${imageData.height}, ISO: ${settings.iso}, filmType: ${settings.filmType}`);
+
     if (!this.worker) {
+      console.error('Worker not initialized - cannot process image');
       return {
         imageData,
         success: false,
@@ -47,6 +73,7 @@ export class GrainWorkerManager {
     }
 
     if (this.isProcessing) {
+      console.warn('Processing already in progress - rejecting new request');
       return {
         imageData,
         success: false,
@@ -58,6 +85,7 @@ export class GrainWorkerManager {
 
     return new Promise((resolve) => {
       if (!this.worker) {
+        console.error('Worker became unavailable during processing setup');
         resolve({
           imageData,
           success: false,
@@ -69,19 +97,36 @@ export class GrainWorkerManager {
       const handleMessage = (e: MessageEvent) => {
         const { type, ...data } = e.data;
 
+        // Validate message structure with custom assertion
+        assert(
+          type && typeof type === 'string',
+          'Worker message must have a valid type property',
+          { receivedMessage: e.data, type, typeOf: typeof type }
+        );
+
         switch (type) {
           case 'progress':
             if (onProgress) {
-              onProgress({
-                progress: data.progress,
-                stage: data.stage
-              });
+              // Validate progress data structure
+              if (typeof data.progress === 'number' && typeof data.stage === 'string') {
+                onProgress({
+                  progress: data.progress,
+                  stage: data.stage
+                });
+              } else {
+                console.warn('Invalid progress data received from worker', { data });
+              }
             }
             break;
 
           case 'result':
             this.worker?.removeEventListener('message', handleMessage);
             this.isProcessing = false;
+            
+            // Validate result data with custom assertion
+            assertImageData(data.imageData, 'worker result imageData');
+            
+            console.log('Image processing completed successfully');
             resolve({
               imageData: data.imageData,
               success: true
@@ -91,11 +136,18 @@ export class GrainWorkerManager {
           case 'error':
             this.worker?.removeEventListener('message', handleMessage);
             this.isProcessing = false;
+            
+            const errorMessage = typeof data.error === 'string' ? data.error : 'Unknown worker error';
+            console.error('Worker processing error:', errorMessage);
             resolve({
               imageData,
               success: false,
-              error: data.error
+              error: errorMessage
             });
+            break;
+
+          default:
+            console.warn('Unknown message type from worker:', type);
             break;
         }
       };

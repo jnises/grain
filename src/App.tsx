@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { GrainWorkerManager, FILM_PRESETS, GrainSettings, GrainProcessingProgress } from './grain-worker-manager'
+import { assertImageData, assertObject, assert } from './utils'
 import './App.css'
 
 function App() {
@@ -139,42 +140,105 @@ function App() {
 
   const extractImageData = (imageUrl: string): Promise<ImageData> => {
     return new Promise((resolve, reject) => {
+      // Validate input parameter with custom assertion
+      assert(
+        imageUrl && typeof imageUrl === 'string',
+        'Image URL must be a non-empty string',
+        { imageUrl, type: typeof imageUrl }
+      );
+
+      console.log(`Extracting image data from URL: ${imageUrl.substring(0, 50)}...`);
+
       const img = new Image()
       img.crossOrigin = 'anonymous'
       img.onload = () => {
-        const canvas = canvasRef.current || document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
-        if (!ctx) {
-          reject(new Error('Could not get canvas context'))
-          return
-        }
+        try {
+          const canvas = canvasRef.current || document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+          
+          assert(
+            ctx !== null,
+            'Could not get canvas 2D context - browser may not support canvas'
+          );
 
-        canvas.width = img.width
-        canvas.height = img.height
-        ctx.drawImage(img, 0, 0)
-        
-        const imageData = ctx.getImageData(0, 0, img.width, img.height)
-        resolve(imageData)
+          // Validate image dimensions with custom assertion
+          assert(
+            img.width > 0 && img.height > 0,
+            'Image must have positive dimensions',
+            { width: img.width, height: img.height }
+          );
+
+          canvas.width = img.width
+          canvas.height = img.height
+          ctx.drawImage(img, 0, 0)
+          
+          const imageData = ctx.getImageData(0, 0, img.width, img.height)
+          
+          // Validate extracted image data with custom assertion
+          assertImageData(imageData, 'extracted image data');
+
+          console.log(`Successfully extracted image data: ${imageData.width}x${imageData.height}, ${imageData.data.length} bytes`);
+          resolve(imageData);
+        } catch (error) {
+          console.error('Error during image data extraction:', error);
+          const extractionError = error instanceof Error ? error : new Error('Unknown extraction error');
+          reject(extractionError);
+        }
       }
-      img.onerror = () => reject(new Error('Failed to load image'))
+      img.onerror = (event) => {
+        const eventType = typeof event === 'string' ? event : (event as Event).type || 'unknown';
+        const error = new Error(`Failed to load image: ${eventType}`);
+        console.error('Image loading error:', error.message, 'URL:', imageUrl);
+        reject(error);
+      }
       img.src = imageUrl
     })
   }
 
   const imageDataToDataUrl = (imageData: ImageData): string => {
+    // Validate input parameter with custom assertion
+    assertImageData(imageData, 'imageData parameter');
+
+    console.log(`Converting image data to data URL: ${imageData.width}x${imageData.height}`);
+
     const canvas = canvasRef.current || document.createElement('canvas')
     const ctx = canvas.getContext('2d')
-    if (!ctx) return ''
-
-    canvas.width = imageData.width
-    canvas.height = imageData.height
-    ctx.putImageData(imageData, 0, 0)
     
-    return canvas.toDataURL('image/jpeg', 0.9)
+    assert(
+      ctx !== null,
+      'Could not get canvas 2D context for image conversion'
+    );
+
+    try {
+      canvas.width = imageData.width
+      canvas.height = imageData.height
+      ctx.putImageData(imageData, 0, 0)
+      
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      
+      // Validate result with custom assertion
+      assert(
+        dataUrl && typeof dataUrl === 'string' && dataUrl.startsWith('data:'),
+        'Failed to generate valid data URL from image data',
+        { dataUrl: dataUrl?.substring(0, 50) + '...', length: dataUrl?.length }
+      );
+
+      console.log(`Successfully converted to data URL: ${dataUrl.length} characters`);
+      return dataUrl;
+    } catch (error) {
+      console.error('Error during image data to data URL conversion:', error);
+      throw error instanceof Error ? error : new Error('Unknown conversion error');
+    }
   }
 
   const handleProcessGrain = async () => {
-    if (!image || !grainWorkerRef.current || isProcessing) return
+    // Validate preconditions with custom assertions
+    assert(image !== null, 'No image available for processing');
+    assert(grainWorkerRef.current !== null, 'Grain worker not available');
+    assert(!isProcessing, 'Processing already in progress');
+    assertObject(customSettings, 'customSettings');
+
+    console.log('Starting grain processing with settings:', customSettings);
 
     setIsProcessing(true)
     setProcessingProgress({ progress: 0, stage: 'Starting...' })
@@ -196,13 +260,15 @@ function App() {
         const processedDataUrl = imageDataToDataUrl(result.imageData)
         setProcessedImage(processedDataUrl)
         setProcessingProgress({ progress: 100, stage: 'Complete!' })
+        console.log('Grain processing completed successfully');
       } else {
         console.error('Grain processing failed:', result.error)
         setProcessingProgress({ progress: 0, stage: `Error: ${result.error}` })
       }
     } catch (error) {
       console.error('Error processing image:', error)
-      setProcessingProgress({ progress: 0, stage: 'Error occurred during processing' })
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred during processing';
+      setProcessingProgress({ progress: 0, stage: `Error: ${errorMessage}` })
     }
 
     setIsProcessing(false)
