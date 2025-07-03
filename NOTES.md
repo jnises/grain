@@ -1,1 +1,6 @@
 - [ ] `grain-worker.ts` seems to not use the functionality from `grain-generator.ts`. That is actually being tested?
+- [ ] Remove hard to implement features of `ALGORITHM_DESIGN.md` such as parallax.
+- [ ] Check to make sure the `Compositing Multiple Grain Layers` section of `ALGORITHM_DESIGN.md` makes sense.
+- [ ] Go through `ALGORITHM_DESIGN.md` and compare against the current implementation. Describe what has been implemented and what hasn't any why.
+- [ ] Add slider to control how large the grains are relative to the image, as if to simulate adjusting the enlargement factor of the image in a darkroom. (Or will this have the same effect as adjusting the iso?)
+- [ ] Make sure the algorithm is gamma aware. Update the algorithm and the design document to be so if not.
