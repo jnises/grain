@@ -1,4 +1,3 @@
-- [x] `grain-worker.ts` seems to not use the functionality from `grain-generator.ts`. That is actually being tested? **FIXED**: Refactored `grain-worker.ts` to use the `GrainGenerator` class instead of duplicating code. Removed duplicated methods: `generatePoissonDiskSampling`, `generateFallbackGrains`, `analyzeDistribution`, `createGrainGrid`, and `generateGrainStructure`. The worker now properly delegates to the main implementation, following the coding guidelines about avoiding code duplication.
 - [ ] Remove hard to implement features of `ALGORITHM_DESIGN.md` such as parallax.
 - [ ] Check to make sure the `Compositing Multiple Grain Layers` section of `ALGORITHM_DESIGN.md` makes sense.
 - [ ] Go through `ALGORITHM_DESIGN.md` and compare against the current implementation. Describe what has been implemented and what hasn't any why.
