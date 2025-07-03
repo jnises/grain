@@ -1,9 +1,9 @@
 // Web Worker for Film Grain Processing
 // Implements physically plausible analog film grain algorithm
 
+import { GrainGenerator } from './grain-generator';
 import type {
   GrainSettings,
-  Point2D,
   LabColor,
   RgbEffect,
   GrainPoint,
@@ -17,11 +17,13 @@ class GrainProcessor {
   private width: number;
   private height: number;
   private settings: GrainSettings;
+  private grainGenerator: GrainGenerator;
 
   constructor(width: number, height: number, settings: GrainSettings) {
     this.width = width;
     this.height = height;
     this.settings = settings;
+    this.grainGenerator = new GrainGenerator(width, height, settings);
   }
 
   // Generate pseudorandom number with seed
@@ -46,118 +48,6 @@ class GrainProcessor {
     const v = y * y * (3 - 2 * y);
     
     return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
-  }
-
-  // Generate Poisson disk sampling for grain placement
-  private generatePoissonDiskSampling(minDistance: number, maxSamples: number): Point2D[] {
-    const points: Point2D[] = [];
-    const cellSize = minDistance / Math.sqrt(2);
-    const gridWidth = Math.ceil(this.width / cellSize);
-    const gridHeight = Math.ceil(this.height / cellSize);
-    const grid: Array<Array<Point2D | null>> = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(null));
-    
-    // Start with random point
-    const initialPoint = {
-      x: Math.random() * this.width,
-      y: Math.random() * this.height
-    };
-    points.push(initialPoint);
-    
-    const activeList = [initialPoint];
-    grid[Math.floor(initialPoint.x / cellSize)][Math.floor(initialPoint.y / cellSize)] = initialPoint;
-    
-    while (activeList.length > 0 && points.length < maxSamples) {
-      const randomIndex = Math.floor(Math.random() * activeList.length);
-      const point = activeList[randomIndex];
-      let found = false;
-      
-      for (let i = 0; i < 50; i++) { // Increased attempts from 30 to 50
-        const angle = Math.random() * 2 * Math.PI;
-        const radius = minDistance + Math.random() * minDistance; // Changed back to ensure minimum distance
-        const newPoint = {
-          x: point.x + Math.cos(angle) * radius,
-          y: point.y + Math.sin(angle) * radius
-        };
-        
-        if (newPoint.x >= 0 && newPoint.x < this.width && 
-            newPoint.y >= 0 && newPoint.y < this.height) {
-          
-          const gridX = Math.floor(newPoint.x / cellSize);
-          const gridY = Math.floor(newPoint.y / cellSize);
-          
-          let valid = true;
-          for (let dx = -1; dx <= 1; dx++) {
-            for (let dy = -1; dy <= 1; dy++) {
-              const checkX = gridX + dx;
-              const checkY = gridY + dy;
-              if (checkX >= 0 && checkX < gridWidth && 
-                  checkY >= 0 && checkY < gridHeight && 
-                  grid[checkX][checkY]) {
-                const existingPoint = grid[checkX][checkY]!;
-                const distance = Math.sqrt(
-                  Math.pow(newPoint.x - existingPoint.x, 2) + 
-                  Math.pow(newPoint.y - existingPoint.y, 2)
-                );
-                if (distance < minDistance) {
-                  valid = false;
-                  break;
-                }
-              }
-            }
-            if (!valid) break;
-          }
-          
-          if (valid) {
-            points.push(newPoint);
-            activeList.push(newPoint);
-            grid[gridX][gridY] = newPoint;
-            found = true;
-            break;
-          }
-        }
-      }
-      
-      if (!found) {
-        activeList.splice(randomIndex, 1);
-      }
-    }
-    
-    return points;
-  }
-
-  // Fallback grain generation for better coverage
-  private generateFallbackGrains(existingGrains: Point2D[], targetCount: number): Point2D[] {
-    const fallbackGrains: Point2D[] = [...existingGrains];
-    const remainingCount = targetCount - existingGrains.length;
-    
-    if (remainingCount <= 0) {
-      return fallbackGrains;
-    }
-    
-    // Calculate grid size to fit approximately the target number of grains
-    const gridSize = Math.sqrt(this.width * this.height / targetCount);
-    const cols = Math.ceil(this.width / gridSize);
-    const rows = Math.ceil(this.height / gridSize);
-    
-    // Generate grains in grid pattern
-    for (let row = 0; row < rows && fallbackGrains.length < targetCount; row++) {
-      for (let col = 0; col < cols && fallbackGrains.length < targetCount; col++) {
-        // Calculate base position
-        const baseX = (col + 0.5) * gridSize;
-        const baseY = (row + 0.5) * gridSize;
-        
-        // Add random offset to avoid perfect grid
-        const offsetX = (Math.random() - 0.5) * gridSize * 0.6;
-        const offsetY = (Math.random() - 0.5) * gridSize * 0.6;
-        
-        const x = Math.max(0, Math.min(this.width - 1, baseX + offsetX));
-        const y = Math.max(0, Math.min(this.height - 1, baseY + offsetY));
-        
-        fallbackGrains.push({ x, y });
-      }
-    }
-    
-    return fallbackGrains;
   }
 
   // Convert RGB to LAB color space
@@ -202,137 +92,14 @@ class GrainProcessor {
     return 1 / (1 + Math.exp(-contrast * (input - midpoint)));
   }
 
-  // Analyze grain distribution (simple version for worker)
-  private analyzeDistribution(grains: Point2D[]): {
-    quadrants: { topLeft: number; topRight: number; bottomLeft: number; bottomRight: number };
-  } {
-    const quadrants = {
-      topLeft: 0,
-      topRight: 0,
-      bottomLeft: 0,
-      bottomRight: 0
-    };
-    
-    const midX = this.width / 2;
-    const midY = this.height / 2;
-    
-    for (const grain of grains) {
-      if (grain.x < midX && grain.y < midY) {
-        quadrants.topLeft++;
-      } else if (grain.x >= midX && grain.y < midY) {
-        quadrants.topRight++;
-      } else if (grain.x < midX && grain.y >= midY) {
-        quadrants.bottomLeft++;
-      } else {
-        quadrants.bottomRight++;
-      }
-    }
-    
-    return { quadrants };
-  }
-
   // Generate grain structure
   private generateGrainStructure(): GrainPoint[] {
-    const baseGrainSize = Math.max(0.5, this.settings.iso / 200);
-    const imageArea = this.width * this.height;
-    // Scale grain density based on image size and ISO
-    const densityFactor = Math.min(0.05, this.settings.iso / 10000); // Increased max from 0.01 to 0.05
-    const grainDensity = Math.floor(imageArea * densityFactor);
-    const minDistance = Math.max(1, baseGrainSize * 0.3);
-    
-    const grainPoints = this.generatePoissonDiskSampling(minDistance, grainDensity);
-    
-    let finalGrainPoints = grainPoints;
-    
-    // Always check distribution and prefer fallback if needed
-    if (grainPoints.length >= grainDensity * 0.5) {
-      const analysis = this.analyzeDistribution(grainPoints);
-      const totalGrains = grainPoints.length;
-      const maxQuadrant = Math.max(
-        analysis.quadrants.topLeft,
-        analysis.quadrants.topRight,
-        analysis.quadrants.bottomLeft,
-        analysis.quadrants.bottomRight
-      );
-      
-      // If any quadrant has too many grains (> 50% of total), use fallback
-      if (maxQuadrant > totalGrains * 0.5) {
-        finalGrainPoints = this.generateFallbackGrains([], grainDensity);
-      }
-    } else {
-      // Not enough grains, use fallback
-      finalGrainPoints = this.generateFallbackGrains(grainPoints, grainDensity);
-    }
-    
-    // Debug information
-    console.log(`=== Grain Generation Debug ===`);
-    console.log(`Image: ${this.width}x${this.height} (${this.width * this.height} pixels)`);
-    console.log(`ISO: ${this.settings.iso}, Intensity: ${this.settings.grainIntensity}`);
-    console.log(`Base grain size: ${baseGrainSize.toFixed(3)}`);
-    console.log(`Density factor: ${densityFactor.toFixed(6)}`);
-    console.log(`Target density: ${grainDensity}`);
-    console.log(`Min distance: ${minDistance.toFixed(3)}`);
-    console.log(`Poisson generated: ${grainPoints.length}`);
-    console.log(`Final grain count: ${finalGrainPoints.length}`);
-    console.log(`Grain density: ${(finalGrainPoints.length / (this.width * this.height) * 1000).toFixed(2)} per 1000 pixels`);
-    
-    // Test distribution
-    if (finalGrainPoints.length > 0) {
-      const quadrants = { tl: 0, tr: 0, bl: 0, br: 0 };
-      const midX = this.width / 2;
-      const midY = this.height / 2;
-      
-      for (const point of finalGrainPoints) {
-        if (point.x < midX && point.y < midY) quadrants.tl++;
-        else if (point.x >= midX && point.y < midY) quadrants.tr++;
-        else if (point.x < midX && point.y >= midY) quadrants.bl++;
-        else quadrants.br++;
-      }
-      
-      console.log(`Distribution: TL=${quadrants.tl}, TR=${quadrants.tr}, BL=${quadrants.bl}, BR=${quadrants.br}`);
-    }
-    
-    return finalGrainPoints.map((point, index) => {
-      const sizeVariation = this.seededRandom(index * 123.456);
-      const sensitivityVariation = this.seededRandom(index * 789.012);
-      const shapeVariation = this.seededRandom(index * 345.678);
-      
-      return {
-        x: point.x,
-        y: point.y,
-        size: baseGrainSize * (0.5 + sizeVariation * 1.5),
-        sensitivity: 0.8 + sensitivityVariation * 0.4,
-        shape: shapeVariation
-      };
-    });
+    return this.grainGenerator.generateGrainStructure();
   }
 
   // Create spatial grid for grain acceleration
   private createGrainGrid(grains: GrainPoint[]): Map<string, GrainPoint[]> {
-    const maxGrainSize = Math.max(...grains.map(g => g.size));
-    const gridSize = Math.max(8, Math.floor(maxGrainSize * 2)); // Grid cell size based on grain influence radius
-    const grainGrid = new Map<string, GrainPoint[]>();
-    
-    for (const grain of grains) {
-      const influenceRadius = grain.size * 2;
-      const minGridX = Math.floor((grain.x - influenceRadius) / gridSize);
-      const maxGridX = Math.floor((grain.x + influenceRadius) / gridSize);
-      const minGridY = Math.floor((grain.y - influenceRadius) / gridSize);
-      const maxGridY = Math.floor((grain.y + influenceRadius) / gridSize);
-      
-      // Add grain to all grid cells it can influence
-      for (let gridX = minGridX; gridX <= maxGridX; gridX++) {
-        for (let gridY = minGridY; gridY <= maxGridY; gridY++) {
-          const key = `${gridX},${gridY}`;
-          if (!grainGrid.has(key)) {
-            grainGrid.set(key, []);
-          }
-          grainGrid.get(key)!.push(grain);
-        }
-      }
-    }
-    
-    return grainGrid;
+    return this.grainGenerator.createGrainGrid(grains);
   }
 
   // Apply grain to image
