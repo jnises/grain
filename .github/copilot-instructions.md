@@ -2,7 +2,17 @@
 
 ## Core Principles
 
-- Avoid magic numbers in the code for nonobvious values. Instead use constants to make the code more maintainable. If a constant is applicable to multiple parts of the codebase define it in `src/constants.ts`. If a constant is only applicable to a specific part of the code, define the constant there. If a constant is only applicable within a function define it in that function. If a constant is only applicable to a single line of code, define it just before that line.
+### Constants
+- Avoid magic numbers for non-obvious values. Use constants to improve maintainability:
+  - Global constants: define in `src/constants.ts`
+  - Module-specific constants: define at the top of the file
+  - Function-specific constants: define at the start of the function
+  - Single-use constants: define just before the line where used
+
+### Error handling
+- Use asserts to check any assumptions you make in the code.
+- Avoid silent handling of potential errors.
+- Logic errors should assert and bring down the application as loudly as possible.
 
 ### Avoid Code Duplication
 - Unless absolutely necessary reuse existing classes and functions instead of reimplementing
