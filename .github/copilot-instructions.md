@@ -9,10 +9,14 @@
   - Function-specific constants: define at the start of the function
   - Single-use constants: define just before the line where used
 
-### Error handling
-- Use asserts to check any assumptions you make in the code.
-- Avoid silent handling of potential errors.
-- Logic errors should assert and bring down the application as loudly as possible.
+### Error Handling
+- Use assertions to validate assumptions and preconditions in your code
+- Prefer failing fast and loudly over silent error handling
+- For logic errors: use `assert()` to crash immediately with clear error messages
+- For recoverable errors: throw descriptive exceptions with context
+- Always validate inputs at function boundaries
+- Use type guards for runtime type checking when TypeScript types aren't sufficient
+- Log errors with sufficient context for debugging before throwing/asserting
 
 ### Avoid Code Duplication
 - Unless absolutely necessary reuse existing classes and functions instead of reimplementing
