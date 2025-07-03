@@ -6,7 +6,6 @@ export interface GrainSettings {
   grainIntensity: number;
   upscaleFactor: number;
   useMultipleLayers?: boolean;
-  useDensityModel?: boolean;
 }
 
 export interface GrainProcessingResult {

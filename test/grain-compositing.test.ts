@@ -9,8 +9,7 @@ describe('Multiple Grain Layers', () => {
     filmType: 'kodak',
     grainIntensity: 1.0,
     upscaleFactor: 1,
-    useMultipleLayers: true,
-    useDensityModel: true
+    useMultipleLayers: true
   };
 
   const generator = new GrainGenerator(800, 600, settings);

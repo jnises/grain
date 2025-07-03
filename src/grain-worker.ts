@@ -218,19 +218,11 @@ class GrainProcessor {
               const weight = Math.exp(-distance / grain.size);
               const grainStrength = this.calculateGrainStrength(luminance, grain, x, y);
               
-              if (this.settings.useDensityModel) {
-                // Density-based compositing
-                const grainDensity = this.calculateGrainDensity(grainStrength, grain);
-                totalGrainDensity.r += grainDensity * weight * 0.7;
-                totalGrainDensity.g += grainDensity * weight * 0.9;
-                totalGrainDensity.b += grainDensity * weight * 1.0;
-              } else {
-                // Legacy additive blending for backward compatibility
-                const grainEffect = grainStrength * weight * this.settings.grainIntensity;
-                totalGrainDensity.r += grainEffect * 0.7;
-                totalGrainDensity.g += grainEffect * 0.9;
-                totalGrainDensity.b += grainEffect * 1.0;
-              }
+              // Density-based compositing
+              const grainDensity = this.calculateGrainDensity(grainStrength, grain);
+              totalGrainDensity.r += grainDensity * weight * 0.7;
+              totalGrainDensity.g += grainDensity * weight * 0.9;
+              totalGrainDensity.b += grainDensity * weight * 1.0;
               
               totalWeight += weight;
             }
@@ -248,17 +240,8 @@ class GrainProcessor {
           
           let finalColor: [number, number, number];
           
-          if (this.settings.useDensityModel || this.settings.useMultipleLayers) {
-            // Use density-based compositing (physically accurate)
-            finalColor = this.applySimpleDensityCompositing([r, g, b], totalGrainDensity);
-          } else {
-            // Legacy additive blending
-            finalColor = [
-              Math.max(0, Math.min(255, r + totalGrainDensity.r * 255)),
-              Math.max(0, Math.min(255, g + totalGrainDensity.g * 255)),
-              Math.max(0, Math.min(255, b + totalGrainDensity.b * 255))
-            ];
-          }
+          // Use density-based compositing (physically accurate)
+          finalColor = this.applySimpleDensityCompositing([r, g, b], totalGrainDensity);
           
           result.data[pixelIndex] = finalColor[0];
           result.data[pixelIndex + 1] = finalColor[1];
@@ -282,7 +265,7 @@ class GrainProcessor {
     console.log(`Total pixels processed: ${totalPixels}`);
     console.log(`Pixels with grain effect: ${grainEffectCount}`);
     console.log(`Grain effect coverage: ${(grainEffectCount / totalPixels * 100).toFixed(2)}%`);
-    console.log(`Processing mode: ${this.settings.useMultipleLayers ? 'Multiple Layers' : 'Single Layer'}, ${this.settings.useDensityModel ? 'Density Model' : 'Additive Model'}`);
+    console.log(`Processing mode: ${this.settings.useMultipleLayers ? 'Multiple Layers' : 'Single Layer'}, Density Model`);
     
     postMessage({ type: 'progress', progress: 100, stage: 'Complete!' } as ProgressMessage);
     return result;
@@ -323,22 +306,6 @@ class GrainProcessor {
     
     // Scale by grain intensity setting
     return densityResponse * this.settings.grainIntensity * 0.3; // Reduced multiplier for density model
-  }
-
-  // Apply density-based compositing using Beer-Lambert law
-  private applyDensityCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
-    const [r, g, b] = originalColor;
-    
-    // Calculate light transmission using Beer-Lambert law: I = I0 * exp(-density)
-    const transmissionR = Math.exp(-grainDensity.r);
-    const transmissionG = Math.exp(-grainDensity.g);
-    const transmissionB = Math.exp(-grainDensity.b);
-    
-    return [
-      r * transmissionR,
-      g * transmissionG,
-      b * transmissionB
-    ];
   }
 
   // Apply simplified multiplicative compositing

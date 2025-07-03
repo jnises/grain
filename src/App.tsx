@@ -371,17 +371,6 @@ function App() {
               Multiple Grain Layers (Primary, Secondary, Micro)
             </label>
           </div>
-          <div className="control-group">
-            <label>
-              <input 
-                type="checkbox" 
-                checked={customSettings.useDensityModel || false}
-                onChange={(e) => handleCustomSettingChange('useDensityModel', e.target.checked)}
-                disabled={isProcessing}
-              />
-              Physically Accurate Density Model
-            </label>
-          </div>
         </div>
       )}
 
