@@ -1,5 +1,1 @@
-- [x] `npm run test` seems to run in watch mode, should it be named something else?
-- [x] `grain-worker-test.ts` seems to contain redundant implementations of functionality from the non-test files. That seems like bad practice?
-- [x] Add agent instructions to avoid duplicating functionality. Especially when only one set of the functionality is tested.
-- [x] Update readme with new test instructions.
 - [ ] `grain-worker.ts` seems to not use the functionality from `grain-generator.ts`. That is actually being tested?

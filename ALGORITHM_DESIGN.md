@@ -120,7 +120,3 @@ The conversion process models how photographic exposure and development translat
 *   **Halation and Light Scattering:** Bright areas cause light to scatter in the emulsion, creating subtle halos and affecting grain development.
 *   **Emulsion Thickness Effects:** Grains at different depths have different focus characteristics (front grains sharper, back grains softer).
 *   **Chemical Development Variations:** Over-development increases grain contrast and bridging, while under-development creates more gray, less defined grains. Temperature and time also affect grain characteristics.
-
-### 8. Coding instructions
-1. Start by adding ui elements to upload, view, zoom and download an image
-2. Add the algorithm described above. Do it using a worker to avoid blocking the main thread.
