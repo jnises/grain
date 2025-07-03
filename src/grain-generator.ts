@@ -2,6 +2,22 @@
 // This file contains the grain generation algorithms without Web Worker dependencies
 
 import type { GrainSettings, Point2D, GrainPoint, GrainLayer } from './types';
+import { SEEDED_RANDOM_MULTIPLIER } from './constants';
+
+// File-level constants shared across multiple methods
+const ISO_TO_GRAIN_SIZE_DIVISOR = 200;
+const MIN_GRAIN_SIZE = 0.5;
+const ISO_TO_DENSITY_DIVISOR = 10000;
+const MAX_DENSITY_FACTOR = 0.05;
+const GRAIN_DISTANCE_MULTIPLIER = 0.3;
+const MIN_GRAIN_DISTANCE = 1;
+
+const PRIMARY_LAYER_SIZE_MULTIPLIER = 1.5;
+const SECONDARY_LAYER_SIZE_MULTIPLIER = 0.8;
+const MICRO_LAYER_SIZE_MULTIPLIER = 0.3;
+const PRIMARY_LAYER_DENSITY_MULTIPLIER = 0.4;
+const SECONDARY_LAYER_DENSITY_MULTIPLIER = 0.35;
+const MICRO_LAYER_DENSITY_MULTIPLIER = 0.25;
 
 export class GrainGenerator {
   private width: number;
@@ -15,15 +31,20 @@ export class GrainGenerator {
   }
 
   // Generate pseudorandom number with seed
-  private seededRandom(seed: number): number {
-    const x = Math.sin(seed) * 10000;
+  public seededRandom(seed: number): number {
+    const x = Math.sin(seed) * SEEDED_RANDOM_MULTIPLIER;
     return x - Math.floor(x);
   }
 
   // Generate Poisson disk sampling for grain placement
   public generatePoissonDiskSampling(minDistance: number, maxSamples: number): Point2D[] {
+    // Poisson disk sampling constants
+    const POISSON_GRID_SQRT_2 = Math.sqrt(2);
+    const POISSON_MAX_ATTEMPTS_MULTIPLIER = 100;
+    const POISSON_CANDIDATES_PER_POINT = 50;
+    
     const points: Point2D[] = [];
-    const cellSize = minDistance / Math.sqrt(2);
+    const cellSize = minDistance / POISSON_GRID_SQRT_2;
     const gridWidth = Math.ceil(this.width / cellSize);
     const gridHeight = Math.ceil(this.height / cellSize);
     const grid: Array<Array<Point2D | null>> = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(null));
@@ -39,7 +60,7 @@ export class GrainGenerator {
     grid[Math.floor(initialPoint.x / cellSize)][Math.floor(initialPoint.y / cellSize)] = initialPoint;
     
     let attempts = 0;
-    const maxAttempts = maxSamples * 100; // Prevent infinite loops
+    const maxAttempts = maxSamples * POISSON_MAX_ATTEMPTS_MULTIPLIER; // Prevent infinite loops
     
     while (activeList.length > 0 && points.length < maxSamples && attempts < maxAttempts) {
       attempts++;
@@ -47,7 +68,7 @@ export class GrainGenerator {
       const point = activeList[randomIndex];
       let found = false;
       
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < POISSON_CANDIDATES_PER_POINT; i++) {
         const angle = Math.random() * 2 * Math.PI;
         const radius = minDistance + Math.random() * minDistance; // Changed back to ensure minimum distance
         const newPoint = {
@@ -103,6 +124,10 @@ export class GrainGenerator {
 
   // Fallback grain generation for better coverage
   public generateFallbackGrains(existingGrains: Point2D[], targetCount: number): Point2D[] {
+    // Fallback grid generation constants
+    const FALLBACK_GRID_CENTER_OFFSET = 0.5;
+    const FALLBACK_GRID_RANDOMNESS = 0.6;
+    
     const fallbackGrains: Point2D[] = [...existingGrains];
     const remainingCount = targetCount - existingGrains.length;
     
@@ -119,12 +144,12 @@ export class GrainGenerator {
     for (let row = 0; row < rows && fallbackGrains.length < targetCount; row++) {
       for (let col = 0; col < cols && fallbackGrains.length < targetCount; col++) {
         // Calculate base position
-        const baseX = (col + 0.5) * gridSize;
-        const baseY = (row + 0.5) * gridSize;
+        const baseX = (col + FALLBACK_GRID_CENTER_OFFSET) * gridSize;
+        const baseY = (row + FALLBACK_GRID_CENTER_OFFSET) * gridSize;
         
         // Add random offset to avoid perfect grid
-        const offsetX = (Math.random() - 0.5) * gridSize * 0.6;
-        const offsetY = (Math.random() - 0.5) * gridSize * 0.6;
+        const offsetX = (Math.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
+        const offsetY = (Math.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
         
         const x = Math.max(0, Math.min(this.width - 1, baseX + offsetX));
         const y = Math.max(0, Math.min(this.height - 1, baseY + offsetY));
@@ -144,11 +169,11 @@ export class GrainGenerator {
     densityFactor: number;
     imageArea: number;
   } {
-    const baseGrainSize = Math.max(0.5, this.settings.iso / 200);
+    const baseGrainSize = Math.max(MIN_GRAIN_SIZE, this.settings.iso / ISO_TO_GRAIN_SIZE_DIVISOR);
     const imageArea = this.width * this.height;
-    const densityFactor = Math.min(0.05, this.settings.iso / 10000); // Increased max from 0.01 to 0.05
+    const densityFactor = Math.min(MAX_DENSITY_FACTOR, this.settings.iso / ISO_TO_DENSITY_DIVISOR); // Increased max from 0.01 to 0.05
     const grainDensity = Math.floor(imageArea * densityFactor);
-    const minDistance = Math.max(1, baseGrainSize * 0.3);
+    const minDistance = Math.max(MIN_GRAIN_DISTANCE, baseGrainSize * GRAIN_DISTANCE_MULTIPLIER);
 
     return {
       baseGrainSize,
@@ -161,6 +186,13 @@ export class GrainGenerator {
 
   // Generate complete grain structure
   public generateGrainStructure(): GrainPoint[] {
+    // Grain analysis and variation constants
+    const GRAIN_DENSITY_THRESHOLD = 0.5;
+    const QUADRANT_MAX_RATIO = 0.5;
+    const SIZE_VARIATION_SEED_MULTIPLIER = 123.456;
+    const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
+    const SHAPE_VARIATION_SEED_MULTIPLIER = 345.678;
+    
     const params = this.calculateGrainParameters();
     
     // For now, prefer fallback generation due to Poisson clustering issues
@@ -170,7 +202,7 @@ export class GrainGenerator {
     let finalGrainPoints = grainPoints;
     
     // Always check distribution and prefer fallback if needed
-    if (grainPoints.length >= params.grainDensity * 0.5) {
+    if (grainPoints.length >= params.grainDensity * GRAIN_DENSITY_THRESHOLD) {
       const analysis = this.analyzeDistribution(grainPoints);
       const totalGrains = grainPoints.length;
       const maxQuadrant = Math.max(
@@ -181,7 +213,7 @@ export class GrainGenerator {
       );
       
       // If any quadrant has too many grains (> 50% of total), use fallback
-      if (maxQuadrant > totalGrains * 0.5) {
+      if (maxQuadrant > totalGrains * QUADRANT_MAX_RATIO) {
         finalGrainPoints = this.generateFallbackGrains([], params.grainDensity);
       }
     } else {
@@ -190,9 +222,9 @@ export class GrainGenerator {
     }
     
     return finalGrainPoints.map((point, index) => {
-      const sizeVariation = this.seededRandom(index * 123.456);
-      const sensitivityVariation = this.seededRandom(index * 789.012);
-      const shapeVariation = this.seededRandom(index * 345.678);
+      const sizeVariation = this.seededRandom(index * SIZE_VARIATION_SEED_MULTIPLIER);
+      const sensitivityVariation = this.seededRandom(index * SENSITIVITY_VARIATION_SEED_MULTIPLIER);
+      const shapeVariation = this.seededRandom(index * SHAPE_VARIATION_SEED_MULTIPLIER);
       
       return {
         x: point.x,
@@ -307,15 +339,27 @@ export class GrainGenerator {
     const params = this.calculateGrainParameters();
     
     // Primary grain layer (largest, most visible)
-    const primaryGrains = this.generateGrainLayer('primary', params.baseGrainSize * 1.5, params.grainDensity * 0.4);
+    const primaryGrains = this.generateGrainLayer(
+      'primary', 
+      params.baseGrainSize * PRIMARY_LAYER_SIZE_MULTIPLIER, 
+      params.grainDensity * PRIMARY_LAYER_DENSITY_MULTIPLIER
+    );
     layers.push(primaryGrains);
     
     // Secondary grain layer (medium size clusters)
-    const secondaryGrains = this.generateGrainLayer('secondary', params.baseGrainSize * 0.8, params.grainDensity * 0.35);
+    const secondaryGrains = this.generateGrainLayer(
+      'secondary', 
+      params.baseGrainSize * SECONDARY_LAYER_SIZE_MULTIPLIER, 
+      params.grainDensity * SECONDARY_LAYER_DENSITY_MULTIPLIER
+    );
     layers.push(secondaryGrains);
     
     // Micro grain layer (fine texture)
-    const microGrains = this.generateGrainLayer('micro', params.baseGrainSize * 0.3, params.grainDensity * 0.25);
+    const microGrains = this.generateGrainLayer(
+      'micro', 
+      params.baseGrainSize * MICRO_LAYER_SIZE_MULTIPLIER, 
+      params.grainDensity * MICRO_LAYER_DENSITY_MULTIPLIER
+    );
     layers.push(microGrains);
     
     return layers;

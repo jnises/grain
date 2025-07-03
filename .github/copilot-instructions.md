@@ -2,7 +2,7 @@
 
 ## Core Principles
 
-- Avoid magic numbers in the code for nonobvious values. Instead use constants to make the code more maintainable.
+- Avoid magic numbers in the code for nonobvious values. Instead use constants to make the code more maintainable. If a constant is applicable to multiple parts of the codebase define it in `src/constants.ts`. If a constant is only applicable to a specific part of the code, define the constant there. If a constant is only applicable within a function define it in that function. If a constant is only applicable to a single line of code, define it just before that line.
 
 ### Avoid Code Duplication
 - Unless absolutely necessary reuse existing classes and functions instead of reimplementing

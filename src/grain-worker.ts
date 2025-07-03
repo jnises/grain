@@ -5,7 +5,6 @@ import { GrainGenerator } from './grain-generator';
 import type {
   GrainSettings,
   LabColor,
-  RgbEffect,
   GrainPoint,
   GrainLayer,
   GrainDensity,
@@ -13,6 +12,9 @@ import type {
   ProgressMessage,
   ResultMessage
 } from './types';
+
+// File-level constants shared across methods
+const RGB_MAX_VALUE = 255;
 
 // Utility functions for grain generation
 class GrainProcessor {
@@ -28,70 +30,98 @@ class GrainProcessor {
     this.grainGenerator = new GrainGenerator(width, height, settings);
   }
 
-  // Generate pseudorandom number with seed
-  private seededRandom(seed: number): number {
-    const x = Math.sin(seed) * 10000;
-    return x - Math.floor(x);
-  }
-
   // 2D Perlin noise implementation
   private noise(x: number, y: number): number {
-    const X = Math.floor(x) & 255;
-    const Y = Math.floor(y) & 255;
+    // Noise generation constants
+    const NOISE_GRID_MASK = 255;
+    const PERLIN_FADE_COEFFICIENT_A = 3;
+    const PERLIN_FADE_COEFFICIENT_B = 2;
+    
+    const X = Math.floor(x) & NOISE_GRID_MASK;
+    const Y = Math.floor(y) & NOISE_GRID_MASK;
     x -= Math.floor(x);
     y -= Math.floor(y);
     
-    const a = this.seededRandom(X + Y * 256);
-    const b = this.seededRandom(X + 1 + Y * 256);
-    const c = this.seededRandom(X + (Y + 1) * 256);
-    const d = this.seededRandom(X + 1 + (Y + 1) * 256);
+    const a = this.grainGenerator.seededRandom(X + Y * 256);
+    const b = this.grainGenerator.seededRandom(X + 1 + Y * 256);
+    const c = this.grainGenerator.seededRandom(X + (Y + 1) * 256);
+    const d = this.grainGenerator.seededRandom(X + 1 + (Y + 1) * 256);
     
-    const u = x * x * (3 - 2 * x);
-    const v = y * y * (3 - 2 * y);
+    const u = x * x * (PERLIN_FADE_COEFFICIENT_A - PERLIN_FADE_COEFFICIENT_B * x);
+    const v = y * y * (PERLIN_FADE_COEFFICIENT_A - PERLIN_FADE_COEFFICIENT_B * y);
     
     return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
   }
 
   // Convert RGB to LAB color space
   private rgbToLab(r: number, g: number, b: number): LabColor {
+    // Color space conversion constants
+    const RGB_GAMMA_THRESHOLD = 0.04045;
+    const RGB_GAMMA_LINEAR_DIVISOR = 12.92;
+    const RGB_GAMMA_POWER = 2.4;
+    const RGB_GAMMA_OFFSET = 0.055;
+    const RGB_GAMMA_MULTIPLIER = 1.055;
+
+    const RGB_TO_XYZ_MATRIX = {
+      x: { r: 0.4124564, g: 0.3575761, b: 0.1804375 },
+      y: { r: 0.2126729, g: 0.7151522, b: 0.0721750 },
+      z: { r: 0.0193339, g: 0.1191920, b: 0.9503041 }
+    } as const;
+
+    const D65_ILLUMINANT = {
+      x: 0.95047,
+      y: 1.00000,
+      z: 1.08883
+    } as const;
+
+    const LAB_EPSILON = 0.008856;
+    const LAB_KAPPA = 7.787;
+    const LAB_DELTA = 16 / 116;
+    const LAB_L_MULTIPLIER = 116;
+    const LAB_L_OFFSET = 16;
+    const LAB_A_MULTIPLIER = 500;
+    const LAB_B_MULTIPLIER = 200;
+
     // Normalize RGB values
-    r /= 255;
-    g /= 255;
-    b /= 255;
+    r /= RGB_MAX_VALUE;
+    g /= RGB_MAX_VALUE;
+    b /= RGB_MAX_VALUE;
 
     // Apply gamma correction
-    r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
-    g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
-    b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+    r = r > RGB_GAMMA_THRESHOLD ? Math.pow((r + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER, RGB_GAMMA_POWER) : r / RGB_GAMMA_LINEAR_DIVISOR;
+    g = g > RGB_GAMMA_THRESHOLD ? Math.pow((g + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER, RGB_GAMMA_POWER) : g / RGB_GAMMA_LINEAR_DIVISOR;
+    b = b > RGB_GAMMA_THRESHOLD ? Math.pow((b + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER, RGB_GAMMA_POWER) : b / RGB_GAMMA_LINEAR_DIVISOR;
 
     // Convert to XYZ
-    let x = r * 0.4124564 + g * 0.3575761 + b * 0.1804375;
-    let y = r * 0.2126729 + g * 0.7151522 + b * 0.0721750;
-    let z = r * 0.0193339 + g * 0.1191920 + b * 0.9503041;
+    let x = r * RGB_TO_XYZ_MATRIX.x.r + g * RGB_TO_XYZ_MATRIX.x.g + b * RGB_TO_XYZ_MATRIX.x.b;
+    let y = r * RGB_TO_XYZ_MATRIX.y.r + g * RGB_TO_XYZ_MATRIX.y.g + b * RGB_TO_XYZ_MATRIX.y.b;
+    let z = r * RGB_TO_XYZ_MATRIX.z.r + g * RGB_TO_XYZ_MATRIX.z.g + b * RGB_TO_XYZ_MATRIX.z.b;
 
     // Normalize for D65 illuminant
-    x /= 0.95047;
-    y /= 1.00000;
-    z /= 1.08883;
+    x /= D65_ILLUMINANT.x;
+    y /= D65_ILLUMINANT.y;
+    z /= D65_ILLUMINANT.z;
 
     // Convert to LAB
-    x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x + 16/116);
-    y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y + 16/116);
-    z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z + 16/116);
+    x = x > LAB_EPSILON ? Math.pow(x, 1/3) : (LAB_KAPPA * x + LAB_DELTA);
+    y = y > LAB_EPSILON ? Math.pow(y, 1/3) : (LAB_KAPPA * y + LAB_DELTA);
+    z = z > LAB_EPSILON ? Math.pow(z, 1/3) : (LAB_KAPPA * z + LAB_DELTA);
 
     return {
-      l: 116 * y - 16,
-      a: 500 * (x - y),
-      b: 200 * (y - z)
+      l: LAB_L_MULTIPLIER * y - LAB_L_OFFSET,
+      a: LAB_A_MULTIPLIER * (x - y),
+      b: LAB_B_MULTIPLIER * (y - z)
     };
   }
 
   // Film characteristic curve (S-curve)
   private filmCurve(input: number): number {
+    // Film curve constants
+    const FILM_CURVE_CONTRAST = 1.2;
+    const FILM_CURVE_MIDPOINT = 0.5;
+    
     // Sigmoid-based film response curve
-    const contrast = 1.2;
-    const midpoint = 0.5;
-    return 1 / (1 + Math.exp(-contrast * (input - midpoint)));
+    return 1 / (1 + Math.exp(-FILM_CURVE_CONTRAST * (input - FILM_CURVE_MIDPOINT)));
   }
 
   // Generate grain structure
@@ -273,15 +303,30 @@ class GrainProcessor {
 
   // Calculate grain strength based on luminance and grain properties
   private calculateGrainStrength(luminance: number, grain: GrainPoint, x: number, y: number): number {
+    // Grain strength calculation constants
+    const SHADOW_LUMINANCE_THRESHOLD = 0.5;
+    const SHADOW_STRENGTH_BASE = 1.2;
+    const SHADOW_STRENGTH_MULTIPLIER = 0.6;
+    const HIGHLIGHT_STRENGTH_BASE = 0.6;
+    const HIGHLIGHT_STRENGTH_MULTIPLIER = 0.8;
+
+    // Noise texture generation constants
+    const NOISE_SCALE_FINE = 0.15;
+    const NOISE_SCALE_MEDIUM = 0.08;
+    const NOISE_SCALE_COARSE = 0.03;
+    const NOISE_WEIGHT_FINE = 0.6;
+    const NOISE_WEIGHT_MEDIUM = 0.3;
+    const NOISE_WEIGHT_COARSE = 0.1;
+
     // Grain is most visible in mid-tones and shadows
-    const luminanceResponse = luminance < 0.5 
-      ? 1.2 - luminance * 0.6  // Stronger in shadows
-      : 0.6 + (1.0 - luminance) * 0.8; // Moderate in highlights
+    const luminanceResponse = luminance < SHADOW_LUMINANCE_THRESHOLD 
+      ? SHADOW_STRENGTH_BASE - luminance * SHADOW_STRENGTH_MULTIPLIER  // Stronger in shadows
+      : HIGHLIGHT_STRENGTH_BASE + (1.0 - luminance) * HIGHLIGHT_STRENGTH_MULTIPLIER; // Moderate in highlights
     
     // Add noise for grain texture with multiple octaves
-    const noiseValue = this.noise(x * 0.15, y * 0.15) * 0.6 + 
-                      this.noise(x * 0.08, y * 0.08) * 0.3 + 
-                      this.noise(x * 0.03, y * 0.03) * 0.1;
+    const noiseValue = this.noise(x * NOISE_SCALE_FINE, y * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
+                      this.noise(x * NOISE_SCALE_MEDIUM, y * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
+                      this.noise(x * NOISE_SCALE_COARSE, y * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
     
     // Film characteristic curve
     const filmResponse = this.filmCurve(luminance);
