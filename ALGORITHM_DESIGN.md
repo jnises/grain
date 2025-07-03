@@ -60,22 +60,15 @@ An alternative approach is to render grain as vector shapes or distance fields, 
 
 ## Advanced Realism Features
 
-### Emulsion Layer Simulation
-
-*   Grain is modeled at different depths within the emulsion.
-*   Slight parallax effects are implemented for grains at different layers.
-*   Subtle focus variations are added, where grain deeper in the emulsion appears softer.
-
 ### Development Process Effects
 
-*   Grain bridging (grains connecting during development) is simulated.
-*   Slight grain movement/clustering based on development chemistry is added.
-*   Edge effects are implemented where grain density changes near high-contrast boundaries.
+*   Basic grain bridging (grains connecting during development) can be simulated through simple clustering.
+*   Edge effects where grain density changes near high-contrast boundaries provide visual realism.
 
 ### Film Stock Characteristics
 
-*   Profiles for different film stocks (e.g., Kodak, Fuji) are created, each with unique grain size distribution and pattern.
-*   Color response curves specific to each emulsion type are included.
+*   Basic profiles for different film characteristics can be implemented through grain size and density parameters.
+*   Simple color response variations between RGB channels provide film-like character.
 
 ## Conversion Process: Digital Image to Grains
 
@@ -99,8 +92,8 @@ The conversion process models how photographic exposure and development translat
 
 ### 4. Multi-Channel Processing
 
-*   **Color Separation Approach:** Each RGB channel is processed as separate photographic layers with different grain patterns, sensitivity curves, and slight registration errors.
-*   **Cross-Channel Coupling:** Grains developing strongly in one channel influence neighboring channels, simulating color developer interactions and dye cloud formation.
+*   **Color Separation Approach:** Each RGB channel is processed with different grain sensitivity parameters to simulate the characteristic differences between color layers in film.
+*   **Simple Channel Variations:** Different grain visibility and size distributions per channel create realistic color grain characteristics.
 
 ### 5. Density-to-Output Conversion
 
@@ -115,8 +108,8 @@ The conversion process models how photographic exposure and development translat
 *   **Development Simulation:** Apply threshold function, calculate final grain opacity/density, and apply grain interaction effects.
 *   **Final Compositing:** Combine all grain layers, apply color channel mixing, convert back to RGB, and downsample to final resolution.
 
-### 7. Advanced Considerations
+### 7. Practical Considerations
 
-*   **Halation and Light Scattering:** Bright areas cause light to scatter in the emulsion, creating subtle halos and affecting grain development.
-*   **Emulsion Thickness Effects:** Grains at different depths have different focus characteristics (front grains sharper, back grains softer).
-*   **Chemical Development Variations:** Over-development increases grain contrast and bridging, while under-development creates more gray, less defined grains. Temperature and time also affect grain characteristics.
+*   **Simplified Processing:** Focus on core grain generation and density mapping rather than complex chemical simulation.
+*   **Efficient Implementation:** Use lookup tables and simplified models to achieve realistic results with reasonable computational cost.
+*   **Parameter Control:** Provide intuitive controls for grain size, density, and visibility that map to understandable photographic concepts.
