@@ -3,8 +3,8 @@
 - [x] Remove the legacy algorithm
 - [x] Go through the code and make sure it follows the instructions in `copilot-instructions.md`
 - [x] Add instruction for agent to assert any assumption it makes.
-- [ ] Create custom assert function what does narrowing and such.
-- [ ] Go through the code and make sure assertions are added where it makes sense.
+- [x] Create custom assert function what does narrowing and such.
+- [x] Go through the code and make sure assertions are added where it makes sense.
 - [ ] Ask why all the custom assertion functions are needed.
 - [ ] Create a separate assert util for slow checks that is only run when in dev mode.
 - [ ] Update agent instructions on how to use the asserts.
