@@ -97,8 +97,26 @@ The conversion process models how photographic exposure and development translat
 
 ### 5. Density-to-Output Conversion
 
-*   **From Grain Density to Pixel Values:** Developed grains block light transmission, and multiple overlapping grains create cumulative density. Grain density is converted back to RGB values using an inverse film curve.
-*   **Compositing Multiple Grain Layers:** `final_pixel = base_color * (1 - grain_layer_1_density) * (1 - grain_layer_2_density) * ...`
+*   **From Grain Density to Pixel Values:** The implementation supports two compositing models to balance physical accuracy with computational efficiency:
+
+*   **Density-Based Compositing (Physical Model):** 
+    - **Beer-Lambert Law:** `final_pixel = base_color * exp(-grain_density_total)` where grain_density_total is the sum of all grain layer densities
+    - **Simplified Physical Model:** `final_pixel = base_color * (1 - grain_density)` with density clamped to prevent complete blackness
+    - **Multi-Layer Support:** Each grain layer contributes density independently: `total_density = sum(layer_density * layer_weight)`
+    - **Channel-Specific Response:** Different density calculations for R, G, B channels (blue most affected, red least)
+
+*   **Additive Compositing (Legacy Model):**
+    - **Direct Addition:** `final_pixel = base_color + grain_effect` for computational efficiency
+    - **Backward Compatibility:** Maintains compatibility with existing presets and workflows
+    - **Faster Processing:** Reduces computational overhead for real-time applications
+
+*   **Implementation Control:**
+    - **`useDensityModel` Setting:** Toggles between density-based (physical) and additive (legacy) compositing
+    - **`useMultipleLayers` Setting:** Enables generation of Primary, Secondary, and Micro grain layers
+    - **Automatic Mode Selection:** Density model automatically enabled when multiple layers are active
+    - **Per-Channel Weighting:** RGB channels receive different grain influence (R: 0.7, G: 0.9, B: 1.0)
+
+**Technical Implementation:** The grain strength is converted to optical density using `calculateGrainDensity()`, which applies film characteristic curves and sensitivity variations. The final compositing method is selected based on user settings, allowing for both physically accurate simulation and faster processing modes.
 
 ### 6. Practical Implementation Flow
 

@@ -7,6 +7,8 @@ import type {
   LabColor,
   RgbEffect,
   GrainPoint,
+  GrainLayer,
+  GrainDensity,
   ProcessMessage,
   ProgressMessage,
   ResultMessage
@@ -93,13 +95,27 @@ class GrainProcessor {
   }
 
   // Generate grain structure
-  private generateGrainStructure(): GrainPoint[] {
-    return this.grainGenerator.generateGrainStructure();
+  private generateGrainStructure(): GrainPoint[] | GrainLayer[] {
+    if (this.settings.useMultipleLayers) {
+      return this.grainGenerator.generateMultipleGrainLayers();
+    } else {
+      return this.grainGenerator.generateGrainStructure();
+    }
   }
 
-  // Create spatial grid for grain acceleration
-  private createGrainGrid(grains: GrainPoint[]): Map<string, GrainPoint[]> {
-    return this.grainGenerator.createGrainGrid(grains);
+  // Create spatial grid for grain acceleration (works with both single grains and layers)
+  private createGrainGrid(grains: GrainPoint[] | GrainLayer[]): Map<string, GrainPoint[]> {
+    if (Array.isArray(grains) && grains.length > 0 && 'layerType' in grains[0]) {
+      // Multiple layers - flatten all grains
+      const allGrains: GrainPoint[] = [];
+      for (const layer of grains as GrainLayer[]) {
+        allGrains.push(...layer.grains);
+      }
+      return this.grainGenerator.createGrainGrid(allGrains);
+    } else {
+      // Single layer
+      return this.grainGenerator.createGrainGrid(grains as GrainPoint[]);
+    }
   }
 
   // Apply grain to image
@@ -109,12 +125,25 @@ class GrainProcessor {
     
     // Step 1: Generate grain structure
     postMessage({ type: 'progress', progress: 10, stage: 'Generating grain structure...' } as ProgressMessage);
-    const grains = this.generateGrainStructure();
+    const grainStructure = this.generateGrainStructure();
     
     // Step 2: Create spatial acceleration grid
     postMessage({ type: 'progress', progress: 20, stage: 'Creating spatial grid...' } as ProgressMessage);
-    const grainGrid = this.createGrainGrid(grains);
-    const maxGrainSize = Math.max(...grains.map(g => g.size));
+    const grainGrid = this.createGrainGrid(grainStructure);
+    
+    // Determine grid size for spatial lookup
+    let maxGrainSize = 1;
+    if (Array.isArray(grainStructure) && grainStructure.length > 0) {
+      if ('layerType' in grainStructure[0]) {
+        // Multiple layers
+        const layers = grainStructure as GrainLayer[];
+        maxGrainSize = Math.max(...layers.flatMap(layer => layer.grains.map(g => g.size)));
+      } else {
+        // Single layer
+        const grains = grainStructure as GrainPoint[];
+        maxGrainSize = Math.max(...grains.map(g => g.size));
+      }
+    }
     const gridSize = Math.max(8, Math.floor(maxGrainSize * 2));
     
     // Step 3: Process each pixel
@@ -137,11 +166,11 @@ class GrainProcessor {
         const lab = this.rgbToLab(r, g, b);
         const luminance = lab.l / 100;
         
-        // Calculate grain effect for this pixel
-        let grainEffect: RgbEffect = { r: 0, g: 0, b: 0 };
+        // Initialize grain density
+        let totalGrainDensity: GrainDensity = { r: 0, g: 0, b: 0 };
         let totalWeight = 0;
         
-        // Get grains from nearby grid cells only
+        // Get grains from nearby grid cells
         const pixelGridX = Math.floor(x / gridSize);
         const pixelGridY = Math.floor(y / gridSize);
         const nearbyGrains: GrainPoint[] = [];
@@ -157,59 +186,84 @@ class GrainProcessor {
           }
         }
         
-        // Debug: Sample a few pixels to see grain processing
-        const shouldDebug = (x === 100 && y === 100) || (x === 200 && y === 150) || (x === 300 && y === 200);
-        if (shouldDebug) {
-          console.log(`Pixel (${x},${y}): Found ${nearbyGrains.length} nearby grains in grid (${pixelGridX},${pixelGridY})`);
-        }
-        
-        // Process only nearby grains
-        for (const grain of nearbyGrains) {
-          const distance = Math.sqrt(
-            Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2)
-          );
-          
-          if (distance < grain.size * 2) {
-            // Calculate grain influence based on distance and grain properties
-            const weight = Math.exp(-distance / grain.size);
-            const grainStrength = this.calculateGrainStrength(luminance, grain, x, y);
+        // Process grain effects
+        if (this.settings.useMultipleLayers && Array.isArray(grainStructure) && 'layerType' in grainStructure[0]) {
+          // Multiple layers processing
+          const layers = grainStructure as GrainLayer[];
+          for (const layer of layers) {
+            const layerGrains = layer.grains.filter(grain => nearbyGrains.includes(grain));
+            for (const grain of layerGrains) {
+              const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
+              
+              if (distance < grain.size * 2) {
+                const weight = Math.exp(-distance / grain.size);
+                const grainStrength = this.calculateGrainStrength(luminance, grain, x, y);
+                const grainDensity = this.calculateGrainDensity(grainStrength, grain, layer.intensityMultiplier);
+                
+                // Apply different grain characteristics per channel
+                totalGrainDensity.r += grainDensity * weight * 0.7; // Red channel less affected
+                totalGrainDensity.g += grainDensity * weight * 0.9; // Green channel moderate
+                totalGrainDensity.b += grainDensity * weight * 1.0; // Blue channel most affected
+                
+                totalWeight += weight;
+              }
+            }
+          }
+        } else {
+          // Single layer processing (backward compatibility)
+          for (const grain of nearbyGrains) {
+            const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
             
-            // Apply different grain characteristics per channel
-            grainEffect.r += grainStrength * weight * 0.7; // Red channel less affected
-            grainEffect.g += grainStrength * weight * 0.9; // Green channel moderate
-            grainEffect.b += grainStrength * weight * 1.0; // Blue channel most affected
-            
-            totalWeight += weight;
-            
-            if (shouldDebug) {
-              console.log(`  Grain at (${grain.x.toFixed(1)},${grain.y.toFixed(1)}): dist=${distance.toFixed(2)}, size=${grain.size.toFixed(2)}, strength=${grainStrength.toFixed(4)}, weight=${weight.toFixed(4)}`);
+            if (distance < grain.size * 2) {
+              const weight = Math.exp(-distance / grain.size);
+              const grainStrength = this.calculateGrainStrength(luminance, grain, x, y);
+              
+              if (this.settings.useDensityModel) {
+                // Density-based compositing
+                const grainDensity = this.calculateGrainDensity(grainStrength, grain);
+                totalGrainDensity.r += grainDensity * weight * 0.7;
+                totalGrainDensity.g += grainDensity * weight * 0.9;
+                totalGrainDensity.b += grainDensity * weight * 1.0;
+              } else {
+                // Legacy additive blending for backward compatibility
+                const grainEffect = grainStrength * weight * this.settings.grainIntensity;
+                totalGrainDensity.r += grainEffect * 0.7;
+                totalGrainDensity.g += grainEffect * 0.9;
+                totalGrainDensity.b += grainEffect * 1.0;
+              }
+              
+              totalWeight += weight;
             }
           }
         }
         
+        // Apply final compositing
         if (totalWeight > 0) {
           grainEffectCount++;
-          grainEffect.r /= totalWeight;
-          grainEffect.g /= totalWeight;
-          grainEffect.b /= totalWeight;
           
-          // Apply grain intensity setting
-          const intensity = this.settings.grainIntensity;
-          grainEffect.r *= intensity;
-          grainEffect.g *= intensity;
-          grainEffect.b *= intensity;
+          // Normalize by total weight
+          totalGrainDensity.r /= totalWeight;
+          totalGrainDensity.g /= totalWeight;
+          totalGrainDensity.b /= totalWeight;
           
-          // Blend grain effect with original pixel
-          result.data[pixelIndex] = Math.max(0, Math.min(255, r + grainEffect.r * 255));
-          result.data[pixelIndex + 1] = Math.max(0, Math.min(255, g + grainEffect.g * 255));
-          result.data[pixelIndex + 2] = Math.max(0, Math.min(255, b + grainEffect.b * 255));
-          result.data[pixelIndex + 3] = a;
+          let finalColor: [number, number, number];
           
-          if (shouldDebug) {
-            console.log(`  Final effect: r=${grainEffect.r.toFixed(4)}, g=${grainEffect.g.toFixed(4)}, b=${grainEffect.b.toFixed(4)}`);
+          if (this.settings.useDensityModel || this.settings.useMultipleLayers) {
+            // Use density-based compositing (physically accurate)
+            finalColor = this.applySimpleDensityCompositing([r, g, b], totalGrainDensity);
+          } else {
+            // Legacy additive blending
+            finalColor = [
+              Math.max(0, Math.min(255, r + totalGrainDensity.r * 255)),
+              Math.max(0, Math.min(255, g + totalGrainDensity.g * 255)),
+              Math.max(0, Math.min(255, b + totalGrainDensity.b * 255))
+            ];
           }
-        } else if (shouldDebug) {
-          console.log(`  No grain effect applied`);
+          
+          result.data[pixelIndex] = finalColor[0];
+          result.data[pixelIndex + 1] = finalColor[1];
+          result.data[pixelIndex + 2] = finalColor[2];
+          result.data[pixelIndex + 3] = a;
         }
       }
       
@@ -228,6 +282,7 @@ class GrainProcessor {
     console.log(`Total pixels processed: ${totalPixels}`);
     console.log(`Pixels with grain effect: ${grainEffectCount}`);
     console.log(`Grain effect coverage: ${(grainEffectCount / totalPixels * 100).toFixed(2)}%`);
+    console.log(`Processing mode: ${this.settings.useMultipleLayers ? 'Multiple Layers' : 'Single Layer'}, ${this.settings.useDensityModel ? 'Density Model' : 'Additive Model'}`);
     
     postMessage({ type: 'progress', progress: 100, stage: 'Complete!' } as ProgressMessage);
     return result;
@@ -256,6 +311,46 @@ class GrainProcessor {
     const shapeModifier = 0.7 + grain.shape * 0.6;
     
     return finalStrength * shapeModifier * 0.5; // Increased multiplier for better visibility
+  }
+
+  // Calculate grain density for density-based compositing
+  private calculateGrainDensity(grainStrength: number, grain: GrainPoint, layerMultiplier: number = 1.0): number {
+    // Convert grain strength to optical density
+    const baseDensity = grainStrength * grain.sensitivity * layerMultiplier;
+    
+    // Apply film characteristic curve for density response
+    const densityResponse = this.filmCurve(baseDensity);
+    
+    // Scale by grain intensity setting
+    return densityResponse * this.settings.grainIntensity * 0.3; // Reduced multiplier for density model
+  }
+
+  // Apply density-based compositing using Beer-Lambert law
+  private applyDensityCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
+    const [r, g, b] = originalColor;
+    
+    // Calculate light transmission using Beer-Lambert law: I = I0 * exp(-density)
+    const transmissionR = Math.exp(-grainDensity.r);
+    const transmissionG = Math.exp(-grainDensity.g);
+    const transmissionB = Math.exp(-grainDensity.b);
+    
+    return [
+      r * transmissionR,
+      g * transmissionG,
+      b * transmissionB
+    ];
+  }
+
+  // Apply simplified multiplicative compositing
+  private applySimpleDensityCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
+    const [r, g, b] = originalColor;
+    
+    // Simplified model: final = original * (1 - density)
+    return [
+      r * (1 - Math.min(0.8, grainDensity.r)), // Clamp density to prevent full black
+      g * (1 - Math.min(0.8, grainDensity.g)),
+      b * (1 - Math.min(0.8, grainDensity.b))
+    ];
   }
 }
 

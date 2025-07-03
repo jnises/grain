@@ -5,6 +5,8 @@ export interface GrainSettings {
   filmType: 'kodak' | 'fuji' | 'ilford';
   grainIntensity: number;
   upscaleFactor: number;
+  useMultipleLayers?: boolean;
+  useDensityModel?: boolean;
 }
 
 export interface GrainProcessingResult {
@@ -65,4 +67,18 @@ export interface GrainPoint {
   size: number;
   sensitivity: number;
   shape: number;
+}
+
+export interface GrainLayer {
+  layerType: 'primary' | 'secondary' | 'micro';
+  grains: GrainPoint[];
+  baseSize: number;
+  density: number;
+  intensityMultiplier: number;
+}
+
+export interface GrainDensity {
+  r: number;
+  g: number;
+  b: number;
 }

@@ -1,7 +1,7 @@
 // Core grain generation logic extracted for testing
 // This file contains the grain generation algorithms without Web Worker dependencies
 
-import type { GrainSettings, Point2D, GrainPoint } from './types';
+import type { GrainSettings, Point2D, GrainPoint, GrainLayer } from './types';
 
 export class GrainGenerator {
   private width: number;
@@ -299,5 +299,86 @@ export class GrainGenerator {
     }
     
     return grainGrid;
+  }
+
+  // Generate multiple grain layers for realistic film grain
+  public generateMultipleGrainLayers(): GrainLayer[] {
+    const layers: GrainLayer[] = [];
+    const params = this.calculateGrainParameters();
+    
+    // Primary grain layer (largest, most visible)
+    const primaryGrains = this.generateGrainLayer('primary', params.baseGrainSize * 1.5, params.grainDensity * 0.4);
+    layers.push(primaryGrains);
+    
+    // Secondary grain layer (medium size clusters)
+    const secondaryGrains = this.generateGrainLayer('secondary', params.baseGrainSize * 0.8, params.grainDensity * 0.35);
+    layers.push(secondaryGrains);
+    
+    // Micro grain layer (fine texture)
+    const microGrains = this.generateGrainLayer('micro', params.baseGrainSize * 0.3, params.grainDensity * 0.25);
+    layers.push(microGrains);
+    
+    return layers;
+  }
+  
+  // Generate a single grain layer with specific characteristics
+  private generateGrainLayer(layerType: 'primary' | 'secondary' | 'micro', baseSize: number, density: number): GrainLayer {
+    const targetGrainCount = Math.floor(density);
+    const minDistance = Math.max(1, baseSize * 0.3);
+    
+    // Generate grain points using existing methods
+    const grainPoints = this.generatePoissonDiskSampling(minDistance, targetGrainCount);
+    let finalGrainPoints = grainPoints;
+    
+    // Use fallback if not enough grains
+    if (grainPoints.length < targetGrainCount * 0.5) {
+      finalGrainPoints = this.generateFallbackGrains(grainPoints, targetGrainCount);
+    }
+    
+    // Layer-specific adjustments
+    let layerSizeMultiplier = 1.0;
+    let layerSensitivityMultiplier = 1.0;
+    let layerIntensityMultiplier = 1.0;
+    
+    switch (layerType) {
+      case 'primary':
+        layerSizeMultiplier = 1.2;
+        layerSensitivityMultiplier = 1.1;
+        layerIntensityMultiplier = 1.0;
+        break;
+      case 'secondary':
+        layerSizeMultiplier = 0.8;
+        layerSensitivityMultiplier = 0.9;
+        layerIntensityMultiplier = 0.7;
+        break;
+      case 'micro':
+        layerSizeMultiplier = 0.4;
+        layerSensitivityMultiplier = 0.8;
+        layerIntensityMultiplier = 0.5;
+        break;
+    }
+    
+    // Convert to GrainPoint objects with layer-specific properties
+    const grains = finalGrainPoints.map((point, index) => {
+      const sizeVariation = this.seededRandom(index * 123.456 + layerType.length);
+      const sensitivityVariation = this.seededRandom(index * 789.012 + layerType.length);
+      const shapeVariation = this.seededRandom(index * 345.678 + layerType.length);
+      
+      return {
+        x: point.x,
+        y: point.y,
+        size: baseSize * layerSizeMultiplier * (0.5 + sizeVariation * 1.5),
+        sensitivity: (0.8 + sensitivityVariation * 0.4) * layerSensitivityMultiplier,
+        shape: shapeVariation
+      };
+    });
+    
+    return {
+      layerType,
+      grains,
+      baseSize,
+      density,
+      intensityMultiplier: layerIntensityMultiplier
+    };
   }
 }
