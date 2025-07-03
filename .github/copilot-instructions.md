@@ -1,53 +1,48 @@
 # Coding Guidelines
 
-## Architecture Principles
+## Core Principles
 
 ### Avoid Code Duplication
-- **Reuse existing classes and functions** instead of reimplementing them
-- When testing, import and use the actual production classes (e.g., `GrainGenerator`)
-- Test files should focus on testing behavior, not reimplementing functionality
-- If you need to expose private methods for testing, consider making them protected or creating a testing interface
+- Unless absolutely necessary reuse existing classes and functions instead of reimplementing
+- Import and use actual production classes in tests (e.g., `GrainGenerator`)
+- Test files verify behavior, not reimplement functionality
+- Expose private methods via protected access or testing interfaces when needed
 
 ### File Organization
-- Core logic goes in `/src/`
-- Test files go in `/test/` directory
-- Test utilities and helpers can go in `/src/` but should reuse main implementations
-- Web Worker code should import and delegate to core classes when possible
+- Core logic: `/src/`
+- Tests: `/test/`
+- Web Workers: import and delegate to core classes
+- Test utilities: reuse main implementations from `/src/`
 
-### Testing Best Practices
-- Import production classes rather than duplicating their code
-- Use dependency injection or factory patterns if you need to mock dependencies
-- Focus tests on behavior verification, not implementation details
-- When debugging, create focused test functions that use the main classes
+### Testing Strategy
+- Import production classes, never duplicate code
+- Use dependency injection or factories for mocking
+- Test behavior, not implementation details
+- Create focused test functions using main classes
 
-### Code Reuse Examples
+## Examples
 
-#### ✅ Good - Reusing existing classes:
+### ✅ Correct: Reuse existing classes
 ```typescript
 import { GrainGenerator } from './grain-generator';
 
 export function testGrainGeneration(settings: GrainSettings) {
   const generator = new GrainGenerator(width, height, settings);
-  return generator.generatePoissonDiskSampling(params.minDistance, params.grainDensity);
+  return generator.generatePoissonDiskSampling(minDistance, grainDensity);
 }
 ```
 
-#### ❌ Bad - Duplicating implementation:
+### ❌ Wrong: Duplicate implementation
 ```typescript
 class GrainProcessorTest {
-  // Duplicating the same Poisson disk sampling logic that already exists
   public generatePoissonDiskSampling() { /* duplicate code */ }
 }
 ```
 
-## Agent Instructions
+## Best Practices
 
-When working with a coding agent:
-
-1. **Always check for existing implementations** before creating new ones
-2. **Reuse and import existing classes** rather than duplicating code
-3. **Extract shared logic** into reusable modules if needed
-4. **Use composition over inheritance** when extending functionality
-5. **Keep test files focused** on testing behavior, not reimplementing features
-
-These guidelines help maintain code quality, reduce bugs, and make the codebase easier to maintain.
+1. **Check for existing implementations** before creating new ones
+2. **Import and reuse classes** rather than duplicating code
+3. **Extract shared logic** into reusable modules when needed
+4. **Use composition over inheritance** for extending functionality
+5. **Focus tests on behavior** verification, not reimplementation
