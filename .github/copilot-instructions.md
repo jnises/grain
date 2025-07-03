@@ -2,6 +2,8 @@
 
 ## Core Principles
 
+- Avoid magic numbers in the code for nonobvious values. Instead use constants to make the code more maintainable.
+
 ### Avoid Code Duplication
 - Unless absolutely necessary reuse existing classes and functions instead of reimplementing
 - Import and use actual production classes in tests (e.g., `GrainGenerator`)
