@@ -8,8 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest",
-    "test:run": "vitest run",
+    "test:watch": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui"
   },
   "dependencies": {

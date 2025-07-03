@@ -8,6 +8,19 @@ When working with a coding agent, please follow this workflow:
 4.  **Observe HMR updates:** Your browser, running `npm run dev`, will automatically reflect the agent's changes via HMR once they are successfully applied and verified.
 5.  **Report errors to the agent:** If you encounter any runtime errors in your browser or in the terminal running `npm run dev`, please copy and paste the full error message to the agent for analysis and resolution.
 
+## 🧪 Testing
+
+This project uses Vitest for testing. Available test commands:
+
+- `npm test` - Run tests once (for CI/production)
+- `npm run test:watch` - Run tests in watch mode (for development)
+- `npm run test:ui` - Run tests with UI interface
+
+### Test Structure
+- Unit tests are in the `/test/` directory
+- Test utilities that reuse main classes are in `/src/grain-worker-test.ts`
+- Tests focus on behavior verification rather than implementation details
+
 ## 🔄 Image Comparison Feature
 
 After processing an image with grain, you can easily compare the original and processed versions:

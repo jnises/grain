@@ -73,7 +73,13 @@
 
     <script type="module">
         // Import test functions
-        import { runGrainDistributionTests, testBasicGrainGeneration } from './src/grain-worker-test.ts';
+        import { 
+            runGrainDistributionTests, 
+            testPoissonDistribution, 
+            testGrainGeneration, 
+            analyzeGrainDistribution,
+            validatePointDistribution 
+        } from '../src/grain-worker-test.js';
         
         // Make functions available globally
         window.runBasicTests = () => {
@@ -88,7 +94,18 @@
             };
             
             try {
-                testBasicGrainGeneration();
+                // Test basic Poisson disk sampling
+                appendOutput('Testing Poisson disk sampling...\n');
+                const points = testPoissonDistribution(400, 300, 5, 1000);
+                appendOutput(`Generated ${points.length} points\n`);
+                
+                // Validate the distribution
+                const isValid = validatePointDistribution(points, 5);
+                appendOutput(`Min distance validation: ${isValid}\n`);
+                
+                // Analyze the distribution
+                analyzeGrainDistribution(points, 400, 300);
+                
             } catch (error) {
                 appendOutput(`Error: ${error.message}\n`);
             }
@@ -120,7 +137,7 @@
             clearOutput();
             appendOutput('Running parameter analysis...\n');
             
-            // Test different parameter combinations
+            // Test different parameter combinations using actual GrainGenerator
             const testCases = [
                 { iso: 100, desc: "Low ISO (100)" },
                 { iso: 400, desc: "Medium ISO (400)" },
@@ -128,26 +145,35 @@
                 { iso: 1600, desc: "Very High ISO (1600)" }
             ];
             
-            for (const testCase of testCases) {
-                appendOutput(`\n--- ${testCase.desc} ---\n`);
-                
-                const baseGrainSize = Math.max(0.5, testCase.iso / 200);
-                const imageArea = 400 * 300; // 120,000 pixels
-                const densityFactor = Math.min(0.01, testCase.iso / 10000);
-                const grainDensity = Math.floor(imageArea * densityFactor);
-                const minDistance = Math.max(1, baseGrainSize * 0.3);
-                
-                appendOutput(`Base grain size: ${baseGrainSize}\n`);
-                appendOutput(`Density factor: ${densityFactor}\n`);
-                appendOutput(`Target grain count: ${grainDensity}\n`);
-                appendOutput(`Min distance: ${minDistance}\n`);
-                appendOutput(`Grain density per 1000 pixels: ${(grainDensity / imageArea * 1000).toFixed(2)}\n`);
-                
-                // Calculate theoretical maximum grains based on min distance
-                const theoreticalMax = Math.floor(imageArea / (Math.PI * minDistance * minDistance));
-                appendOutput(`Theoretical max grains: ${theoreticalMax}\n`);
-                appendOutput(`Target vs theoretical: ${(grainDensity / theoreticalMax * 100).toFixed(1)}%\n`);
+            // Capture console.log output
+            const originalLog = console.log;
+            console.log = (...args) => {
+                appendOutput(args.join(' ') + '\n');
+                originalLog(...args);
+            };
+            
+            try {
+                for (const testCase of testCases) {
+                    appendOutput(`\n--- ${testCase.desc} ---\n`);
+                    
+                    const settings = {
+                        iso: testCase.iso,
+                        filmType: 'kodak',
+                        grainIntensity: 1.0,
+                        upscaleFactor: 1.0
+                    };
+                    
+                    // Generate grains and analyze
+                    const points = testGrainGeneration(400, 300, settings);
+                    appendOutput(`Generated ${points.length} grains\n`);
+                    
+                    analyzeGrainDistribution(points, 400, 300);
+                }
+            } catch (error) {
+                appendOutput(`Error: ${error.message}\n`);
             }
+            
+            console.log = originalLog;
         };
         
         window.clearOutput = () => {
