@@ -5,15 +5,15 @@
 - [x] Add instruction for agent to assert any assumption it makes.
 - [x] Create custom assert function what does narrowing and such.
 - [x] Go through the code and make sure assertions are added where it makes sense.
-- [ ] Ask why all the custom assertion functions are needed.
-- [ ] Create a separate assert util for slow checks that is only run when in dev mode.
-- [ ] Update agent instructions on how to use the asserts.
-- [ ] Update hot code to use the dev assert.
+- [x] Ask why all the custom assertion functions are needed.
 - [ ] Optimize or simplify the `multiple grain layers` feature. It is currently very slow.
 - [ ] Go through `ALGORITHM_DESIGN.md` and compare against the current implementation. Describe what has been implemented and what hasn't any why.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate adjusting the enlargement factor of the image in a darkroom. (Or will this have the same effect as adjusting the iso?)
 - [ ] Add debug page that can visualize separate parts of the algorithm, such as raw grains before they are combined with the image. This page should only be visible in dev mode.
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense.
+- [ ] Create a separate assert util for slow checks that is only run when in dev mode.
+- [ ] Update agent instructions on how to use the asserts.
+- [ ] Update hot code to use the dev assert.
 - [ ] Optimize the algorithm
 - [ ] Clean up unused files and debug utils such as `public/grain-test.html`
 - [ ] Clean up old agent-generated analysis and summary md files.
