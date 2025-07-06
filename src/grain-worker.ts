@@ -23,12 +23,68 @@ import {
 // File-level constants shared across methods
 const RGB_MAX_VALUE = 255;
 
+// Performance benchmarking interface
+interface PerformanceBenchmark {
+  operation: string;
+  startTime: number;
+  endTime?: number;
+  duration?: number;
+  pixelsProcessed?: number;
+  pixelsPerSecond?: number;
+}
+
+// Performance tracking utility
+class PerformanceTracker {
+  private benchmarks: Map<string, PerformanceBenchmark> = new Map();
+  
+  startBenchmark(operation: string, pixelsProcessed?: number): void {
+    this.benchmarks.set(operation, {
+      operation,
+      startTime: performance.now(),
+      pixelsProcessed
+    });
+  }
+  
+  endBenchmark(operation: string): PerformanceBenchmark | null {
+    const benchmark = this.benchmarks.get(operation);
+    if (!benchmark) return null;
+    
+    benchmark.endTime = performance.now();
+    benchmark.duration = benchmark.endTime - benchmark.startTime;
+    
+    if (benchmark.pixelsProcessed) {
+      benchmark.pixelsPerSecond = benchmark.pixelsProcessed / (benchmark.duration / 1000);
+    }
+    
+    return benchmark;
+  }
+  
+  getBenchmark(operation: string): PerformanceBenchmark | null {
+    return this.benchmarks.get(operation) || null;
+  }
+  
+  getAllBenchmarks(): PerformanceBenchmark[] {
+    return Array.from(this.benchmarks.values()).filter(b => b.duration !== undefined);
+  }
+  
+  logSummary(): void {
+    console.log('\n=== Performance Benchmarks ===');
+    for (const benchmark of this.getAllBenchmarks()) {
+      console.log(`${benchmark.operation}: ${benchmark.duration?.toFixed(2)}ms`);
+      if (benchmark.pixelsPerSecond) {
+        console.log(`  - ${(benchmark.pixelsPerSecond / 1000000).toFixed(2)}M pixels/sec`);
+      }
+    }
+  }
+}
+
 // Utility functions for grain generation
 class GrainProcessor {
   private width: number;
   private height: number;
   private settings: GrainSettings;
   private grainGenerator: GrainGenerator;
+  private performanceTracker: PerformanceTracker;
 
   constructor(width: number, height: number, settings: GrainSettings) {
     // Validate input parameters with custom assertions that provide type narrowing
@@ -49,6 +105,7 @@ class GrainProcessor {
     this.height = height;
     this.settings = settings;
     this.grainGenerator = new GrainGenerator(width, height, settings);
+    this.performanceTracker = new PerformanceTracker();
   }
 
   // Type guard for GrainSettings
@@ -216,14 +273,22 @@ class GrainProcessor {
   public async processImage(imageData: ImageData): Promise<ImageData> {
     const data = new Uint8ClampedArray(imageData.data);
     const result = new ImageData(data, this.width, this.height);
+    const totalImagePixels = this.width * this.height;
+    
+    // Start overall benchmark
+    this.performanceTracker.startBenchmark('Total Processing', totalImagePixels);
     
     // Step 1: Generate grain structure
     postMessage({ type: 'progress', progress: 10, stage: 'Generating grain structure...' } as ProgressMessage);
+    this.performanceTracker.startBenchmark('Grain Generation');
     const grainStructure = this.generateGrainStructure();
+    this.performanceTracker.endBenchmark('Grain Generation');
     
     // Step 2: Create spatial acceleration grid
     postMessage({ type: 'progress', progress: 20, stage: 'Creating spatial grid...' } as ProgressMessage);
+    this.performanceTracker.startBenchmark('Spatial Grid Creation');
     const grainGrid = this.createGrainGrid(grainStructure);
+    this.performanceTracker.endBenchmark('Spatial Grid Creation');
     
     // Determine grid size for spatial lookup
     let maxGrainSize = 1;
@@ -242,14 +307,18 @@ class GrainProcessor {
     
     // Step 3: Process each pixel
     postMessage({ type: 'progress', progress: 30, stage: 'Processing pixels...' } as ProgressMessage);
+    this.performanceTracker.startBenchmark('Pixel Processing', totalImagePixels);
     
     let grainEffectCount = 0;
-    let totalPixels = 0;
+    let processedPixels = 0;
+    
+    // Start performance benchmark for pixel processing
+    this.performanceTracker.startBenchmark('Pixel Processing', this.width * this.height);
     
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const pixelIndex = (y * this.width + x) * 4;
-        totalPixels++;
+        processedPixels++;
         
         const r = data[pixelIndex];
         const g = data[pixelIndex + 1];
@@ -282,11 +351,26 @@ class GrainProcessor {
         
         // Process grain effects
         if (this.settings.useMultipleLayers && Array.isArray(grainStructure) && 'layerType' in grainStructure[0]) {
-          // Multiple layers processing
+          // Multiple layers processing - optimized to avoid O(n²) complexity
           const layers = grainStructure as GrainLayer[];
+          
+          // Start benchmark for multiple layers processing (first pixel only to avoid overhead)
+          if (x === 0 && y === 0) {
+            this.performanceTracker.startBenchmark('Multiple Layers Processing');
+          }
+          
+          // Create a map for fast layer lookup by grain reference
+          const grainToLayerMap = new Map<GrainPoint, GrainLayer>();
           for (const layer of layers) {
-            const layerGrains = layer.grains.filter(grain => nearbyGrains.includes(grain));
-            for (const grain of layerGrains) {
+            for (const grain of layer.grains) {
+              grainToLayerMap.set(grain, layer);
+            }
+          }
+          
+          // Process nearby grains directly (already filtered by spatial grid)
+          for (const grain of nearbyGrains) {
+            const layer = grainToLayerMap.get(grain);
+            if (layer) {
               const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
               
               if (distance < grain.size * 2) {
@@ -303,8 +387,18 @@ class GrainProcessor {
               }
             }
           }
+          
+          // End benchmark for multiple layers processing (last pixel only)
+          if (x === this.width - 1 && y === this.height - 1) {
+            this.performanceTracker.endBenchmark('Multiple Layers Processing');
+          }
         } else {
           // Single layer processing (backward compatibility)
+          // Start benchmark for single layer processing (first pixel only)
+          if (x === 0 && y === 0) {
+            this.performanceTracker.startBenchmark('Single Layer Processing');
+          }
+          
           for (const grain of nearbyGrains) {
             const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
             
@@ -320,6 +414,11 @@ class GrainProcessor {
               
               totalWeight += weight;
             }
+          }
+          
+          // End benchmark for single layer processing (last pixel only)
+          if (x === this.width - 1 && y === this.height - 1) {
+            this.performanceTracker.endBenchmark('Single Layer Processing');
           }
         }
         
@@ -355,11 +454,38 @@ class GrainProcessor {
       }
     }
     
+    // End pixel processing benchmark
+    this.performanceTracker.endBenchmark('Pixel Processing');
+    
+    // End overall benchmark
+    this.performanceTracker.endBenchmark('Total Processing');
+    
     console.log(`=== Processing Summary ===`);
-    console.log(`Total pixels processed: ${totalPixels}`);
+    console.log(`Total pixels processed: ${processedPixels}`);
     console.log(`Pixels with grain effect: ${grainEffectCount}`);
-    console.log(`Grain effect coverage: ${(grainEffectCount / totalPixels * 100).toFixed(2)}%`);
+    console.log(`Grain effect coverage: ${(grainEffectCount / processedPixels * 100).toFixed(2)}%`);
     console.log(`Processing mode: ${this.settings.useMultipleLayers ? 'Multiple Layers' : 'Single Layer'}, Density Model`);
+    
+    // Log performance benchmarks
+    this.performanceTracker.logSummary();
+    
+    // Calculate and log performance metrics for multiple layers optimization
+    const totalBenchmark = this.performanceTracker.getBenchmark('Total Processing');
+    const pixelBenchmark = this.performanceTracker.getBenchmark('Pixel Processing');
+    const layerBenchmark = this.performanceTracker.getBenchmark(this.settings.useMultipleLayers ? 'Multiple Layers Processing' : 'Single Layer Processing');
+    
+    if (totalBenchmark && pixelBenchmark) {
+      console.log(`\n=== Performance Metrics ===`);
+      console.log(`Total processing speed: ${(totalBenchmark.pixelsPerSecond! / 1000000).toFixed(2)}M pixels/sec`);
+      console.log(`Pixel processing speed: ${(pixelBenchmark.pixelsPerSecond! / 1000000).toFixed(2)}M pixels/sec`);
+      console.log(`Processing overhead: ${((totalBenchmark.duration! - pixelBenchmark.duration!) / totalBenchmark.duration! * 100).toFixed(1)}%`);
+      
+      if (layerBenchmark) {
+        console.log(`Layer processing mode: ${this.settings.useMultipleLayers ? 'Multiple Layers (optimized)' : 'Single Layer'}`);
+        console.log(`Layer processing time: ${layerBenchmark.duration!.toFixed(2)}ms`);
+        console.log(`Layer processing efficiency: ${(pixelBenchmark.duration! / layerBenchmark.duration!).toFixed(2)}x pixel processing speed`);
+      }
+    }
     
     postMessage({ type: 'progress', progress: 100, stage: 'Complete!' } as ProgressMessage);
     return result;

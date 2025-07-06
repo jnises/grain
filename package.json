@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test:watch": "vitest",
     "test": "vitest run",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "benchmark": "vitest run test/performance-benchmark.test.ts"
   },
   "dependencies": {
     "react": "^19.1.0",
