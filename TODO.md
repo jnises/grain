@@ -14,6 +14,7 @@
 - [ ] Create a separate assert util for slow checks that is only run when in dev mode.
 - [ ] Update agent instructions on how to use the asserts.
 - [ ] Update hot code to use the dev assert.
+- [ ] Add option for monochrome grains
 - [ ] Optimize the algorithm
 - [ ] Clean up unused files and debug utils such as `public/grain-test.html`
 - [ ] Clean up old agent-generated analysis and summary md files.

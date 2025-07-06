@@ -193,6 +193,8 @@
         </div>
         <div>
             <button onclick="generateDebugVisualization()">Generate Visualization</button>
+            <button onclick="generateWithSmallGrains()">Generate with Small Grains</button>
+            <button onclick="testGrainDensity()">Test Density Calculation</button>
             <button onclick="clearAllCanvases()">Clear All</button>
         </div>
     </div>
@@ -388,9 +390,27 @@
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
             
+            // Safety check for currentSettings
+            if (!currentSettings) {
+                console.error('currentSettings not available for point drawing');
+                return;
+            }
+            
+            // Calculate scaling factors
+            const scaleX = canvas.width / currentSettings.width;
+            const scaleY = canvas.height / currentSettings.height;
+            
             ctx.fillStyle = color;
             for (const point of points) {
-                ctx.fillRect(Math.floor(point.x), Math.floor(point.y), size, size);
+                // Scale position and size
+                const scaledX = point.x * scaleX;
+                const scaledY = point.y * scaleY;
+                const scaledSize = Math.max(1, size * Math.min(scaleX, scaleY));
+                
+                // Draw as circle for better visibility
+                ctx.beginPath();
+                ctx.arc(scaledX, scaledY, scaledSize, 0, 2 * Math.PI);
+                ctx.fill();
             }
         }
 
@@ -398,16 +418,39 @@
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
             
-            ctx.fillStyle = color;
-            for (const grain of grains) {
-                const size = Math.max(1, Math.floor(grain.size));
-                ctx.fillRect(
-                    Math.floor(grain.x - size/2), 
-                    Math.floor(grain.y - size/2), 
-                    size, 
-                    size
-                );
+            // Safety check for currentSettings
+            if (!currentSettings) {
+                console.error('currentSettings not available for grain drawing');
+                return;
             }
+            
+            // Calculate scaling factors
+            const scaleX = canvas.width / currentSettings.width;
+            const scaleY = canvas.height / currentSettings.height;
+            
+            // Add transparency to see overlapping grains
+            ctx.globalAlpha = 0.7;
+            ctx.fillStyle = color;
+            
+            let drawnCount = 0;
+            for (const grain of grains) {
+                // Scale both position and size
+                const scaledX = grain.x * scaleX;
+                const scaledY = grain.y * scaleY;
+                // Use minimum scale to maintain aspect ratio of grain size
+                const scaledSize = Math.max(0.5, grain.size * Math.min(scaleX, scaleY));
+                
+                // Draw grain as a circle for better visualization
+                ctx.beginPath();
+                ctx.arc(scaledX, scaledY, scaledSize / 2, 0, 2 * Math.PI);
+                ctx.fill();
+                drawnCount++;
+            }
+            
+            // Reset alpha
+            ctx.globalAlpha = 1.0;
+            
+            console.log(`Drew ${drawnCount} grains for ${canvasId} with color ${color}`);
         }
 
         function clearCanvas(canvasId) {
@@ -426,22 +469,70 @@
             clearStats('rawGrainsStats');
             clearCanvas('rawGrainsCanvas');
             
+            // Calculate scaling factors for logging
+            const canvas = document.getElementById('rawGrainsCanvas');
+            const scaleX = canvas.width / currentSettings.width;
+            const scaleY = canvas.height / currentSettings.height;
+            
+            // Draw a border around the canvas to show the image bounds
+            const ctx = canvas.getContext('2d');
+            ctx.strokeStyle = '#444444';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+            
+            // Draw grid lines to show coordinate system
+            ctx.strokeStyle = '#222222';
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= 10; x++) {
+                const gridX = (x / 10) * canvas.width;
+                ctx.beginPath();
+                ctx.moveTo(gridX, 0);
+                ctx.lineTo(gridX, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= 10; y++) {
+                const gridY = (y / 10) * canvas.height;
+                ctx.beginPath();
+                ctx.moveTo(0, gridY);
+                ctx.lineTo(canvas.width, gridY);
+                ctx.stroke();
+            }
+            
             // Draw Poisson points in green
-            drawPoints('rawGrainsCanvas', grainData.poissonPoints, '#00ff00', 2);
+            drawPoints('rawGrainsCanvas', grainData.poissonPoints, '#00ff00', 3);
             
             // Draw fallback points in red
             if (grainData.fallbackPoints.length > 0) {
-                drawPoints('rawGrainsCanvas', grainData.fallbackPoints, '#ff6666', 2);
+                drawPoints('rawGrainsCanvas', grainData.fallbackPoints, '#ff6666', 3);
             }
             
-            // Log statistics
+            // Log statistics with scaling information
+            log(`=== Image and Canvas Info ===`, 'rawGrainsStats');
+            log(`Original image: ${currentSettings.width}x${currentSettings.height}`, 'rawGrainsStats');
+            log(`Canvas size: ${canvas.width}x${canvas.height}`, 'rawGrainsStats');
+            log(`Scale factors: X=${scaleX.toFixed(3)}, Y=${scaleY.toFixed(3)}`, 'rawGrainsStats');
+            log(``, 'rawGrainsStats');
+            log(`=== Grain Distribution ===`, 'rawGrainsStats');
             log(`Poisson points: ${grainData.poissonPoints.length}`, 'rawGrainsStats');
             log(`Fallback points: ${grainData.fallbackPoints.length}`, 'rawGrainsStats');
             log(`Total points: ${grainData.finalPoints.length}`, 'rawGrainsStats');
             log(`Target density: ${grainData.params.grainDensity}`, 'rawGrainsStats');
             log(`Achieved density: ${(grainData.finalPoints.length / (currentSettings.width * currentSettings.height) * 1000).toFixed(2)} per 1000px`, 'rawGrainsStats');
-            log(`Base grain size: ${grainData.params.baseGrainSize.toFixed(3)}`, 'rawGrainsStats');
-            log(`Min distance: ${grainData.params.minDistance.toFixed(3)}`, 'rawGrainsStats');
+            log(`Base grain size: ${grainData.params.baseGrainSize.toFixed(3)}px`, 'rawGrainsStats');
+            log(`Min distance: ${grainData.params.minDistance.toFixed(3)}px`, 'rawGrainsStats');
+            
+            // Add sample coordinates for debugging
+            if (grainData.poissonPoints.length > 0) {
+                log(``, 'rawGrainsStats');
+                log(`=== Sample Poisson coordinates ===`, 'rawGrainsStats');
+                const sampleCount = Math.min(5, grainData.poissonPoints.length);
+                for (let i = 0; i < sampleCount; i++) {
+                    const point = grainData.poissonPoints[i];
+                    const scaledX = (point.x * scaleX).toFixed(1);
+                    const scaledY = (point.y * scaleY).toFixed(1);
+                    log(`Point ${i}: (${point.x.toFixed(1)}, ${point.y.toFixed(1)}) -> canvas (${scaledX}, ${scaledY})`, 'rawGrainsStats');
+                }
+            }
         }
 
         function visualizeLayers(layers, activeLayer = 'all') {
@@ -456,19 +547,54 @@
             };
             
             let totalGrains = 0;
+            let visibleGrains = 0;
             
             for (const layer of layers) {
                 if (activeLayer === 'all' || activeLayer === layer.layerType) {
                     const color = layerColors[layer.layerType] || '#ffffff';
                     drawGrains('layersCanvas', layer.grains, color);
+                    visibleGrains += layer.grains.length;
                 }
                 
                 totalGrains += layer.grains.length;
-                log(`${layer.layerType}: ${layer.grains.length} grains, base size: ${layer.baseSize.toFixed(2)}`, 'layersStats');
+                
+                // Calculate size range for this layer
+                if (layer.grains.length > 0) {
+                    const layerSizes = layer.grains.map(g => g.size);
+                    const minLayerSize = Math.min(...layerSizes);
+                    const maxLayerSize = Math.max(...layerSizes);
+                    const avgLayerSize = layerSizes.reduce((a, b) => a + b, 0) / layerSizes.length;
+                    
+                    log(`${layer.layerType}: ${layer.grains.length} grains`, 'layersStats');
+                    log(`  Base size: ${layer.baseSize.toFixed(2)}px`, 'layersStats');
+                    log(`  Size range: ${minLayerSize.toFixed(2)} - ${maxLayerSize.toFixed(2)}px`, 'layersStats');
+                    log(`  Avg size: ${avgLayerSize.toFixed(2)}px`, 'layersStats');
+                    log(`  Intensity: ${layer.intensityMultiplier.toFixed(2)}`, 'layersStats');
+                } else {
+                    log(`${layer.layerType}: ${layer.grains.length} grains (empty)`, 'layersStats');
+                }
             }
             
+            log(``, 'layersStats');
             log(`Total grains: ${totalGrains}`, 'layersStats');
-            log(`Showing: ${activeLayer}`, 'layersStats');
+            log(`Visible grains (${activeLayer}): ${visibleGrains}`, 'layersStats');
+            
+            // Add debug information about grain positions
+            if (activeLayer !== 'all' && layers.length > 0) {
+                const layer = layers.find(l => l.layerType === activeLayer);
+                if (layer && layer.grains.length > 0) {
+                    log(``, 'layersStats');
+                    log(`=== Sample ${activeLayer} grain positions ===`, 'layersStats');
+                    const sampleCount = Math.min(10, layer.grains.length);
+                    for (let i = 0; i < sampleCount; i++) {
+                        const grain = layer.grains[i];
+                        log(`Grain ${i}: (${grain.x.toFixed(1)}, ${grain.y.toFixed(1)}) size=${grain.size.toFixed(2)}`, 'layersStats');
+                    }
+                    if (layer.grains.length > sampleCount) {
+                        log(`... and ${layer.grains.length - sampleCount} more grains`, 'layersStats');
+                    }
+                }
+            }
         }
 
         function visualizeSizeDistribution(layers) {
@@ -509,28 +635,37 @@
             const canvas = document.getElementById('gridCanvas');
             const ctx = canvas.getContext('2d');
             
+            // Calculate scaling factors
+            const scaleX = canvas.width / currentSettings.width;
+            const scaleY = canvas.height / currentSettings.height;
+            
             const allGrains = layers.flatMap(layer => layer.grains);
             const maxGrainSize = Math.max(...allGrains.map(g => g.size));
-            const gridSize = Math.max(8, Math.floor(maxGrainSize * 2));
             
-            const gridCols = Math.ceil(canvas.width / gridSize);
-            const gridRows = Math.ceil(canvas.height / gridSize);
+            // Grid size should be based on original image space, then scaled
+            const originalGridSize = Math.max(8, Math.floor(maxGrainSize * 2));
+            const scaledGridSize = originalGridSize * Math.min(scaleX, scaleY);
             
-            // Draw grid lines
+            const gridCols = Math.ceil(currentSettings.width / originalGridSize);
+            const gridRows = Math.ceil(currentSettings.height / originalGridSize);
+            
+            // Draw grid lines (scaled to canvas)
             ctx.strokeStyle = '#333333';
             ctx.lineWidth = 1;
             
             for (let x = 0; x <= gridCols; x++) {
+                const scaledX = (x * originalGridSize) * scaleX;
                 ctx.beginPath();
-                ctx.moveTo(x * gridSize, 0);
-                ctx.lineTo(x * gridSize, canvas.height);
+                ctx.moveTo(scaledX, 0);
+                ctx.lineTo(scaledX, canvas.height);
                 ctx.stroke();
             }
             
             for (let y = 0; y <= gridRows; y++) {
+                const scaledY = (y * originalGridSize) * scaleY;
                 ctx.beginPath();
-                ctx.moveTo(0, y * gridSize);
-                ctx.lineTo(canvas.width, y * gridSize);
+                ctx.moveTo(0, scaledY);
+                ctx.lineTo(canvas.width, scaledY);
                 ctx.stroke();
             }
             
@@ -541,25 +676,28 @@
             const cellCounts = new Map();
             
             for (const grain of allGrains) {
-                const cellX = Math.floor(grain.x / gridSize);
-                const cellY = Math.floor(grain.y / gridSize);
+                const cellX = Math.floor(grain.x / originalGridSize);
+                const cellY = Math.floor(grain.y / originalGridSize);
                 const cellKey = `${cellX},${cellY}`;
                 cellCounts.set(cellKey, (cellCounts.get(cellKey) || 0) + 1);
             }
             
             for (const [cellKey, count] of cellCounts.entries()) {
                 const [cellX, cellY] = cellKey.split(',').map(Number);
-                const x = cellX * gridSize;
-                const y = cellY * gridSize;
+                const x = (cellX * originalGridSize) * scaleX;
+                const y = (cellY * originalGridSize) * scaleY;
+                const width = originalGridSize * scaleX;
+                const height = originalGridSize * scaleY;
                 
-                ctx.strokeRect(x, y, gridSize, gridSize);
+                ctx.strokeRect(x, y, width, height);
             }
             
             // Draw grains as white dots
             drawGrains('gridCanvas', allGrains, '#ffffff');
             
             // Log statistics
-            log(`Grid size: ${gridSize}px`, 'gridStats');
+            log(`Original grid size: ${originalGridSize}px`, 'gridStats');
+            log(`Scaled grid size: ${scaledGridSize.toFixed(1)}px`, 'gridStats');
             log(`Grid dimensions: ${gridCols} x ${gridRows}`, 'gridStats');
             log(`Total cells: ${gridCols * gridRows}`, 'gridStats');
             log(`Occupied cells: ${cellCounts.size}`, 'gridStats');
@@ -586,25 +724,108 @@
                 useMultipleLayers
             };
             
-            // Update all canvas sizes
-            updateCanvasSize('rawGrainsCanvas', width, height);
-            updateCanvasSize('layersCanvas', width, height);
-            updateCanvasSize('sizesCanvas', width, height);
-            updateCanvasSize('gridCanvas', width, height);
+            generateVisualizationWithSettings(currentSettings);
+        };
+
+        window.generateWithSmallGrains = function() {
+            const width = parseInt(document.getElementById('width').value);
+            const height = parseInt(document.getElementById('height').value);
+            const filmType = document.getElementById('filmType').value;
+            const grainIntensity = parseFloat(document.getElementById('grainIntensity').value);
+            const useMultipleLayers = document.getElementById('useMultipleLayers').checked;
+            
+            // Use very low ISO for small grains
+            currentSettings = {
+                width,
+                height,
+                iso: 100, // Force small grains
+                filmType,
+                grainIntensity,
+                upscaleFactor: 1.0,
+                useMultipleLayers
+            };
+            
+            generateVisualizationWithSettings(currentSettings);
+        };
+
+        window.testGrainDensity = function() {
+            const width = parseInt(document.getElementById('width').value);
+            const height = parseInt(document.getElementById('height').value);
+            const iso = parseInt(document.getElementById('iso').value);
+            
+            console.log('=== Testing Grain Density Calculation ===');
+            console.log(`Image size: ${width}x${height} = ${width * height} pixels`);
+            console.log(`ISO: ${iso}`);
+            
+            // Test density calculation manually
+            const baseGrainSize = Math.max(0.5, iso / 200);
+            const imageArea = width * height;
+            const densityFactor = Math.min(0.05, iso / 10000);
+            const grainDensity = Math.floor(imageArea * densityFactor);
+            const minDistance = Math.max(1, baseGrainSize * 0.3);
+            
+            console.log(`Base grain size: ${baseGrainSize.toFixed(3)}`);
+            console.log(`Density factor: ${densityFactor.toFixed(6)}`);
+            console.log(`Target grain density: ${grainDensity}`);
+            console.log(`Min distance: ${minDistance.toFixed(3)}`);
+            
+            // Test what happens with very simple settings
+            const testSettings = {
+                width,
+                height,
+                iso: 200, // Low ISO
+                filmType: 'kodak',
+                grainIntensity: 1.0,
+                upscaleFactor: 1.0,
+                useMultipleLayers: false // Single layer only
+            };
+            
+            const testVisualizer = new GrainDebugVisualizer(width, height, testSettings);
+            const testParams = testVisualizer.grainGenerator.calculateGrainParameters();
+            console.log('Calculated parameters:', testParams);
+            
+            // Test just the raw Poisson generation
+            const poissonPoints = testVisualizer.grainGenerator.generatePoissonDiskSampling(testParams.minDistance, testParams.grainDensity);
+            console.log(`Poisson generated: ${poissonPoints.length} / ${testParams.grainDensity} points`);
+            
+            // Test fallback generation
+            const fallbackPoints = testVisualizer.grainGenerator.generateFallbackGrains([], testParams.grainDensity);
+            console.log(`Fallback generated: ${fallbackPoints.length} points`);
+        };
+
+        function generateVisualizationWithSettings(settings) {
+            // Use fixed canvas sizes for consistent visualization
+            const canvasWidth = 400;
+            const canvasHeight = 300;
+            
+            // Update all canvas sizes to fixed dimensions
+            updateCanvasSize('rawGrainsCanvas', canvasWidth, canvasHeight);
+            updateCanvasSize('layersCanvas', canvasWidth, canvasHeight);
+            updateCanvasSize('sizesCanvas', canvasWidth, canvasHeight);
+            updateCanvasSize('gridCanvas', canvasWidth, canvasHeight);
             
             clearAllCanvases();
             
-            const visualizer = new GrainDebugVisualizer(width, height, currentSettings);
+            const visualizer = new GrainDebugVisualizer(settings.width, settings.height, settings);
             
             console.log('=== Debug Visualization Generation ===');
-            console.log('Settings:', currentSettings);
+            console.log('Settings:', settings);
             
             // Generate raw grains
             currentRawGrains = visualizer.generateRawGrains();
+            console.log('Raw grains generated:', currentRawGrains);
             visualizeRawGrains(currentRawGrains);
             
             // Generate layers
             currentLayers = visualizer.generateLayerStructure();
+            console.log('Layers generated:', currentLayers);
+            console.log('Layer grain counts:', currentLayers.map(l => ({ type: l.layerType, count: l.grains.length })));
+            
+            // Log some sample grains for debugging
+            if (currentLayers.length > 0 && currentLayers[0].grains.length > 0) {
+                console.log('Sample grains from first layer:', currentLayers[0].grains.slice(0, 5));
+            }
+            
             visualizeLayers(currentLayers);
             
             // Show size distribution
@@ -612,7 +833,7 @@
             
             // Show spatial grid
             visualizeSpatialGrid(currentLayers);
-        };
+        }
 
         window.showLayer = function(layerType) {
             if (!currentLayers) return;
