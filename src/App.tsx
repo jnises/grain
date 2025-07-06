@@ -295,6 +295,17 @@ function App() {
       <header className="app-header">
         <h1>Analog Film Grain Simulator</h1>
         <p>Upload an image to add physically plausible analog film grain</p>
+        {import.meta.env.DEV && (
+          <div className="dev-debug-link">
+            <a 
+              href="/grain-debug.html" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              🔧 Debug Visualizer (Dev Mode)
+            </a>
+          </div>
+        )}
       </header>
 
       <div className="controls">

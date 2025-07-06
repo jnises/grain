@@ -37,6 +37,29 @@
   font-size: 1.1rem;
 }
 
+.dev-debug-link {
+  margin-top: 1rem;
+}
+
+.dev-debug-link a {
+  color: #ff6b35;
+  text-decoration: none;
+  font-size: 0.9em;
+  border: 1px solid #ff6b35;
+  padding: 6px 12px;
+  border-radius: 4px;
+  display: inline-block;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.dev-debug-link a:hover {
+  background-color: #ff6b35;
+  color: #1a1a1a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;
