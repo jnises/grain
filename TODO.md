@@ -9,6 +9,8 @@
 - [x] The algorithm is much slower when using `multiple grain layers` feature. Figure out why that is. **Fixed**: The issue was O(n²) complexity in grain layer processing. Each pixel was doing `layer.grains.filter(grain => nearbyGrains.includes(grain))` which searched through all grains for each layer. Optimized by creating a grain-to-layer map for O(1) layer lookup instead. **Benchmarked**: Added comprehensive performance tests showing multiple layers now perform 1.2-1.6x faster than single layer mode, confirming the optimization works.
 - [x] Add debug page that can visualize separate parts of the algorithm, such as raw grains before they are combined with the image. This page should only be available in dev mode. **Implemented**: Created `/public/grain-debug.html` with comprehensive algorithm visualization including raw Poisson/fallback grain points, multiple layer visualization, size distribution analysis, and spatial grid visualization. Added development-only link in main app header that only appears when `import.meta.env.DEV` is true.
 - [x] Go through `ALGORITHM_DESIGN.md` and compare against the current implementation. Describe what has been implemented and what hasn't any why. **Completed**: Created comprehensive analysis in `ALGORITHM_IMPLEMENTATION_ANALYSIS.md`. Found that ~70% of the designed algorithm is implemented including multi-layer grain system, density-based compositing, spatial distribution, and multi-channel processing. Major gaps are in grain shape generation (no Perlin noise/halos), upsampling for detail, and advanced photographic effects like grain bridging.
+- [ ] Adjust benchmark code to focus on how the performance changes over time, rather than comparing single/multi layers.
+- [ ] Use something like a flamegraph to find the hotspots in the code and optimize those
 
 ## Partially Implemented Features (Complete these for better photographic accuracy)
 
@@ -27,7 +29,6 @@
 
 - [ ] **Implement grain bridging and clustering effects**: Add simulation of grains connecting during development through clustering algorithms. This creates more realistic grain patterns that match actual film behavior.
 - [ ] **Add edge effects near high-contrast boundaries**: Implement grain density changes near high-contrast image boundaries to simulate developer depletion and chemical diffusion effects.
-- [ ] **Add Voronoi diagram grain generation**: Implement as alternative to Poisson disk sampling for different grain distribution characteristics and variety.
 
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense.
