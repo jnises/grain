@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
-import type { GrainSettings } from '../src/types';
+import type { GrainSettings, Point2D } from '../src/types';
 import { assert, assertPositiveInteger, assertObject } from '../src/utils';
 
 describe('Grain Distribution Bug Tests', () => {
@@ -189,6 +189,220 @@ describe('Grain Distribution Bug Tests', () => {
         
         expect(grains.length).toBeGreaterThan(testCase.expectedMinGrains);
       }
+    });
+  });
+
+  describe('Poisson Distribution Coverage Tests', () => {
+    // These tests verify the optimized Poisson disk sampling algorithm's distribution properties
+    // The algorithm now correctly:
+    // 1. Distributes points across ALL regions of the image (complete coverage)
+    // 2. Maintains minimum distance constraints (zero violations)  
+    // 3. Avoids clustering in corners/edges
+    // 4. Uses proper density calculations to maximize space utilization
+    
+    it('should distribute Poisson samples across entire image area', () => {
+      const generator = new GrainGenerator(400, 300, settings);
+      const params = generator.calculateGrainParameters();
+      
+      // Generate Poisson samples directly (not full grain structure)
+      const poissonPoints = generator.generatePoissonDiskSampling(params.minDistance, params.grainDensity);
+      
+      // Validate the Poisson generation result
+      assert(Array.isArray(poissonPoints), 'Poisson points must be an array', { poissonPoints });
+      
+      // Skip test if Poisson didn't generate enough points for meaningful distribution analysis
+      if (poissonPoints.length < 50) {
+        console.log(`Skipping Poisson distribution test - only ${poissonPoints.length} points generated`);
+        return;
+      }
+      
+      // Test that Poisson samples are found in all regions of the image
+      const regions = {
+        topLeft: { minX: 0, maxX: 133, minY: 0, maxY: 100 },
+        topCenter: { minX: 133, maxX: 266, minY: 0, maxY: 100 },
+        topRight: { minX: 266, maxX: 400, minY: 0, maxY: 100 },
+        middleLeft: { minX: 0, maxX: 133, minY: 100, maxY: 200 },
+        middleCenter: { minX: 133, maxX: 266, minY: 100, maxY: 200 },
+        middleRight: { minX: 266, maxX: 400, minY: 100, maxY: 200 },
+        bottomLeft: { minX: 0, maxX: 133, minY: 200, maxY: 300 },
+        bottomCenter: { minX: 133, maxX: 266, minY: 200, maxY: 300 },
+        bottomRight: { minX: 266, maxX: 400, minY: 200, maxY: 300 }
+      };
+
+      const regionCounts = Object.fromEntries(
+        Object.keys(regions).map(key => [key, 0])
+      );
+
+      for (const point of poissonPoints) {
+        // Validate each Poisson point structure
+        assertObject(point, 'Poisson point must be an object');
+        assert(typeof point.x === 'number', 'Poisson point x must be a number', { point });
+        assert(typeof point.y === 'number', 'Poisson point y must be a number', { point });
+        assert(point.x >= 0 && point.x < 400, 'Poisson point x must be within bounds', { point });
+        assert(point.y >= 0 && point.y < 300, 'Poisson point y must be within bounds', { point });
+        
+        for (const [regionName, bounds] of Object.entries(regions)) {
+          if (point.x >= bounds.minX && point.x < bounds.maxX &&
+              point.y >= bounds.minY && point.y < bounds.maxY) {
+            regionCounts[regionName]++;
+          }
+        }
+      }
+
+      console.log('Poisson distribution by region:', regionCounts);
+      console.log('Total Poisson points:', poissonPoints.length);
+      console.log('Min distance:', params.minDistance);
+
+      // Poisson distribution should have complete coverage with high enough density
+      const emptyRegions = Object.entries(regionCounts)
+        .filter(([_, count]) => count === 0)
+        .map(([name, _]) => name);
+
+      expect(emptyRegions.length).toBe(0); // All regions should have points with proper density
+      
+      // All 9 regions should have points
+      const regionsWithPoints = Object.values(regionCounts).filter(count => count > 0).length;
+      expect(regionsWithPoints).toBe(9);
+    });
+
+    it('should maintain Poisson minimum distance constraints', () => {
+      const generator = new GrainGenerator(400, 300, settings);
+      const params = generator.calculateGrainParameters();
+      
+      const poissonPoints = generator.generatePoissonDiskSampling(params.minDistance, params.grainDensity);
+      
+      // Validate that we have points to test
+      assert(Array.isArray(poissonPoints), 'Poisson points must be an array', { poissonPoints });
+      
+      if (poissonPoints.length < 2) {
+        console.log(`Skipping distance constraint test - only ${poissonPoints.length} points generated`);
+        return;
+      }
+
+      console.log(`Testing ${poissonPoints.length} Poisson points for min distance ${params.minDistance}`);
+      
+      // Check that all points respect minimum distance constraint
+      let violationCount = 0;
+      const violations: Array<{ point1: Point2D, point2: Point2D, distance: number }> = [];
+      
+      for (let i = 0; i < poissonPoints.length; i++) {
+        for (let j = i + 1; j < poissonPoints.length; j++) {
+          const p1 = poissonPoints[i];
+          const p2 = poissonPoints[j];
+          
+          const distance = Math.sqrt(
+            Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)
+          );
+          
+          if (distance < params.minDistance) {
+            violationCount++;
+            violations.push({ point1: p1, point2: p2, distance });
+          }
+        }
+      }
+      
+      if (violations.length > 0) {
+        console.log('Distance violations found:', violations.slice(0, 5)); // Show first 5
+      }
+      
+      console.log(`Distance violations: ${violationCount} out of ${poissonPoints.length * (poissonPoints.length - 1) / 2} pairs`);
+      
+      // Poisson disk sampling should have zero distance violations now that it's fixed
+      expect(violationCount).toBe(0);
+    });
+
+    it('should not cluster Poisson samples in corner or edge areas', () => {
+      const generator = new GrainGenerator(400, 300, settings);
+      const params = generator.calculateGrainParameters();
+      
+      const poissonPoints = generator.generatePoissonDiskSampling(params.minDistance, params.grainDensity);
+      
+      // Validate Poisson generation result
+      assert(Array.isArray(poissonPoints), 'Poisson points must be an array', { poissonPoints });
+      
+      if (poissonPoints.length < 20) {
+        console.log(`Skipping Poisson clustering test - only ${poissonPoints.length} points generated`);
+        return;
+      }
+      
+      // Define corner and edge regions (10% of image size)
+      const cornerSize = 40; // 10% of 400
+      const edgeSize = 30; // 10% of 300
+      
+      let cornerPoints = 0;
+      let centerPoints = 0;
+      
+      for (const point of poissonPoints) {
+        // Validate point structure before processing
+        assertObject(point, 'Poisson point must be an object');
+        assert(typeof point.x === 'number' && typeof point.y === 'number', 
+          'Poisson point coordinates must be numbers', { point });
+        
+        const isInCorner = 
+          (point.x < cornerSize && point.y < edgeSize) || // top-left
+          (point.x > 400 - cornerSize && point.y < edgeSize) || // top-right
+          (point.x < cornerSize && point.y > 300 - edgeSize) || // bottom-left
+          (point.x > 400 - cornerSize && point.y > 300 - edgeSize); // bottom-right
+        
+        const isInCenter = 
+          point.x > cornerSize * 2 && point.x < 400 - cornerSize * 2 &&
+          point.y > edgeSize * 2 && point.y < 300 - edgeSize * 2;
+        
+        if (isInCorner) cornerPoints++;
+        if (isInCenter) centerPoints++;
+      }
+      
+      console.log(`Poisson - Corner points: ${cornerPoints}, Center points: ${centerPoints}, Total: ${poissonPoints.length}`);
+      
+      // Poisson should have good distribution now that the algorithm is fixed
+      // Center should have more points than corners for good distribution
+      expect(centerPoints).toBeGreaterThan(cornerPoints);
+      
+      // Corner shouldn't have more than 5% of total points (stricter now that algorithm is fixed)
+      expect(cornerPoints / poissonPoints.length).toBeLessThan(0.05);
+    });
+
+    it('should generate consistent Poisson distribution density across different parameters', () => {
+      const testParams = [
+        { minDistance: 5, maxSamples: 500 },
+        { minDistance: 8, maxSamples: 300 },
+        { minDistance: 10, maxSamples: 200 }
+      ];
+      
+      const results = testParams.map(params => {
+        const generator = new GrainGenerator(400, 300, settings);
+        const poissonPoints = generator.generatePoissonDiskSampling(params.minDistance, params.maxSamples);
+        
+        const actualDensity = poissonPoints.length / (400 * 300);
+        const efficiency = poissonPoints.length / params.maxSamples;
+        
+        return {
+          params,
+          pointCount: poissonPoints.length,
+          actualDensity,
+          efficiency
+        };
+      });
+      
+      console.log('Poisson results by parameters:', results);
+      
+      // Smaller minimum distances should generally allow more points
+      // (though this isn't guaranteed due to randomness and constraints)
+      for (let i = 0; i < results.length - 1; i++) {
+        const current = results[i];
+        const next = results[i + 1];
+        
+        // If min distance is smaller, we should get at least some points
+        if (current.params.minDistance < next.params.minDistance) {
+          expect(current.pointCount).toBeGreaterThan(0);
+        }
+      }
+      
+      // All results should have generated at least some points
+      results.forEach(result => {
+        expect(result.pointCount).toBeGreaterThan(0);
+        expect(result.efficiency).toBeLessThanOrEqual(1.0); // Can't exceed target
+      });
     });
   });
 

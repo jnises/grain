@@ -9,7 +9,6 @@ import {
   assertPositiveNumber, 
   assertArray, 
   assertPoint2D,
-  assertValidGridCoordinates,
   assertNonNegativeNumber,
   assertInRange,
   assertFiniteNumber,
@@ -19,10 +18,10 @@ import {
 // File-level constants shared across multiple methods
 const ISO_TO_GRAIN_SIZE_DIVISOR = 200;
 const MIN_GRAIN_SIZE = 0.5;
-const ISO_TO_DENSITY_DIVISOR = 10000;
-const MAX_DENSITY_FACTOR = 0.05;
-const GRAIN_DISTANCE_MULTIPLIER = 0.3;
-const MIN_GRAIN_DISTANCE = 1;
+const ISO_TO_DENSITY_DIVISOR = 3000; // Reduced from 10000 to increase density
+const MAX_DENSITY_FACTOR = 0.15; // Increased from 0.05 to allow much higher densities
+const GRAIN_DISTANCE_MULTIPLIER = 1.2; // Increased from 0.3 to give more reasonable distances
+const MIN_GRAIN_DISTANCE = 0.5; // Reduced from 1 to allow smaller grains when appropriate
 
 const PRIMARY_LAYER_SIZE_MULTIPLIER = 1.5;
 const SECONDARY_LAYER_SIZE_MULTIPLIER = 0.8;
@@ -75,12 +74,11 @@ export class GrainGenerator {
     console.log(`Generating Poisson disk sampling: minDistance=${minDistance}, maxSamples=${maxSamples}, imageSize=${this.width}x${this.height}`);
 
     // Poisson disk sampling constants
-    const POISSON_GRID_SQRT_2 = Math.sqrt(2);
-    const POISSON_MAX_ATTEMPTS_MULTIPLIER = 100;
-    const POISSON_CANDIDATES_PER_POINT = 50;
+    const POISSON_CANDIDATES_PER_POINT = 30; // Standard value from literature
     
     const points: Point2D[] = [];
-    const cellSize = minDistance / POISSON_GRID_SQRT_2;
+    // Use proper cell size calculation - each cell should be able to hold at most one point
+    const cellSize = minDistance / Math.sqrt(2);
     const gridWidth = Math.ceil(this.width / cellSize);
     const gridHeight = Math.ceil(this.height / cellSize);
     
@@ -98,103 +96,123 @@ export class GrainGenerator {
       }
     );
 
+    // Initialize grid to track which cells contain points
     const grid: Array<Array<Point2D | null>> = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(null));
+    const activeList: Point2D[] = [];
     
-    // Start with random point
-    const initialPoint = {
-      x: Math.random() * this.width,
-      y: Math.random() * this.height
-    };
-    points.push(initialPoint);
+    // Helper function to get grid coordinates for a point
+    const getGridCoords = (point: Point2D) => ({
+      x: Math.floor(point.x / cellSize),
+      y: Math.floor(point.y / cellSize)
+    });
     
-    const activeList = [initialPoint];
-    const initialGridX = Math.floor(initialPoint.x / cellSize);
-    const initialGridY = Math.floor(initialPoint.y / cellSize);
-    
-    // Validate grid coordinates with custom assertion
-    assertValidGridCoordinates(
-      initialGridX, 
-      initialGridY, 
-      gridWidth, 
-      gridHeight, 
-      'initial point placement'
-    );
-    
-    grid[initialGridX][initialGridY] = initialPoint;
-    
-    let attempts = 0;
-    const maxAttempts = maxSamples * POISSON_MAX_ATTEMPTS_MULTIPLIER; // Prevent infinite loops
-    
-    while (activeList.length > 0 && points.length < maxSamples && attempts < maxAttempts) {
-      attempts++;
-      const randomIndex = Math.floor(Math.random() * activeList.length);
-      const point = activeList[randomIndex];
-      let found = false;
+    // Helper function to check if a point is valid (respects minimum distance)
+    const isValidPoint = (candidate: Point2D): boolean => {
+      const gridCoords = getGridCoords(candidate);
       
-      for (let i = 0; i < POISSON_CANDIDATES_PER_POINT; i++) {
-        const angle = Math.random() * 2 * Math.PI;
-        const radius = minDistance + Math.random() * minDistance; // Changed back to ensure minimum distance
-        const newPoint = {
-          x: point.x + Math.cos(angle) * radius,
-          y: point.y + Math.sin(angle) * radius
-        };
-        
-        if (newPoint.x >= 0 && newPoint.x < this.width && 
-            newPoint.y >= 0 && newPoint.y < this.height) {
+      // Check all neighboring cells in a radius that could contain conflicting points
+      const checkRadius = Math.ceil(minDistance / cellSize);
+      
+      for (let dx = -checkRadius; dx <= checkRadius; dx++) {
+        for (let dy = -checkRadius; dy <= checkRadius; dy++) {
+          const checkX = gridCoords.x + dx;
+          const checkY = gridCoords.y + dy;
           
-          const gridX = Math.floor(newPoint.x / cellSize);
-          const gridY = Math.floor(newPoint.y / cellSize);
-          
-          // Validate grid coordinates before accessing with better error context
-          if (gridX < 0 || gridX >= gridWidth || gridY < 0 || gridY >= gridHeight) {
-            console.error('Grid coordinates out of bounds - skipping candidate point', {
-              point: newPoint,
-              gridCoords: { x: gridX, y: gridY },
-              gridBounds: { width: gridWidth, height: gridHeight },
-              cellSize
-            });
-            continue; // Skip this candidate point
-          }
-          
-          let valid = true;
-          for (let dx = -1; dx <= 1; dx++) {
-            for (let dy = -1; dy <= 1; dy++) {
-              const checkX = gridX + dx;
-              const checkY = gridY + dy;
-              if (checkX >= 0 && checkX < gridWidth && 
-                  checkY >= 0 && checkY < gridHeight && 
-                  grid[checkX][checkY]) {
-                const existingPoint = grid[checkX][checkY]!;
-                const distance = Math.sqrt(
-                  Math.pow(newPoint.x - existingPoint.x, 2) + 
-                  Math.pow(newPoint.y - existingPoint.y, 2)
-                );
-                if (distance < minDistance) {
-                  valid = false;
-                  break;
-                }
-              }
+          if (checkX >= 0 && checkX < gridWidth && 
+              checkY >= 0 && checkY < gridHeight && 
+              grid[checkX][checkY]) {
+            const existingPoint = grid[checkX][checkY]!;
+            const distance = Math.sqrt(
+              Math.pow(candidate.x - existingPoint.x, 2) + 
+              Math.pow(candidate.y - existingPoint.y, 2)
+            );
+            if (distance < minDistance) {
+              return false;
             }
-            if (!valid) break;
           }
+        }
+      }
+      return true;
+    };
+    
+    // Helper function to add a point to the data structures
+    const addPoint = (point: Point2D) => {
+      points.push(point);
+      activeList.push(point);
+      const gridCoords = getGridCoords(point);
+      grid[gridCoords.x][gridCoords.y] = point;
+    };
+    
+    // Start with a single well-positioned initial point
+    const initialPoint = {
+      x: this.width * (0.3 + Math.random() * 0.4), // Center-ish but with some randomness
+      y: this.height * (0.3 + Math.random() * 0.4)
+    };
+    addPoint(initialPoint);
+    
+    // Track generation progress for early termination
+    let generationRounds = 0;
+    let pointsAddedInLastRound = 0;
+    const maxGenerationRounds = 1000; // Prevent infinite loops
+    const minPointsPerRound = Math.max(1, Math.ceil(maxSamples / 1000)); // Require some progress
+    
+    // Process active points until no more can be added
+    while (activeList.length > 0 && points.length < maxSamples && generationRounds < maxGenerationRounds) {
+      generationRounds++;
+      const pointsAtRoundStart = points.length;
+      
+      // Process all current active points in this round
+      const activePointsThisRound = [...activeList]; // Copy to avoid modification during iteration
+      
+      for (const activePoint of activePointsThisRound) {
+        if (points.length >= maxSamples) break;
+        
+        let foundValidPoint = false;
+        
+        // Try to generate new points around this active point
+        for (let attempt = 0; attempt < POISSON_CANDIDATES_PER_POINT; attempt++) {
+          // Generate point in annulus between minDistance and 2*minDistance
+          const angle = Math.random() * 2 * Math.PI;
+          const radius = minDistance * (1 + Math.random()); // Between minDistance and 2*minDistance
           
-          if (valid) {
-            points.push(newPoint);
-            activeList.push(newPoint);
-            grid[gridX][gridY] = newPoint;
-            found = true;
-            break;
+          const candidate = {
+            x: activePoint.x + Math.cos(angle) * radius,
+            y: activePoint.y + Math.sin(angle) * radius
+          };
+          
+          // Check if candidate is within image bounds
+          if (candidate.x >= 0 && candidate.x < this.width && 
+              candidate.y >= 0 && candidate.y < this.height) {
+            
+            // Check if candidate respects minimum distance constraints
+            if (isValidPoint(candidate)) {
+              addPoint(candidate);
+              foundValidPoint = true;
+              break; // Found a valid point, move to next active point
+            }
+          }
+        }
+        
+        // If no valid point was found after all attempts, remove this point from active list
+        if (!foundValidPoint) {
+          const index = activeList.indexOf(activePoint);
+          if (index >= 0) {
+            activeList.splice(index, 1);
           }
         }
       }
       
-      if (!found) {
-        activeList.splice(randomIndex, 1);
+      pointsAddedInLastRound = points.length - pointsAtRoundStart;
+      
+      // Early termination if we're not making progress
+      if (pointsAddedInLastRound < minPointsPerRound && generationRounds > 10) {
+        console.log(`Early termination: only ${pointsAddedInLastRound} points added in round ${generationRounds}`);
+        break;
       }
     }
     
     // Log final results for debugging
-    console.log(`Poisson disk sampling completed: generated ${points.length}/${maxSamples} points after ${attempts} attempts`);
+    console.log(`Poisson disk sampling completed: generated ${points.length}/${maxSamples} points in ${generationRounds} rounds, ${activeList.length} active points remaining`);
     
     return points;
   }

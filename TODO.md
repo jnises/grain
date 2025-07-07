@@ -9,6 +9,8 @@
 - [x] The algorithm is much slower when using `multiple grain layers` feature. Figure out why that is. **Fixed**: The issue was O(n²) complexity in grain layer processing. Each pixel was doing `layer.grains.filter(grain => nearbyGrains.includes(grain))` which searched through all grains for each layer. Optimized by creating a grain-to-layer map for O(1) layer lookup instead. **Benchmarked**: Added comprehensive performance tests showing multiple layers now perform 1.2-1.6x faster than single layer mode, confirming the optimization works.
 - [x] Add debug page that can visualize separate parts of the algorithm, such as raw grains before they are combined with the image. This page should only be available in dev mode. **Implemented**: Created `/public/grain-debug.html` with comprehensive algorithm visualization including raw Poisson/fallback grain points, multiple layer visualization, size distribution analysis, and spatial grid visualization. Added development-only link in main app header that only appears when `import.meta.env.DEV` is true.
 - [x] Go through `ALGORITHM_DESIGN.md` and compare against the current implementation. Describe what has been implemented and what hasn't any why. **Completed**: Created comprehensive analysis in `ALGORITHM_IMPLEMENTATION_ANALYSIS.md`. Found that ~70% of the designed algorithm is implemented including multi-layer grain system, density-based compositing, spatial distribution, and multi-channel processing. Major gaps are in grain shape generation (no Perlin noise/halos), upsampling for detail, and advanced photographic effects like grain bridging.
+- [x] **Fix Poisson disk sampling distribution issues**: Fixed severe clustering and distance violations in Poisson algorithm. Corrected radius calculation (now proper annulus sampling), improved neighbor checking, and increased density parameters. Algorithm now achieves complete coverage (all 9 image regions filled) with zero distance violations. Updated `ISO_TO_DENSITY_DIVISOR` from 10000→3000 and `MAX_DENSITY_FACTOR` from 0.05→0.15 for proper space utilization.
+- [ ] Remove the multi layer codepath, instead change the single layer path to handle varying grain sizes. Store the size per grain and adjust the min distance when calulating the distribution.
 - [ ] Adjust benchmark code to focus on how the performance changes over time, rather than comparing single/multi layers.
 - [ ] Use something like a flamegraph to find the hotspots in the code and optimize those
 
@@ -36,6 +38,7 @@
 - [ ] Update agent instructions on how to use the asserts.
 - [ ] Update hot code to use the dev assert.
 - [ ] Add option for monochrome grains
+- [ ] Go through the testcases and make sure they are all enabled and makes sense
 - [ ] Optimize the algorithm
 - [ ] Clean up unused files and debug utils such as `public/grain-test.html`
 - [ ] Clean up old agent-generated analysis and summary md files.
