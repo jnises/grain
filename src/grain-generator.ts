@@ -1,7 +1,7 @@
 // Core grain generation logic extracted for testing
 // This file contains the grain generation algorithms without Web Worker dependencies
 
-import type { GrainSettings, Point2D, GrainPoint, GrainLayer } from './types';
+import type { GrainSettings, Point2D, GrainPoint } from './types';
 import { SEEDED_RANDOM_MULTIPLIER } from './constants';
 import { 
   assertPositiveInteger, 
@@ -23,12 +23,10 @@ const MAX_DENSITY_FACTOR = 0.15; // Increased from 0.05 to allow much higher den
 const GRAIN_DISTANCE_MULTIPLIER = 1.2; // Increased from 0.3 to give more reasonable distances
 const MIN_GRAIN_DISTANCE = 0.5; // Reduced from 1 to allow smaller grains when appropriate
 
-const PRIMARY_LAYER_SIZE_MULTIPLIER = 1.5;
-const SECONDARY_LAYER_SIZE_MULTIPLIER = 0.8;
-const MICRO_LAYER_SIZE_MULTIPLIER = 0.3;
-const PRIMARY_LAYER_DENSITY_MULTIPLIER = 0.4;
-const SECONDARY_LAYER_DENSITY_MULTIPLIER = 0.35;
-const MICRO_LAYER_DENSITY_MULTIPLIER = 0.25;
+// Grain size variation constants for single layer with varying sizes
+const GRAIN_SIZE_VARIATION_RANGE = 2.0; // Size can vary from 0.5x to 2.5x base size
+const GRAIN_SIZE_VARIATION_SEED_MULTIPLIER = 456.789;
+const GRAIN_SIZE_DISTRIBUTION_BIAS = 0.6; // Bias towards smaller grains (0.5 = uniform, >0.5 = more small grains)
 
 export class GrainGenerator {
   private width: number;
@@ -317,56 +315,40 @@ export class GrainGenerator {
     };
   }
 
-  // Generate complete grain structure
+  // Generate complete grain structure with varying sizes
   public generateGrainStructure(): GrainPoint[] {
     // Grain analysis and variation constants
     const GRAIN_DENSITY_THRESHOLD = 0.5;
-    const QUADRANT_MAX_RATIO = 0.5;
-    const SIZE_VARIATION_SEED_MULTIPLIER = 123.456;
     const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
     const SHAPE_VARIATION_SEED_MULTIPLIER = 345.678;
     
     const params = this.calculateGrainParameters();
     
-    // For now, prefer fallback generation due to Poisson clustering issues
-    // Try Poisson disk sampling first
-    const grainPoints = this.generatePoissonDiskSampling(params.minDistance, params.grainDensity);
+    // Generate grains with varying sizes using adaptive Poisson disk sampling
+    const finalGrainPoints = this.generateVariableSizeGrains(params.baseGrainSize, params.grainDensity);
     
-    let finalGrainPoints = grainPoints;
-    
-    // Always check distribution and prefer fallback if needed
-    if (grainPoints.length >= params.grainDensity * GRAIN_DENSITY_THRESHOLD) {
-      const analysis = this.analyzeDistribution(grainPoints);
-      const totalGrains = grainPoints.length;
-      const maxQuadrant = Math.max(
-        analysis.quadrants.topLeft,
-        analysis.quadrants.topRight,
-        analysis.quadrants.bottomLeft,
-        analysis.quadrants.bottomRight
-      );
+    // Check distribution quality and use fallback if needed
+    if (finalGrainPoints.length < params.grainDensity * GRAIN_DENSITY_THRESHOLD) {
+      const fallbackGrains = this.generateFallbackGrains([], params.grainDensity);
       
-      // If any quadrant has too many grains (> 50% of total), use fallback
-      if (maxQuadrant > totalGrains * QUADRANT_MAX_RATIO) {
-        finalGrainPoints = this.generateFallbackGrains([], params.grainDensity);
-      }
-    } else {
-      // Not enough grains, use fallback
-      finalGrainPoints = this.generateFallbackGrains(grainPoints, params.grainDensity);
+      // Convert fallback grains to variable-size grains
+      return fallbackGrains.map((point, index) => {
+        const sensitivityVariation = this.seededRandom(index * SENSITIVITY_VARIATION_SEED_MULTIPLIER);
+        const shapeVariation = this.seededRandom(index * SHAPE_VARIATION_SEED_MULTIPLIER);
+        
+        const grainSize = this.generateVariableGrainSize(params.baseGrainSize, index);
+        
+        return {
+          x: point.x,
+          y: point.y,
+          size: grainSize,
+          sensitivity: 0.8 + sensitivityVariation * 0.4,
+          shape: shapeVariation
+        };
+      });
     }
     
-    return finalGrainPoints.map((point, index) => {
-      const sizeVariation = this.seededRandom(index * SIZE_VARIATION_SEED_MULTIPLIER);
-      const sensitivityVariation = this.seededRandom(index * SENSITIVITY_VARIATION_SEED_MULTIPLIER);
-      const shapeVariation = this.seededRandom(index * SHAPE_VARIATION_SEED_MULTIPLIER);
-      
-      return {
-        x: point.x,
-        y: point.y,
-        size: params.baseGrainSize * (0.5 + sizeVariation * 1.5),
-        sensitivity: 0.8 + sensitivityVariation * 0.4,
-        shape: shapeVariation
-      };
-    });
+    return finalGrainPoints;
   }
 
   // Analyze grain distribution
@@ -491,96 +473,100 @@ export class GrainGenerator {
     return grainGrid;
   }
 
-  // Generate multiple grain layers for realistic film grain
-  public generateMultipleGrainLayers(): GrainLayer[] {
-    const layers: GrainLayer[] = [];
-    const params = this.calculateGrainParameters();
+  // Generate grains with varying sizes using adaptive Poisson disk sampling
+  private generateVariableSizeGrains(baseSize: number, targetCount: number): GrainPoint[] {
+    const grains: GrainPoint[] = [];
+    const maxAttempts = targetCount * 10;
+    let attempts = 0;
     
-    // Primary grain layer (largest, most visible)
-    const primaryGrains = this.generateGrainLayer(
-      'primary', 
-      params.baseGrainSize * PRIMARY_LAYER_SIZE_MULTIPLIER, 
-      params.grainDensity * PRIMARY_LAYER_DENSITY_MULTIPLIER
-    );
-    layers.push(primaryGrains);
+    // Constants for grain size distribution
+    const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
+    const SHAPE_VARIATION_SEED_MULTIPLIER = 345.678;
     
-    // Secondary grain layer (medium size clusters)
-    const secondaryGrains = this.generateGrainLayer(
-      'secondary', 
-      params.baseGrainSize * SECONDARY_LAYER_SIZE_MULTIPLIER, 
-      params.grainDensity * SECONDARY_LAYER_DENSITY_MULTIPLIER
-    );
-    layers.push(secondaryGrains);
+    while (grains.length < targetCount && attempts < maxAttempts) {
+      // Generate random position
+      const x = this.seededRandom(attempts * 12.34) * this.width;
+      const y = this.seededRandom(attempts * 56.78) * this.height;
+      
+      // Generate variable size for this grain
+      const grainSize = this.generateVariableGrainSize(baseSize, attempts);
+      
+      // Check if this position is valid (not too close to existing grains)
+      const minDistance = this.calculateMinDistanceForGrain(grainSize, grains, x, y);
+      
+      if (this.isValidGrainPosition(x, y, minDistance, grains)) {
+        const sensitivityVariation = this.seededRandom(attempts * SENSITIVITY_VARIATION_SEED_MULTIPLIER);
+        const shapeVariation = this.seededRandom(attempts * SHAPE_VARIATION_SEED_MULTIPLIER);
+        
+        grains.push({
+          x,
+          y,
+          size: grainSize,
+          sensitivity: 0.8 + sensitivityVariation * 0.4,
+          shape: shapeVariation
+        });
+      }
+      
+      attempts++;
+    }
     
-    // Micro grain layer (fine texture)
-    const microGrains = this.generateGrainLayer(
-      'micro', 
-      params.baseGrainSize * MICRO_LAYER_SIZE_MULTIPLIER, 
-      params.grainDensity * MICRO_LAYER_DENSITY_MULTIPLIER
-    );
-    layers.push(microGrains);
-    
-    return layers;
+    return grains;
   }
   
-  // Generate a single grain layer with specific characteristics
-  private generateGrainLayer(layerType: 'primary' | 'secondary' | 'micro', baseSize: number, density: number): GrainLayer {
-    const targetGrainCount = Math.floor(density);
-    const minDistance = Math.max(1, baseSize * 0.3);
+  // Generate variable grain size with distribution bias towards smaller grains
+  private generateVariableGrainSize(baseSize: number, index: number): number {
+    const sizeVariation = this.seededRandom(index * GRAIN_SIZE_VARIATION_SEED_MULTIPLIER);
     
-    // Generate grain points using existing methods
-    const grainPoints = this.generatePoissonDiskSampling(minDistance, targetGrainCount);
-    let finalGrainPoints = grainPoints;
+    // Apply distribution bias (more small grains than large ones)
+    const biasedVariation = Math.pow(sizeVariation, 1.0 / GRAIN_SIZE_DISTRIBUTION_BIAS);
     
-    // Use fallback if not enough grains
-    if (grainPoints.length < targetGrainCount * 0.5) {
-      finalGrainPoints = this.generateFallbackGrains(grainPoints, targetGrainCount);
-    }
+    // Size ranges from 0.5x to 2.5x base size
+    const minSizeMultiplier = 0.5;
+    const maxSizeMultiplier = 0.5 + GRAIN_SIZE_VARIATION_RANGE;
     
-    // Layer-specific adjustments
-    let layerSizeMultiplier = 1.0;
-    let layerSensitivityMultiplier = 1.0;
-    let layerIntensityMultiplier = 1.0;
+    const sizeMultiplier = minSizeMultiplier + biasedVariation * (maxSizeMultiplier - minSizeMultiplier);
     
-    switch (layerType) {
-      case 'primary':
-        layerSizeMultiplier = 1.2;
-        layerSensitivityMultiplier = 1.1;
-        layerIntensityMultiplier = 1.0;
-        break;
-      case 'secondary':
-        layerSizeMultiplier = 0.8;
-        layerSensitivityMultiplier = 0.9;
-        layerIntensityMultiplier = 0.7;
-        break;
-      case 'micro':
-        layerSizeMultiplier = 0.4;
-        layerSensitivityMultiplier = 0.8;
-        layerIntensityMultiplier = 0.5;
-        break;
-    }
-    
-    // Convert to GrainPoint objects with layer-specific properties
-    const grains = finalGrainPoints.map((point, index) => {
-      const sizeVariation = this.seededRandom(index * 123.456 + layerType.length);
-      const sensitivityVariation = this.seededRandom(index * 789.012 + layerType.length);
-      const shapeVariation = this.seededRandom(index * 345.678 + layerType.length);
-      
-      return {
-        x: point.x,
-        y: point.y,
-        size: baseSize * layerSizeMultiplier * (0.5 + sizeVariation * 1.5),
-        sensitivity: (0.8 + sensitivityVariation * 0.4) * layerSensitivityMultiplier,
-        shape: shapeVariation
-      };
-    });
-    
-    return {
-      layerType,
-      grains,
-      baseSize,
-      density,
-      intensityMultiplier: layerIntensityMultiplier
-    };
+    return Math.max(MIN_GRAIN_SIZE, baseSize * sizeMultiplier);
   }
+  
+  // Calculate minimum distance for a grain based on its size and nearby grains
+  private calculateMinDistanceForGrain(grainSize: number, existingGrains: GrainPoint[], x: number, y: number): number {
+    // Base minimum distance based on grain size
+    let minDistance = Math.max(MIN_GRAIN_DISTANCE, grainSize * GRAIN_DISTANCE_MULTIPLIER);
+    
+    // Find nearby grains and adjust distance based on their sizes
+    const NEARBY_GRAIN_RADIUS = grainSize * 4; // Check in a radius of 4x grain size
+    
+    for (const grain of existingGrains) {
+      const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
+      
+      if (distance < NEARBY_GRAIN_RADIUS) {
+        // Adjust minimum distance based on nearby grain size
+        const combinedSizeDistance = (grainSize + grain.size) * 0.8;
+        minDistance = Math.max(minDistance, combinedSizeDistance);
+      }
+    }
+    
+    return minDistance;
+  }
+  
+  // Check if a position is valid for placing a grain
+  private isValidGrainPosition(x: number, y: number, minDistance: number, existingGrains: GrainPoint[]): boolean {
+    // Check bounds
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+      return false;
+    }
+    
+    // Check distance to existing grains
+    for (const grain of existingGrains) {
+      const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
+      if (distance < minDistance) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  // ...existing code...
 }

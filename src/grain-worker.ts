@@ -6,7 +6,6 @@ import type {
   GrainSettings,
   LabColor,
   GrainPoint,
-  GrainLayer,
   GrainDensity,
   ProcessMessage,
   ProgressMessage,
@@ -245,28 +244,14 @@ class GrainProcessor {
     return 1 / (1 + Math.exp(-FILM_CURVE_CONTRAST * (input - FILM_CURVE_MIDPOINT)));
   }
 
-  // Generate grain structure
-  private generateGrainStructure(): GrainPoint[] | GrainLayer[] {
-    if (this.settings.useMultipleLayers) {
-      return this.grainGenerator.generateMultipleGrainLayers();
-    } else {
-      return this.grainGenerator.generateGrainStructure();
-    }
+  // Generate grain structure (single layer with varying sizes)
+  private generateGrainStructure(): GrainPoint[] {
+    return this.grainGenerator.generateGrainStructure();
   }
 
-  // Create spatial grid for grain acceleration (works with both single grains and layers)
-  private createGrainGrid(grains: GrainPoint[] | GrainLayer[]): Map<string, GrainPoint[]> {
-    if (Array.isArray(grains) && grains.length > 0 && 'layerType' in grains[0]) {
-      // Multiple layers - flatten all grains
-      const allGrains: GrainPoint[] = [];
-      for (const layer of grains as GrainLayer[]) {
-        allGrains.push(...layer.grains);
-      }
-      return this.grainGenerator.createGrainGrid(allGrains);
-    } else {
-      // Single layer
-      return this.grainGenerator.createGrainGrid(grains as GrainPoint[]);
-    }
+  // Create spatial grid for grain acceleration (single layer)
+  private createGrainGrid(grains: GrainPoint[]): Map<string, GrainPoint[]> {
+    return this.grainGenerator.createGrainGrid(grains);
   }
 
   // Apply grain to image
@@ -293,15 +278,9 @@ class GrainProcessor {
     // Determine grid size for spatial lookup
     let maxGrainSize = 1;
     if (Array.isArray(grainStructure) && grainStructure.length > 0) {
-      if ('layerType' in grainStructure[0]) {
-        // Multiple layers
-        const layers = grainStructure as GrainLayer[];
-        maxGrainSize = Math.max(...layers.flatMap(layer => layer.grains.map(g => g.size)));
-      } else {
-        // Single layer
-        const grains = grainStructure as GrainPoint[];
-        maxGrainSize = Math.max(...grains.map(g => g.size));
-      }
+      // Single layer with varying grain sizes
+      const grains = grainStructure as GrainPoint[];
+      maxGrainSize = Math.max(...grains.map(g => g.size));
     }
     const gridSize = Math.max(8, Math.floor(maxGrainSize * 2));
     
@@ -349,77 +328,33 @@ class GrainProcessor {
           }
         }
         
-        // Process grain effects
-        if (this.settings.useMultipleLayers && Array.isArray(grainStructure) && 'layerType' in grainStructure[0]) {
-          // Multiple layers processing - optimized to avoid O(n²) complexity
-          const layers = grainStructure as GrainLayer[];
+        // Process grain effects (single layer with varying sizes)
+        // Start benchmark for single layer processing (first pixel only)
+        if (x === 0 && y === 0) {
+          this.performanceTracker.startBenchmark('Single Layer Processing');
+        }
+        
+        // Process nearby grains directly (already filtered by spatial grid)
+        for (const grain of nearbyGrains) {
+          const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
           
-          // Start benchmark for multiple layers processing (first pixel only to avoid overhead)
-          if (x === 0 && y === 0) {
-            this.performanceTracker.startBenchmark('Multiple Layers Processing');
-          }
-          
-          // Create a map for fast layer lookup by grain reference
-          const grainToLayerMap = new Map<GrainPoint, GrainLayer>();
-          for (const layer of layers) {
-            for (const grain of layer.grains) {
-              grainToLayerMap.set(grain, layer);
-            }
-          }
-          
-          // Process nearby grains directly (already filtered by spatial grid)
-          for (const grain of nearbyGrains) {
-            const layer = grainToLayerMap.get(grain);
-            if (layer) {
-              const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
-              
-              if (distance < grain.size * 2) {
-                const weight = Math.exp(-distance / grain.size);
-                const grainStrength = this.calculateGrainStrength(luminance, grain, x, y);
-                const grainDensity = this.calculateGrainDensity(grainStrength, grain, layer.intensityMultiplier);
-                
-                // Apply different grain characteristics per channel
-                totalGrainDensity.r += grainDensity * weight * 0.7; // Red channel less affected
-                totalGrainDensity.g += grainDensity * weight * 0.9; // Green channel moderate
-                totalGrainDensity.b += grainDensity * weight * 1.0; // Blue channel most affected
-                
-                totalWeight += weight;
-              }
-            }
-          }
-          
-          // End benchmark for multiple layers processing (last pixel only)
-          if (x === this.width - 1 && y === this.height - 1) {
-            this.performanceTracker.endBenchmark('Multiple Layers Processing');
-          }
-        } else {
-          // Single layer processing (backward compatibility)
-          // Start benchmark for single layer processing (first pixel only)
-          if (x === 0 && y === 0) {
-            this.performanceTracker.startBenchmark('Single Layer Processing');
-          }
-          
-          for (const grain of nearbyGrains) {
-            const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
+          if (distance < grain.size * 2) {
+            const weight = Math.exp(-distance / grain.size);
+            const grainStrength = this.calculateGrainStrength(luminance, grain, x, y);
+            const grainDensity = this.calculateGrainDensity(grainStrength, grain, 1.0); // No layer multiplier
             
-            if (distance < grain.size * 2) {
-              const weight = Math.exp(-distance / grain.size);
-              const grainStrength = this.calculateGrainStrength(luminance, grain, x, y);
-              
-              // Density-based compositing
-              const grainDensity = this.calculateGrainDensity(grainStrength, grain);
-              totalGrainDensity.r += grainDensity * weight * 0.7;
-              totalGrainDensity.g += grainDensity * weight * 0.9;
-              totalGrainDensity.b += grainDensity * weight * 1.0;
-              
-              totalWeight += weight;
-            }
+            // Apply different grain characteristics per channel
+            totalGrainDensity.r += grainDensity * weight * 0.7; // Red channel less affected
+            totalGrainDensity.g += grainDensity * weight * 0.9; // Green channel moderate
+            totalGrainDensity.b += grainDensity * weight * 1.0; // Blue channel most affected
+            
+            totalWeight += weight;
           }
-          
-          // End benchmark for single layer processing (last pixel only)
-          if (x === this.width - 1 && y === this.height - 1) {
-            this.performanceTracker.endBenchmark('Single Layer Processing');
-          }
+        }
+        
+        // End benchmark for single layer processing (last pixel only)
+        if (x === this.width - 1 && y === this.height - 1) {
+          this.performanceTracker.endBenchmark('Single Layer Processing');
         }
         
         // Apply final compositing
@@ -464,7 +399,7 @@ class GrainProcessor {
     console.log(`Total pixels processed: ${processedPixels}`);
     console.log(`Pixels with grain effect: ${grainEffectCount}`);
     console.log(`Grain effect coverage: ${(grainEffectCount / processedPixels * 100).toFixed(2)}%`);
-    console.log(`Processing mode: ${this.settings.useMultipleLayers ? 'Multiple Layers' : 'Single Layer'}, Density Model`);
+    console.log(`Processing mode: Single Layer (Variable Sizes), Density Model`);
     
     // Log performance benchmarks
     this.performanceTracker.logSummary();
@@ -472,7 +407,7 @@ class GrainProcessor {
     // Calculate and log performance metrics for multiple layers optimization
     const totalBenchmark = this.performanceTracker.getBenchmark('Total Processing');
     const pixelBenchmark = this.performanceTracker.getBenchmark('Pixel Processing');
-    const layerBenchmark = this.performanceTracker.getBenchmark(this.settings.useMultipleLayers ? 'Multiple Layers Processing' : 'Single Layer Processing');
+    const layerBenchmark = this.performanceTracker.getBenchmark('Single Layer Processing');
     
     if (totalBenchmark && pixelBenchmark) {
       console.log(`\n=== Performance Metrics ===`);
@@ -481,7 +416,7 @@ class GrainProcessor {
       console.log(`Processing overhead: ${((totalBenchmark.duration! - pixelBenchmark.duration!) / totalBenchmark.duration! * 100).toFixed(1)}%`);
       
       if (layerBenchmark) {
-        console.log(`Layer processing mode: ${this.settings.useMultipleLayers ? 'Multiple Layers (optimized)' : 'Single Layer'}`);
+        console.log(`Layer processing mode: Single Layer (Variable Sizes)`);
         console.log(`Layer processing time: ${layerBenchmark.duration!.toFixed(2)}ms`);
         console.log(`Layer processing efficiency: ${(pixelBenchmark.duration! / layerBenchmark.duration!).toFixed(2)}x pixel processing speed`);
       }

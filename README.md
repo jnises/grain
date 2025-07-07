@@ -26,3 +26,13 @@ npm run benchmark
 npm test -- performance-benchmark.test.ts
 npm test -- grain-worker-performance.test.ts
 ```
+
+## Working with coding agent
+- Add items to `TODO.md`
+- Issue a prompt like this:
+    ```
+    Find the first uncheck item in TODO.md and act on it.
+    Start by checking if it is still applicable.
+    If it looks like a small task just do it.
+    If it looks like a bigger task first split it up into subtasks and add add those to TODO.md, then ask the user for feedback on the subtasks before continuing.
+    ```

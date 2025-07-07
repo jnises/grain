@@ -5,7 +5,6 @@ export interface GrainSettings {
   filmType: 'kodak' | 'fuji' | 'ilford';
   grainIntensity: number;
   upscaleFactor: number;
-  useMultipleLayers?: boolean;
 }
 
 export interface GrainProcessingResult {

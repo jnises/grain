@@ -437,17 +437,6 @@ function App() {
               </select>
             </label>
           </div>
-          <div className="control-group">
-            <label>
-              <input 
-                type="checkbox" 
-                checked={customSettings.useMultipleLayers || false}
-                onChange={(e) => handleCustomSettingChange('useMultipleLayers', e.target.checked)}
-                disabled={isProcessing}
-              />
-              Multiple Grain Layers (Primary, Secondary, Micro)
-            </label>
-          </div>
         </div>
       )}
 
