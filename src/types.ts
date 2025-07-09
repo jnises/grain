@@ -67,14 +67,6 @@ export interface GrainPoint {
   shape: number;
 }
 
-export interface GrainLayer {
-  layerType: 'primary' | 'secondary' | 'micro';
-  grains: GrainPoint[];
-  baseSize: number;
-  density: number;
-  intensityMultiplier: number;
-}
-
 export interface GrainDensity {
   r: number;
   g: number;

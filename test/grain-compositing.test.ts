@@ -1,115 +1,125 @@
-// Test file to verify the new grain compositing features
+// Test file to verify grain structure generation and variable grain sizes
 
 import { describe, it, test, expect } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
-import type { GrainSettings, GrainLayer } from '../src/types';
+import type { GrainSettings } from '../src/types';
 import { assert, assertObject } from '../src/utils';
 
-describe('Multiple Grain Layers', () => {
+describe('Variable Grain Size Generation', () => {
   const settings: GrainSettings = {
     iso: 400,
     filmType: 'kodak',
     grainIntensity: 1.0,
-    upscaleFactor: 1,
-    useMultipleLayers: true
+    upscaleFactor: 1
   };
 
   const generator = new GrainGenerator(800, 600, settings);
 
   describe('Error Handling', () => {
-    it('should validate generator construction for multi-layer mode', () => {
+    it('should validate generator construction', () => {
       expect(() => new GrainGenerator(0, 600, settings)).toThrow(/width must be a positive integer/);
       expect(() => new GrainGenerator(800, 0, settings)).toThrow(/height must be a positive integer/);
       expect(() => new GrainGenerator(800, 600, null as any)).toThrow(/settings must be.*object/);
     });
-
-    it('should handle invalid useMultipleLayers setting', () => {
-      const invalidSettings = { ...settings, useMultipleLayers: 'invalid' as any };
-      // useMultipleLayers is optional and not validated in constructor - this test is not needed
-      expect(() => new GrainGenerator(800, 600, invalidSettings)).not.toThrow();
-    });
   });
 
-  test('should generate multiple grain layers with different characteristics', () => {
-    const layers = generator.generateMultipleGrainLayers();
+  test('should generate grains with variable sizes', () => {
+    const grains = generator.generateGrainStructure();
     
     // Validate the result structure
-    assert(Array.isArray(layers), 'Layers must be an array', { layers });
-    assert(layers.length === 3, 'Should generate exactly 3 layers', { layers });
+    assert(Array.isArray(grains), 'Grains must be an array', { grains });
+    expect(grains.length).toBeGreaterThan(0);
     
-    // Validate each layer structure
-    for (const layer of layers) {
-      assertObject(layer, 'Layer must be an object');
-      assert(typeof layer.layerType === 'string', 'Layer type must be a string', { layer });
-      assert(Array.isArray(layer.grains), 'Grains must be an array', { layer });
-      assert(typeof layer.baseSize === 'number' && layer.baseSize > 0, 'Base size must be positive', { layer });
-      assert(typeof layer.density === 'number' && layer.density > 0, 'Density must be positive', { layer });
-      assert(typeof layer.intensityMultiplier === 'number' && layer.intensityMultiplier > 0, 
-        'Intensity multiplier must be positive', { layer });
+    // Validate each grain structure
+    for (const grain of grains) {
+      assertObject(grain, 'Grain must be an object');
+      assert(typeof grain.x === 'number', 'Grain x must be a number', { grain });
+      assert(typeof grain.y === 'number', 'Grain y must be a number', { grain });
+      assert(typeof grain.size === 'number' && grain.size > 0, 'Grain size must be positive', { grain });
+      assert(typeof grain.sensitivity === 'number' && grain.sensitivity > 0, 'Grain sensitivity must be positive', { grain });
+      assert(typeof grain.shape === 'number', 'Grain shape must be a number', { grain });
     }
     
-    expect(layers[0].layerType).toBe('primary');
-    expect(layers[1].layerType).toBe('secondary');
-    expect(layers[2].layerType).toBe('micro');
+    // Check that we have variable grain sizes
+    const sizes = grains.map(g => g.size);
+    const minSize = Math.min(...sizes);
+    const maxSize = Math.max(...sizes);
     
-    // Primary layer should have the largest grains
-    const primaryAvgSize = layers[0].grains.reduce((sum, g) => sum + g.size, 0) / layers[0].grains.length;
-    const microAvgSize = layers[2].grains.reduce((sum, g) => sum + g.size, 0) / layers[2].grains.length;
-    
-    expect(primaryAvgSize).toBeGreaterThan(microAvgSize);
+    expect(maxSize).toBeGreaterThan(minSize);
   });
 
-  test('should have different density for each layer', () => {
-    const layers = generator.generateMultipleGrainLayers();
+  test('should have size variation within expected range', () => {
+    const grains = generator.generateGrainStructure();
     
-    // Validate structure before comparing
-    assert(Array.isArray(layers) && layers.length >= 2, 'Need at least 2 layers to compare', { layers });
+    // Validate structure before analyzing
+    assert(Array.isArray(grains) && grains.length > 0, 'Need grains to analyze', { grains });
     
-    expect(layers[0].density).not.toBe(layers[1].density);
-    expect(layers[1].density).not.toBe(layers[2].density);
+    const sizes = grains.map(g => g.size);
+    const minSize = Math.min(...sizes);
+    const maxSize = Math.max(...sizes);
+    const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
+    
+    // Check that size variation is reasonable
+    expect(minSize).toBeGreaterThan(0);
+    expect(maxSize).toBeGreaterThan(minSize);
+    expect(avgSize).toBeGreaterThan(minSize);
+    expect(avgSize).toBeLessThan(maxSize);
+    
+    // Most grains should be smaller (due to distribution bias)
+    const smallGrains = sizes.filter(size => size <= avgSize).length;
+    const largeGrains = sizes.filter(size => size > avgSize).length;
+    expect(smallGrains).toBeGreaterThanOrEqual(largeGrains);
   });
 
-  test('should have different intensity multipliers for each layer', () => {
-    const layers = generator.generateMultipleGrainLayers();
+  test('should generate grains with proper distribution', () => {
+    const grains = generator.generateGrainStructure();
     
-    // Validate intensity multipliers are reasonable
-    for (const layer of layers) {
-      assert(layer.intensityMultiplier >= 0 && layer.intensityMultiplier <= 1.0, 
-        'Intensity multiplier should be between 0 and 1', { layer });
+    // Validate minimum grain count based on settings
+    expect(grains.length).toBeGreaterThan(100); // Should generate reasonable number of grains
+    
+    // Check grain positions are within canvas bounds
+    for (const grain of grains) {
+      expect(grain.x).toBeGreaterThanOrEqual(0);
+      expect(grain.x).toBeLessThan(800);
+      expect(grain.y).toBeGreaterThanOrEqual(0);
+      expect(grain.y).toBeLessThan(600);
     }
-    
-    expect(layers[0].intensityMultiplier).toBe(1.0); // Primary
-    expect(layers[1].intensityMultiplier).toBe(0.7); // Secondary
-    expect(layers[2].intensityMultiplier).toBe(0.5); // Micro
   });
 });
 
-describe('Density Model Integration', () => {
-  test('should maintain backward compatibility with single layer mode', () => {
-    const settingsOld: GrainSettings = {
+describe('Grain Structure Properties', () => {
+  test('should generate consistent grain properties', () => {
+    const settings: GrainSettings = {
       iso: 400,
       filmType: 'kodak',
       grainIntensity: 1.0,
       upscaleFactor: 1
     };
 
-    const generator = new GrainGenerator(800, 600, settingsOld);
+    const generator = new GrainGenerator(800, 600, settings);
     const grains = generator.generateGrainStructure();
     
     // Validate result structure
     assert(Array.isArray(grains), 'Grains must be an array', { grains });
     expect(grains.length).toBeGreaterThan(0);
     
-    // Should be GrainPoint[] not GrainLayer[]
+    // Validate grain properties
     if (grains.length > 0) {
       const firstGrain = grains[0];
       assertObject(firstGrain, 'Grain must be an object');
       
-      expect('layerType' in firstGrain).toBe(false);
+      // Should have standard grain properties, not layer properties
       expect('x' in firstGrain).toBe(true);
       expect('y' in firstGrain).toBe(true);
+      expect('size' in firstGrain).toBe(true);
+      expect('sensitivity' in firstGrain).toBe(true);
+      expect('shape' in firstGrain).toBe(true);
       
-      // Validate grain properties
+      // Should not have layer-specific properties
+      expect('layerType' in firstGrain).toBe(false);
+      expect('intensityMultiplier' in firstGrain).toBe(false);
+      
+      // Validate grain property types and ranges
       assert(typeof firstGrain.x === 'number', 'Grain x must be a number', { firstGrain });
       assert(typeof firstGrain.y === 'number', 'Grain y must be a number', { firstGrain });
       assert(typeof firstGrain.size === 'number', 'Grain size must be a number', { firstGrain });

@@ -1,5 +1,5 @@
-// Integration test for grain worker performance benchmarks
-// Tests the actual grain processing worker to measure real-world performance improvements
+// Integration test for grain generation performance benchmarks
+// Tests the actual grain generation to measure real-world performance with variable grain sizes
 
 import { describe, it, expect } from 'vitest';
 import type { GrainSettings } from '../src/types';
@@ -41,72 +41,68 @@ function createTestImageData(width: number, height: number): any {
   return { data, width, height };
 }
 
-describe('Grain Worker Performance Integration Tests', () => {
-  it('should demonstrate multiple layers are efficiently processed', async () => {
+describe('Grain Generation Performance Integration Tests', () => {
+  it('should demonstrate efficient variable grain size processing', async () => {
     const width = 300;
     const height = 200;
     const totalPixels = width * height;
     
     console.log(`\n🧪 Testing grain generation performance for ${width}x${height} image...`);
     
-    // Test single layer
-    const singleLayerSettings: GrainSettings = {
-      iso: 800,
+    // Test low ISO
+    const lowISOSettings: GrainSettings = {
+      iso: 200,
       filmType: 'kodak',
       grainIntensity: 1.0,
-      upscaleFactor: 1.0,
-      useMultipleLayers: false
+      upscaleFactor: 1.0
     };
     
-    const singleProcessor = await createGrainProcessor(width, height, singleLayerSettings);
+    const lowISOProcessor = await createGrainProcessor(width, height, lowISOSettings);
     
-    const singleStart = performance.now();
-    const singleResult = singleProcessor.generateGrainStructure();
-    const singleEnd = performance.now();
-    const singleTime = singleEnd - singleStart;
+    const lowISOStart = performance.now();
+    const lowISOResult = lowISOProcessor.generateGrainStructure();
+    const lowISOEnd = performance.now();
+    const lowISOTime = lowISOEnd - lowISOStart;
     
-    // Test multiple layers
-    const multiLayerSettings: GrainSettings = {
-      iso: 800,
+    // Test high ISO
+    const highISOSettings: GrainSettings = {
+      iso: 1600,
       filmType: 'kodak',
       grainIntensity: 1.0,
-      upscaleFactor: 1.0,
-      useMultipleLayers: true
+      upscaleFactor: 1.0
     };
     
-    const multiProcessor = await createGrainProcessor(width, height, multiLayerSettings);
+    const highISOProcessor = await createGrainProcessor(width, height, highISOSettings);
     
-    const multiStart = performance.now();
-    const multiResult = multiProcessor.generateMultipleGrainLayers();
-    const multiEnd = performance.now();
-    const multiTime = multiEnd - multiStart;
+    const highISOStart = performance.now();
+    const highISOResult = highISOProcessor.generateGrainStructure();
+    const highISOEnd = performance.now();
+    const highISOTime = highISOEnd - highISOStart;
     
     // Calculate performance metrics
-    const performanceRatio = singleTime / multiTime;
-    const singleGrainCount = Array.isArray(singleResult) ? singleResult.length : 0;
-    const multiGrainCount = Array.isArray(multiResult) ? 
-      multiResult.reduce((sum: number, layer: any) => sum + layer.grains.length, 0) : 0;
+    const performanceRatio = lowISOTime / highISOTime;
+    const grainCountRatio = highISOResult.length / lowISOResult.length;
     
-    console.log(`  Single layer: ${singleTime.toFixed(2)}ms (${singleGrainCount} grains)`);
-    console.log(`  Multiple layers: ${multiTime.toFixed(2)}ms (${multiGrainCount} grains in ${multiResult.length} layers)`);
+    console.log(`  Low ISO (200): ${lowISOTime.toFixed(2)}ms (${lowISOResult.length} grains)`);
+    console.log(`  High ISO (1600): ${highISOTime.toFixed(2)}ms (${highISOResult.length} grains)`);
+    console.log(`  Grain count ratio: ${grainCountRatio.toFixed(2)}x more grains at high ISO`);
     console.log(`  Performance ratio: ${performanceRatio.toFixed(2)}x`);
     
     // Assertions
-    expect(singleTime).toBeGreaterThan(0);
-    expect(multiTime).toBeGreaterThan(0);
-    expect(singleGrainCount).toBeGreaterThan(0);
-    expect(multiGrainCount).toBeGreaterThan(0);
-    expect(multiResult.length).toBe(3); // Should have 3 layers
+    expect(lowISOTime).toBeGreaterThan(0);
+    expect(highISOTime).toBeGreaterThan(0);
+    expect(lowISOResult.length).toBeGreaterThan(0);
+    expect(highISOResult.length).toBeGreaterThan(0);
     
-    // Performance assertion - multiple layers should be reasonably fast
-    expect(performanceRatio).toBeGreaterThan(0.3); // At least 30% as fast as single layer
+    // High ISO should generate more grains
+    expect(grainCountRatio).toBeGreaterThan(1.5); // At least 50% more grains
     
-    // If multiple layers is faster than single layer, that's even better!
-    if (performanceRatio > 1) {
-      console.log(`  🎉 Multiple layers is faster! This indicates excellent optimization.`);
-    } else if (performanceRatio > 0.5) {
-      console.log(`  ✅ Multiple layers performance is good - within acceptable range.`);
-    }
+    // Both should complete in reasonable time
+    expect(lowISOTime).toBeLessThan(1000); // Less than 1 second
+    expect(highISOTime).toBeLessThan(2000); // Less than 2 seconds even with more grains
+    
+    // Performance should scale reasonably
+    expect(performanceRatio).toBeGreaterThan(0.2); // High ISO shouldn't be more than 5x slower
   }, 10000);
   
   it('should scale performance appropriately with image size', async () => {
@@ -115,92 +111,114 @@ describe('Grain Worker Performance Integration Tests', () => {
       { width: 400, height: 300, name: 'medium' }
     ];
     
-    const results: Array<{ size: string; ratio: number; multiTime: number }> = [];
+    const results: Array<{ size: string; time: number; grainCount: number; pixelRatio: number }> = [];
     
     for (const size of testSizes) {
       console.log(`\n📏 Testing ${size.name} image (${size.width}x${size.height})...`);
       
-      const singleSettings: GrainSettings = {
-        iso: 600,
+      const settings: GrainSettings = {
+        iso: 800,
         filmType: 'kodak',
         grainIntensity: 1.0,
-        upscaleFactor: 1.0,
-        useMultipleLayers: false
+        upscaleFactor: 1.0
       };
       
-      const multiSettings: GrainSettings = {
-        ...singleSettings,
-        useMultipleLayers: true
-      };
+      const processor = await createGrainProcessor(size.width, size.height, settings);
+      const start = performance.now();
+      const grains = processor.generateGrainStructure();
+      const time = performance.now() - start;
       
-      // Single layer test
-      const singleProcessor = await createGrainProcessor(size.width, size.height, singleSettings);
-      const singleStart = performance.now();
-      singleProcessor.generateGrainStructure();
-      const singleTime = performance.now() - singleStart;
+      const pixelCount = size.width * size.height;
+      const pixelRatio = pixelCount / (200 * 150); // Relative to smallest size
       
-      // Multiple layers test
-      const multiProcessor = await createGrainProcessor(size.width, size.height, multiSettings);
-      const multiStart = performance.now();
-      multiProcessor.generateMultipleGrainLayers();
-      const multiTime = performance.now() - multiStart;
+      results.push({ 
+        size: size.name, 
+        time, 
+        grainCount: grains.length,
+        pixelRatio 
+      });
       
-      const ratio = singleTime / multiTime;
-      results.push({ size: size.name, ratio, multiTime });
+      console.log(`  ${size.name}: ${time.toFixed(2)}ms (${grains.length} grains)`);
+      console.log(`  Grains per second: ${(grains.length / (time / 1000)).toFixed(0)}`);
       
-      console.log(`  ${size.name}: ${ratio.toFixed(2)}x performance ratio`);
-      
-      // Each size should have reasonable performance
-      expect(ratio).toBeGreaterThan(0.2); // At least 20% as fast
+      // Each size should complete in reasonable time
+      expect(time).toBeLessThan(3000); // Less than 3 seconds
+      expect(grains.length).toBeGreaterThan(0);
     }
     
-    // Overall performance should be consistent across sizes
-    const avgRatio = results.reduce((sum, r) => sum + r.ratio, 0) / results.length;
-    console.log(`\n📊 Average performance ratio across sizes: ${avgRatio.toFixed(2)}x`);
-    
-    expect(avgRatio).toBeGreaterThan(0.3); // Average should be at least 30%
+    // Performance should scale reasonably with image size
+    if (results.length >= 2) {
+      const smallResult = results[0];
+      const mediumResult = results[1];
+      
+      const timeRatio = mediumResult.time / smallResult.time;
+      const grainRatio = mediumResult.grainCount / smallResult.grainCount;
+      
+      console.log(`\n📊 Size scaling analysis:`);
+      console.log(`  Time ratio: ${timeRatio.toFixed(2)}x`);
+      console.log(`  Grain ratio: ${grainRatio.toFixed(2)}x`);
+      console.log(`  Pixel ratio: ${mediumResult.pixelRatio.toFixed(2)}x`);
+      
+      // Time should scale sub-linearly with pixel count (due to efficiency)
+      expect(timeRatio).toBeLessThan(mediumResult.pixelRatio * 1.5);
+      expect(grainRatio).toBeGreaterThan(1.5); // Should have more grains in larger image
+    }
   }, 15000);
   
-  it('should demonstrate grain-to-layer map optimization effectiveness', async () => {
-    // This test verifies that the optimization actually works by testing edge cases
+  it('should demonstrate variable grain size generation effectiveness', async () => {
+    // This test verifies that the variable grain size system works efficiently
     const width = 400;
     const height = 300;
     
     const settings: GrainSettings = {
-      iso: 1600, // High ISO = more grains = more potential for O(n²) problems
+      iso: 1200, // High ISO = more grains with size variation
       filmType: 'kodak',
       grainIntensity: 1.5,
-      upscaleFactor: 1.0,
-      useMultipleLayers: true
+      upscaleFactor: 1.0
     };
     
-    console.log(`\n🎯 Testing optimization with high grain density (ISO ${settings.iso})...`);
+    console.log(`\n🎯 Testing variable grain size generation (ISO ${settings.iso})...`);
     
     const processor = await createGrainProcessor(width, height, settings);
     
     const start = performance.now();
-    const layers = processor.generateMultipleGrainLayers();
+    const grains = processor.generateGrainStructure();
     const end = performance.now();
     const processingTime = end - start;
     
-    const totalGrains = layers.reduce((sum, layer) => sum + layer.grains.length, 0);
-    const grainsPerMs = totalGrains / processingTime;
+    const grainsPerMs = grains.length / processingTime;
+    
+    // Analyze grain size distribution
+    const sizes = grains.map(g => g.size);
+    const minSize = Math.min(...sizes);
+    const maxSize = Math.max(...sizes);
+    const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
     
     console.log(`  Processing time: ${processingTime.toFixed(2)}ms`);
-    console.log(`  Total grains generated: ${totalGrains}`);
+    console.log(`  Total grains generated: ${grains.length}`);
     console.log(`  Grain generation rate: ${grainsPerMs.toFixed(0)} grains/ms`);
+    console.log(`  Size range: ${minSize.toFixed(2)} - ${maxSize.toFixed(2)} (avg: ${avgSize.toFixed(2)})`);
     
-    // With optimization, even high grain counts should process quickly
-    expect(processingTime).toBeLessThan(500); // Should complete in under 500ms
-    expect(totalGrains).toBeGreaterThan(1000); // Should generate substantial grains for high ISO
-    expect(grainsPerMs).toBeGreaterThan(10); // Should maintain good throughput
+    // With variable grain sizes, should process efficiently
+    expect(processingTime).toBeLessThan(2000); // Should complete in under 2 seconds
+    expect(grains.length).toBeGreaterThan(500); // Should generate substantial grains for high ISO
+    expect(grainsPerMs).toBeGreaterThan(1); // Should maintain good throughput
     
-    // Verify we have the expected layer structure
-    expect(layers).toHaveLength(3);
-    expect(layers[0].layerType).toBe('primary');
-    expect(layers[1].layerType).toBe('secondary');
-    expect(layers[2].layerType).toBe('micro');
+    // Verify grain size variation
+    expect(maxSize).toBeGreaterThan(minSize);
+    expect(maxSize / minSize).toBeGreaterThan(1.5); // Should have meaningful size variation
     
-    console.log(`  Layer breakdown: ${layers.map(l => `${l.layerType}(${l.grains.length})`).join(', ')}`);
+    // Verify grain properties
+    for (const grain of grains.slice(0, 10)) { // Check first 10 grains
+      expect(grain.x).toBeGreaterThanOrEqual(0);
+      expect(grain.x).toBeLessThan(width);
+      expect(grain.y).toBeGreaterThanOrEqual(0);
+      expect(grain.y).toBeLessThan(height);
+      expect(grain.size).toBeGreaterThan(0);
+      expect(grain.sensitivity).toBeGreaterThan(0);
+      expect(typeof grain.shape).toBe('number');
+    }
+    
+    console.log(`  Size variation: ${(maxSize / minSize).toFixed(2)}x range`);
   }, 10000);
 });
