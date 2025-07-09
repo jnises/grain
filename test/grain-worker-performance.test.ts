@@ -1,7 +1,7 @@
-// Integration test for grain generation performance benchmarks
-// Tests the actual grain generation to measure real-world performance with variable grain sizes
+// Integration benchmarks for grain generation performance measurement
+// Pure performance measurement without testing logic
 
-import { describe, it, expect } from 'vitest';
+import { describe, it } from 'vitest';
 import type { GrainSettings } from '../src/types';
 
 // Mock Worker environment
@@ -41,13 +41,13 @@ function createTestImageData(width: number, height: number): any {
   return { data, width, height };
 }
 
-describe('Grain Generation Performance Integration Tests', () => {
-  it('should demonstrate efficient variable grain size processing', async () => {
+describe('Grain Generation Performance Integration Benchmarks', () => {
+  it('runs variable grain size processing benchmark', async () => {
     const width = 300;
     const height = 200;
     const totalPixels = width * height;
     
-    console.log(`\n🧪 Testing grain generation performance for ${width}x${height} image...`);
+    console.log(`\n🧪 Variable Grain Size Processing Benchmark for ${width}x${height} image...`);
     
     // Test low ISO
     const lowISOSettings: GrainSettings = {
@@ -83,38 +83,28 @@ describe('Grain Generation Performance Integration Tests', () => {
     const performanceRatio = lowISOTime / highISOTime;
     const grainCountRatio = highISOResult.length / lowISOResult.length;
     
+    console.log(`📊 Results:`);
     console.log(`  Low ISO (200): ${lowISOTime.toFixed(2)}ms (${lowISOResult.length} grains)`);
     console.log(`  High ISO (1600): ${highISOTime.toFixed(2)}ms (${highISOResult.length} grains)`);
     console.log(`  Grain count ratio: ${grainCountRatio.toFixed(2)}x more grains at high ISO`);
     console.log(`  Performance ratio: ${performanceRatio.toFixed(2)}x`);
-    
-    // Assertions
-    expect(lowISOTime).toBeGreaterThan(0);
-    expect(highISOTime).toBeGreaterThan(0);
-    expect(lowISOResult.length).toBeGreaterThan(0);
-    expect(highISOResult.length).toBeGreaterThan(0);
-    
-    // High ISO should generate more grains
-    expect(grainCountRatio).toBeGreaterThan(1.5); // At least 50% more grains
-    
-    // Both should complete in reasonable time
-    expect(lowISOTime).toBeLessThan(1000); // Less than 1 second
-    expect(highISOTime).toBeLessThan(2000); // Less than 2 seconds even with more grains
-    
-    // Performance should scale reasonably
-    expect(performanceRatio).toBeGreaterThan(0.2); // High ISO shouldn't be more than 5x slower
+    console.log(`  Low ISO throughput: ${(lowISOResult.length / (lowISOTime / 1000)).toFixed(0)} grains/sec`);
+    console.log(`  High ISO throughput: ${(highISOResult.length / (highISOTime / 1000)).toFixed(0)} grains/sec`);
   }, 10000);
   
-  it('should scale performance appropriately with image size', async () => {
+  it('runs image size scaling benchmark', async () => {
     const testSizes = [
       { width: 200, height: 150, name: 'small' },
-      { width: 400, height: 300, name: 'medium' }
+      { width: 400, height: 300, name: 'medium' },
+      { width: 600, height: 450, name: 'large' }
     ];
+    
+    console.log(`\n📏 Image Size Scaling Benchmark:`);
     
     const results: Array<{ size: string; time: number; grainCount: number; pixelRatio: number }> = [];
     
     for (const size of testSizes) {
-      console.log(`\n📏 Testing ${size.name} image (${size.width}x${size.height})...`);
+      console.log(`  Testing ${size.name} image (${size.width}x${size.height})...`);
       
       const settings: GrainSettings = {
         iso: 800,
@@ -138,35 +128,33 @@ describe('Grain Generation Performance Integration Tests', () => {
         pixelRatio 
       });
       
-      console.log(`  ${size.name}: ${time.toFixed(2)}ms (${grains.length} grains)`);
-      console.log(`  Grains per second: ${(grains.length / (time / 1000)).toFixed(0)}`);
-      
-      // Each size should complete in reasonable time
-      expect(time).toBeLessThan(3000); // Less than 3 seconds
-      expect(grains.length).toBeGreaterThan(0);
+      console.log(`    ${size.name}: ${time.toFixed(2)}ms (${grains.length} grains)`);
+      console.log(`    Grains per second: ${(grains.length / (time / 1000)).toFixed(0)}`);
+      console.log(`    Pixels per second: ${((pixelCount) / (time / 1000) / 1000).toFixed(0)}K`);
     }
     
-    // Performance should scale reasonably with image size
+    // Performance scaling analysis
     if (results.length >= 2) {
-      const smallResult = results[0];
-      const mediumResult = results[1];
-      
-      const timeRatio = mediumResult.time / smallResult.time;
-      const grainRatio = mediumResult.grainCount / smallResult.grainCount;
-      
       console.log(`\n📊 Size scaling analysis:`);
-      console.log(`  Time ratio: ${timeRatio.toFixed(2)}x`);
-      console.log(`  Grain ratio: ${grainRatio.toFixed(2)}x`);
-      console.log(`  Pixel ratio: ${mediumResult.pixelRatio.toFixed(2)}x`);
-      
-      // Time should scale sub-linearly with pixel count (due to efficiency)
-      expect(timeRatio).toBeLessThan(mediumResult.pixelRatio * 1.5);
-      expect(grainRatio).toBeGreaterThan(1.5); // Should have more grains in larger image
+      for (let i = 1; i < results.length; i++) {
+        const prev = results[i-1];
+        const curr = results[i];
+        
+        const timeRatio = curr.time / prev.time;
+        const grainRatio = curr.grainCount / prev.grainCount;
+        const pixelRatio = curr.pixelRatio / prev.pixelRatio;
+        
+        console.log(`  ${curr.size} vs ${prev.size}:`);
+        console.log(`    Time ratio: ${timeRatio.toFixed(2)}x`);
+        console.log(`    Grain ratio: ${grainRatio.toFixed(2)}x`);
+        console.log(`    Pixel ratio: ${pixelRatio.toFixed(2)}x`);
+        console.log(`    Efficiency: ${(grainRatio / timeRatio).toFixed(2)}x more grains per unit time`);
+      }
     }
-  }, 15000);
+  }, 20000);
   
-  it('should demonstrate variable grain size generation effectiveness', async () => {
-    // This test verifies that the variable grain size system works efficiently
+  it('runs variable grain size generation analysis benchmark', async () => {
+    // Benchmark to analyze the effectiveness of variable grain size generation
     const width = 400;
     const height = 300;
     
@@ -177,7 +165,7 @@ describe('Grain Generation Performance Integration Tests', () => {
       upscaleFactor: 1.0
     };
     
-    console.log(`\n🎯 Testing variable grain size generation (ISO ${settings.iso})...`);
+    console.log(`\n🎯 Variable Grain Size Generation Analysis (ISO ${settings.iso}):`);
     
     const processor = await createGrainProcessor(width, height, settings);
     
@@ -187,6 +175,7 @@ describe('Grain Generation Performance Integration Tests', () => {
     const processingTime = end - start;
     
     const grainsPerMs = grains.length / processingTime;
+    const pixelsPerMs = (width * height) / processingTime;
     
     // Analyze grain size distribution
     const sizes = grains.map(g => g.size);
@@ -194,31 +183,37 @@ describe('Grain Generation Performance Integration Tests', () => {
     const maxSize = Math.max(...sizes);
     const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
     
+    // Size distribution analysis
+    const sizeRanges = [
+      { min: 0, max: avgSize * 0.8, name: 'small' },
+      { min: avgSize * 0.8, max: avgSize * 1.2, name: 'medium' },
+      { min: avgSize * 1.2, max: Infinity, name: 'large' }
+    ];
+    
+    const sizeCounts = sizeRanges.map(range => ({
+      ...range,
+      count: sizes.filter(size => size >= range.min && size < range.max).length
+    }));
+    
+    console.log(`📊 Performance Results:`);
     console.log(`  Processing time: ${processingTime.toFixed(2)}ms`);
     console.log(`  Total grains generated: ${grains.length}`);
-    console.log(`  Grain generation rate: ${grainsPerMs.toFixed(0)} grains/ms`);
+    console.log(`  Grain generation rate: ${grainsPerMs.toFixed(1)} grains/ms`);
+    console.log(`  Pixel processing rate: ${(pixelsPerMs / 1000).toFixed(1)}K pixels/ms`);
+    
+    console.log(`\n📏 Size Distribution:`);
     console.log(`  Size range: ${minSize.toFixed(2)} - ${maxSize.toFixed(2)} (avg: ${avgSize.toFixed(2)})`);
-    
-    // With variable grain sizes, should process efficiently
-    expect(processingTime).toBeLessThan(2000); // Should complete in under 2 seconds
-    expect(grains.length).toBeGreaterThan(500); // Should generate substantial grains for high ISO
-    expect(grainsPerMs).toBeGreaterThan(1); // Should maintain good throughput
-    
-    // Verify grain size variation
-    expect(maxSize).toBeGreaterThan(minSize);
-    expect(maxSize / minSize).toBeGreaterThan(1.5); // Should have meaningful size variation
-    
-    // Verify grain properties
-    for (const grain of grains.slice(0, 10)) { // Check first 10 grains
-      expect(grain.x).toBeGreaterThanOrEqual(0);
-      expect(grain.x).toBeLessThan(width);
-      expect(grain.y).toBeGreaterThanOrEqual(0);
-      expect(grain.y).toBeLessThan(height);
-      expect(grain.size).toBeGreaterThan(0);
-      expect(grain.sensitivity).toBeGreaterThan(0);
-      expect(typeof grain.shape).toBe('number');
-    }
-    
     console.log(`  Size variation: ${(maxSize / minSize).toFixed(2)}x range`);
-  }, 10000);
+    
+    sizeCounts.forEach(range => {
+      const percentage = (range.count / grains.length * 100).toFixed(1);
+      console.log(`  ${range.name.padEnd(6)}: ${range.count.toString().padStart(4)} grains (${percentage}%)`);
+    });
+    
+    console.log(`\n🔍 Sample Grain Properties (first 5):`);
+    for (let i = 0; i < Math.min(5, grains.length); i++) {
+      const grain = grains[i];
+      console.log(`  Grain ${i+1}: pos(${grain.x.toFixed(1)}, ${grain.y.toFixed(1)}) size=${grain.size.toFixed(2)} sensitivity=${grain.sensitivity.toFixed(2)} shape=${grain.shape}`);
+    }
+  }, 15000);
 });

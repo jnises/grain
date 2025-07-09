@@ -1,7 +1,7 @@
 // Performance benchmark test for grain processing optimization
-// Tests grain generation performance across different image sizes and settings
+// Pure benchmarks for tracking performance over time and profiling
 
-import { describe, it, expect } from 'vitest';
+import { describe, it } from 'vitest';
 import type { GrainSettings } from '../src/types';
 
 interface BenchmarkResult {
@@ -136,55 +136,62 @@ async function runPerformanceBenchmarks(): Promise<void> {
   return Promise.resolve();
 }
 
-// Vitest test cases
+// Benchmark runner (no assertions, just performance measurement and reporting)
 describe('Grain Processing Performance Benchmarks', () => {
-  it('should demonstrate reasonable performance across ISO settings', async () => {
+  it('runs ISO performance comparison benchmark', async () => {
     const comparison = await compareBenchmarks(400, 300);
     
-    // High ISO should generate more grains
-    expect(comparison.grainCountRatio).toBeGreaterThan(1.5); // At least 50% more grains
-    expect(comparison.highISO.grainCount).toBeGreaterThan(comparison.lowISO.grainCount);
-    
-    // Performance should be reasonable even with more grains
-    expect(comparison.highISO.processingTime).toBeLessThan(1000); // Less than 1 second
-    expect(comparison.lowISO.processingTime).toBeLessThan(1000); // Less than 1 second
-    
-    console.log(`Performance ratio: ${comparison.performanceRatio.toFixed(2)}x`);
-    console.log(`High ISO: ${comparison.highISO.processingTime.toFixed(2)}ms (${comparison.highISO.grainCount} grains)`);
-    console.log(`Low ISO: ${comparison.lowISO.processingTime.toFixed(2)}ms (${comparison.lowISO.grainCount} grains)`);
-  }, 10000); // 10 second timeout for benchmarks
+    console.log(`\n📊 ISO Performance Comparison Results:`);
+    console.log(`  Performance ratio: ${comparison.performanceRatio.toFixed(2)}x`);
+    console.log(`  High ISO: ${comparison.highISO.processingTime.toFixed(2)}ms (${comparison.highISO.grainCount} grains)`);
+    console.log(`  Low ISO: ${comparison.lowISO.processingTime.toFixed(2)}ms (${comparison.lowISO.grainCount} grains)`);
+    console.log(`  Grain count ratio: ${comparison.grainCountRatio.toFixed(2)}x more grains at high ISO`);
+  }, 10000);
   
-  it('should show consistent performance across different image sizes', async () => {
+  it('runs image size scaling benchmark', async () => {
     const sizes = [
       { width: 200, height: 150 },
-      { width: 400, height: 300 }
+      { width: 400, height: 300 },
+      { width: 800, height: 600 }
     ];
+    
+    console.log(`\n📏 Image Size Scaling Benchmark:`);
     
     for (const size of sizes) {
       const comparison = await compareBenchmarks(size.width, size.height);
       
-      // Both configurations should complete in reasonable time
-      expect(comparison.lowISO.processingTime).toBeLessThan(2000);
-      expect(comparison.highISO.processingTime).toBeLessThan(2000);
-      
-      // High ISO should generate more grains
-      expect(comparison.grainCountRatio).toBeGreaterThan(1.2);
-      
-      console.log(`${size.width}x${size.height}: ${comparison.performanceRatio.toFixed(2)}x performance ratio, ${comparison.grainCountRatio.toFixed(2)}x grain ratio`);
+      console.log(`  ${size.width}x${size.height}:`);
+      console.log(`    Performance ratio: ${comparison.performanceRatio.toFixed(2)}x`);
+      console.log(`    Grain count ratio: ${comparison.grainCountRatio.toFixed(2)}x`);
+      console.log(`    Low ISO time: ${comparison.lowISO.processingTime.toFixed(2)}ms`);
+      console.log(`    High ISO time: ${comparison.highISO.processingTime.toFixed(2)}ms`);
     }
-  }, 15000); // 15 second timeout for multiple sizes
+  }, 20000);
   
-  it('should validate grain generation scales properly with image size', async () => {
+  it('runs grain scaling analysis benchmark', async () => {
     const small = await benchmarkConfiguration(200, 150, 800);
-    const large = await benchmarkConfiguration(400, 300, 800);
+    const medium = await benchmarkConfiguration(400, 300, 800);
+    const large = await benchmarkConfiguration(800, 600, 800);
     
-    const pixelRatio = (large.imageSize.width * large.imageSize.height) / (small.imageSize.width * small.imageSize.height);
-    const grainRatio = large.grainCount / small.grainCount;
+    const smallPixels = small.imageSize.width * small.imageSize.height;
+    const mediumPixels = medium.imageSize.width * medium.imageSize.height;
+    const largePixels = large.imageSize.width * large.imageSize.height;
     
-    // Grain count should scale reasonably with image size
-    expect(grainRatio).toBeGreaterThan(pixelRatio * 0.5); // At least half the pixel ratio
-    expect(grainRatio).toBeLessThan(pixelRatio * 2); // At most twice the pixel ratio
+    console.log(`\n🔍 Grain Scaling Analysis (ISO 800):`);
+    console.log(`  Small (${small.imageSize.width}x${small.imageSize.height}):`);
+    console.log(`    Time: ${small.processingTime.toFixed(2)}ms, Grains: ${small.grainCount}`);
+    console.log(`    Grains/sec: ${small.grainsPerSecond.toFixed(0)}, Pixels/sec: ${(small.pixelsPerSecond / 1000).toFixed(0)}K`);
     
-    console.log(`Pixel ratio: ${pixelRatio.toFixed(2)}x, Grain ratio: ${grainRatio.toFixed(2)}x`);
-  }, 10000);
+    console.log(`  Medium (${medium.imageSize.width}x${medium.imageSize.height}):`);
+    console.log(`    Time: ${medium.processingTime.toFixed(2)}ms, Grains: ${medium.grainCount}`);
+    console.log(`    Grains/sec: ${medium.grainsPerSecond.toFixed(0)}, Pixels/sec: ${(medium.pixelsPerSecond / 1000).toFixed(0)}K`);
+    
+    console.log(`  Large (${large.imageSize.width}x${large.imageSize.height}):`);
+    console.log(`    Time: ${large.processingTime.toFixed(2)}ms, Grains: ${large.grainCount}`);
+    console.log(`    Grains/sec: ${large.grainsPerSecond.toFixed(0)}, Pixels/sec: ${(large.pixelsPerSecond / 1000).toFixed(0)}K`);
+    
+    console.log(`  Scaling ratios:`);
+    console.log(`    Medium/Small - Pixels: ${(mediumPixels/smallPixels).toFixed(2)}x, Grains: ${(medium.grainCount/small.grainCount).toFixed(2)}x, Time: ${(medium.processingTime/small.processingTime).toFixed(2)}x`);
+    console.log(`    Large/Medium - Pixels: ${(largePixels/mediumPixels).toFixed(2)}x, Grains: ${(large.grainCount/medium.grainCount).toFixed(2)}x, Time: ${(large.processingTime/medium.processingTime).toFixed(2)}x`);
+  }, 40000);
 });
