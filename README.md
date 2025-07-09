@@ -1,31 +1,34 @@
 ## 🧪 Testing
 
-This project uses Vitest for testing. Available test commands:
+This project uses Vitest for testing with separate configurations for unit tests and performance benchmarks.
 
-- `npm test` - Run tests once (for CI/production)
-- `npm run test:watch` - Run tests in watch mode (for development)
-- `npm run test:ui` - Run tests with UI interface
-- `npm run benchmark` - Run performance benchmarks to verify optimizations
+**Unit Tests:**
+- `npm test` - Run unit tests once (excludes performance benchmarks for faster execution)
+- `npm run test:watch` - Run unit tests in watch mode (for development)
+- `npm run test:ui` - Run unit tests with UI interface
+
+**Performance Benchmarks:**
+- `npm run benchmark` - Run performance benchmarks (separate from unit tests)
 
 ### Test Structure
-- Unit tests are in the `/test/` directory
+- Unit tests are in the `/test/` directory (excluding performance benchmark files)
+- Performance benchmarks: `test/performance-benchmark.test.ts` and `test/grain-worker-performance.test.ts`
 - Test utilities that reuse main classes are in `/src/grain-worker-test.ts`
 - Tests focus on behavior verification rather than implementation details
+- Benchmarks focus on performance measurement without assertions
 
 ## ⚡ Performance Benchmarking
 
-This project includes comprehensive performance benchmarks to verify that the multiple grain layers optimization is working correctly.
+This project includes comprehensive performance benchmarks that are separated from the regular unit tests. Benchmarks focus on measuring and reporting performance metrics for tracking performance over time and identifying optimization opportunities.
 
 ### Running Benchmarks
 
 ```bash
-# Run all performance benchmarks
+# Run all performance benchmarks (separate from unit tests)
 npm run benchmark
-
-# Run specific benchmark tests
-npm test -- performance-benchmark.test.ts
-npm test -- grain-worker-performance.test.ts
 ```
+
+The benchmark tests are excluded from the regular `npm test` command to keep unit test runs fast. Benchmarks measure processing time, grain count ratios, throughput, and scaling characteristics without making assertions - they purely collect and report performance data.
 
 ## Working with coding agent
 - Add items to `TODO.md`
