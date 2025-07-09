@@ -187,13 +187,9 @@
             <label>Grain Intensity:</label>
             <input type="range" id="grainIntensity" min="0" max="2" step="0.1" value="1.0">
             <span id="intensityValue">1.0</span>
-            
-            <label>Multiple Layers:</label>
-            <input type="checkbox" id="useMultipleLayers" checked>
         </div>
         <div>
             <button onclick="generateDebugVisualization()">Generate Visualization</button>
-            <button onclick="generateWithSmallGrains()">Generate with Small Grains</button>
             <button onclick="testGrainDensity()">Test Density Calculation</button>
             <button onclick="clearAllCanvases()">Clear All</button>
         </div>
@@ -217,31 +213,31 @@
             <div class="stats" id="rawGrainsStats">Click "Generate Visualization" to see raw grain distribution...</div>
         </div>
 
-        <!-- Grain Layers -->
+        <!-- Grain Size Categories -->
         <div class="visualization-panel">
-            <h3>Grain Layers</h3>
-            <div class="layer-controls" id="layerControls">
-                <button class="layer-button active" onclick="showLayer('all')">All Layers</button>
-                <button class="layer-button" onclick="showLayer('primary')">Primary</button>
-                <button class="layer-button" onclick="showLayer('secondary')">Secondary</button>
-                <button class="layer-button" onclick="showLayer('micro')">Micro</button>
+            <h3>Grain Size Categories</h3>
+            <div class="layer-controls" id="sizeControls">
+                <button class="layer-button active" onclick="showSizeCategory('all')">All Grains</button>
+                <button class="layer-button" onclick="showSizeCategory('small')">Small</button>
+                <button class="layer-button" onclick="showSizeCategory('medium')">Medium</button>
+                <button class="layer-button" onclick="showSizeCategory('large')">Large</button>
             </div>
-            <canvas id="layersCanvas" width="400" height="300"></canvas>
+            <canvas id="sizeCategoriesCanvas" width="400" height="300"></canvas>
             <div class="color-legend">
                 <div class="color-item">
-                    <div class="color-box" style="background-color: #ff4444;"></div>
-                    <span>Primary Layer</span>
+                    <div class="color-box" style="background-color: #ff4400;"></div>
+                    <span>Small Grains</span>
                 </div>
                 <div class="color-item">
-                    <div class="color-box" style="background-color: #44ff44;"></div>
-                    <span>Secondary Layer</span>
+                    <div class="color-box" style="background-color: #ff8800;"></div>
+                    <span>Medium Grains</span>
                 </div>
                 <div class="color-item">
-                    <div class="color-box" style="background-color: #4444ff;"></div>
-                    <span>Micro Layer</span>
+                    <div class="color-box" style="background-color: #ffff00;"></div>
+                    <span>Large Grains</span>
                 </div>
             </div>
-            <div class="stats" id="layersStats">Click "Generate Visualization" to see layer breakdown...</div>
+            <div class="stats" id="sizeCategoriesStats">Click "Generate Visualization" to see size breakdown...</div>
         </div>
 
         <!-- Grain Sizes -->
@@ -355,18 +351,16 @@
             }
             
             generateLayerStructure() {
-                if (this.settings.useMultipleLayers) {
-                    return this.grainGenerator.generateMultipleGrainLayers();
-                } else {
-                    const grains = this.grainGenerator.generateGrainStructure();
-                    return [{
-                        layerType: 'single',
-                        grains: grains,
-                        baseSize: 1.0,
-                        density: grains.length,
-                        intensityMultiplier: 1.0
-                    }];
-                }
+                // Use new single-layer approach with variable grain sizes
+                const grains = this.grainGenerator.generateGrainStructure();
+                const params = this.grainGenerator.calculateGrainParameters();
+                return [{
+                    layerType: 'variable-size',
+                    grains: grains,
+                    baseSize: params.baseGrainSize,
+                    density: grains.length,
+                    intensityMultiplier: 1.0
+                }];
             }
         }
 
@@ -455,12 +449,20 @@
 
         function clearCanvas(canvasId) {
             const canvas = document.getElementById(canvasId);
+            if (!canvas) {
+                console.error(`Canvas with ID '${canvasId}' not found`);
+                return;
+            }
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
         function updateCanvasSize(canvasId, width, height) {
             const canvas = document.getElementById(canvasId);
+            if (!canvas) {
+                console.error(`Canvas with ID '${canvasId}' not found`);
+                return;
+            }
             canvas.width = width;
             canvas.height = height;
         }
@@ -535,67 +537,88 @@
             }
         }
 
-        function visualizeLayers(layers, activeLayer = 'all') {
-            clearStats('layersStats');
-            clearCanvas('layersCanvas');
+        function visualizeSizeCategories(layers, activeCategory = 'all') {
+            clearStats('sizeCategoriesStats');
+            clearCanvas('sizeCategoriesCanvas');
             
-            const layerColors = {
-                'primary': '#ff4444',
-                'secondary': '#44ff44', 
-                'micro': '#4444ff',
-                'single': '#ffffff'
+            // Get all grains from the single layer
+            const allGrains = layers.flatMap(layer => layer.grains);
+            if (allGrains.length === 0) {
+                log('No grains to categorize', 'sizeCategoriesStats');
+                return;
+            }
+            
+            // Calculate size thresholds
+            const sizes = allGrains.map(g => g.size);
+            const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
+            const smallThreshold = avgSize * 0.8;
+            const largeThreshold = avgSize * 1.2;
+            
+            // Categorize grains by size
+            const categories = {
+                small: allGrains.filter(g => g.size < smallThreshold),
+                medium: allGrains.filter(g => g.size >= smallThreshold && g.size <= largeThreshold),
+                large: allGrains.filter(g => g.size > largeThreshold)
             };
             
-            let totalGrains = 0;
+            const categoryColors = {
+                small: '#ff4400',
+                medium: '#ff8800',
+                large: '#ffff00'
+            };
+            
             let visibleGrains = 0;
             
-            for (const layer of layers) {
-                if (activeLayer === 'all' || activeLayer === layer.layerType) {
-                    const color = layerColors[layer.layerType] || '#ffffff';
-                    drawGrains('layersCanvas', layer.grains, color);
-                    visibleGrains += layer.grains.length;
+            // Draw grains based on active category
+            if (activeCategory === 'all') {
+                // Draw all categories with their respective colors
+                for (const [categoryName, grains] of Object.entries(categories)) {
+                    drawGrains('sizeCategoriesCanvas', grains, categoryColors[categoryName]);
+                    visibleGrains += grains.length;
                 }
+            } else if (categories[activeCategory]) {
+                // Draw only the selected category
+                drawGrains('sizeCategoriesCanvas', categories[activeCategory], categoryColors[activeCategory]);
+                visibleGrains = categories[activeCategory].length;
+            }
+            
+            // Display statistics
+            log(`Size Categories (threshold: avg ± 20%)`, 'sizeCategoriesStats');
+            log(`Average size: ${avgSize.toFixed(2)}px`, 'sizeCategoriesStats');
+            log(``, 'sizeCategoriesStats');
+            
+            for (const [categoryName, grains] of Object.entries(categories)) {
+                const percentage = ((grains.length / allGrains.length) * 100).toFixed(1);
+                log(`${categoryName}: ${grains.length} grains (${percentage}%)`, 'sizeCategoriesStats');
                 
-                totalGrains += layer.grains.length;
-                
-                // Calculate size range for this layer
-                if (layer.grains.length > 0) {
-                    const layerSizes = layer.grains.map(g => g.size);
-                    const minLayerSize = Math.min(...layerSizes);
-                    const maxLayerSize = Math.max(...layerSizes);
-                    const avgLayerSize = layerSizes.reduce((a, b) => a + b, 0) / layerSizes.length;
-                    
-                    log(`${layer.layerType}: ${layer.grains.length} grains`, 'layersStats');
-                    log(`  Base size: ${layer.baseSize.toFixed(2)}px`, 'layersStats');
-                    log(`  Size range: ${minLayerSize.toFixed(2)} - ${maxLayerSize.toFixed(2)}px`, 'layersStats');
-                    log(`  Avg size: ${avgLayerSize.toFixed(2)}px`, 'layersStats');
-                    log(`  Intensity: ${layer.intensityMultiplier.toFixed(2)}`, 'layersStats');
-                } else {
-                    log(`${layer.layerType}: ${layer.grains.length} grains (empty)`, 'layersStats');
+                if (grains.length > 0) {
+                    const categorySize = grains.map(g => g.size);
+                    const minSize = Math.min(...categorySize);
+                    const maxSize = Math.max(...categorySize);
+                    const avgCategorySize = categorySize.reduce((a, b) => a + b, 0) / categorySize.length;
+                    log(`  Size range: ${minSize.toFixed(2)} - ${maxSize.toFixed(2)}px`, 'sizeCategoriesStats');
+                    log(`  Avg size: ${avgCategorySize.toFixed(2)}px`, 'sizeCategoriesStats');
                 }
             }
             
-            log(``, 'layersStats');
-            log(`Total grains: ${totalGrains}`, 'layersStats');
-            log(`Visible grains (${activeLayer}): ${visibleGrains}`, 'layersStats');
-            
-            // Add debug information about grain positions
-            if (activeLayer !== 'all' && layers.length > 0) {
-                const layer = layers.find(l => l.layerType === activeLayer);
-                if (layer && layer.grains.length > 0) {
-                    log(``, 'layersStats');
-                    log(`=== Sample ${activeLayer} grain positions ===`, 'layersStats');
-                    const sampleCount = Math.min(10, layer.grains.length);
-                    for (let i = 0; i < sampleCount; i++) {
-                        const grain = layer.grains[i];
-                        log(`Grain ${i}: (${grain.x.toFixed(1)}, ${grain.y.toFixed(1)}) size=${grain.size.toFixed(2)}`, 'layersStats');
-                    }
-                    if (layer.grains.length > sampleCount) {
-                        log(`... and ${layer.grains.length - sampleCount} more grains`, 'layersStats');
-                    }
-                }
-            }
+            log(``, 'sizeCategoriesStats');
+            log(`Total grains: ${allGrains.length}`, 'sizeCategoriesStats');
+            log(`Visible grains (${activeCategory}): ${visibleGrains}`, 'sizeCategoriesStats');
         }
+        
+        // Function to handle size category selection
+        window.showSizeCategory = function(category) {
+            // Update button states
+            document.querySelectorAll('#sizeControls .layer-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`#sizeControls .layer-button[onclick="showSizeCategory('${category}')"]`).classList.add('active');
+            
+            // Re-visualize with the selected category
+            if (currentLayers) {
+                visualizeSizeCategories(currentLayers, category);
+            }
+        };
 
         function visualizeSizeDistribution(layers) {
             clearStats('sizesStats');
@@ -712,7 +735,6 @@
             const iso = parseInt(document.getElementById('iso').value);
             const filmType = document.getElementById('filmType').value;
             const grainIntensity = parseFloat(document.getElementById('grainIntensity').value);
-            const useMultipleLayers = document.getElementById('useMultipleLayers').checked;
             
             currentSettings = {
                 width,
@@ -720,29 +742,7 @@
                 iso,
                 filmType,
                 grainIntensity,
-                upscaleFactor: 1.0,
-                useMultipleLayers
-            };
-            
-            generateVisualizationWithSettings(currentSettings);
-        };
-
-        window.generateWithSmallGrains = function() {
-            const width = parseInt(document.getElementById('width').value);
-            const height = parseInt(document.getElementById('height').value);
-            const filmType = document.getElementById('filmType').value;
-            const grainIntensity = parseFloat(document.getElementById('grainIntensity').value);
-            const useMultipleLayers = document.getElementById('useMultipleLayers').checked;
-            
-            // Use very low ISO for small grains
-            currentSettings = {
-                width,
-                height,
-                iso: 100, // Force small grains
-                filmType,
-                grainIntensity,
-                upscaleFactor: 1.0,
-                useMultipleLayers
+                upscaleFactor: 1.0
             };
             
             generateVisualizationWithSettings(currentSettings);
@@ -776,8 +776,7 @@
                 iso: 200, // Low ISO
                 filmType: 'kodak',
                 grainIntensity: 1.0,
-                upscaleFactor: 1.0,
-                useMultipleLayers: false // Single layer only
+                upscaleFactor: 1.0
             };
             
             const testVisualizer = new GrainDebugVisualizer(width, height, testSettings);
@@ -800,7 +799,7 @@
             
             // Update all canvas sizes to fixed dimensions
             updateCanvasSize('rawGrainsCanvas', canvasWidth, canvasHeight);
-            updateCanvasSize('layersCanvas', canvasWidth, canvasHeight);
+            updateCanvasSize('sizeCategoriesCanvas', canvasWidth, canvasHeight);
             updateCanvasSize('sizesCanvas', canvasWidth, canvasHeight);
             updateCanvasSize('gridCanvas', canvasWidth, canvasHeight);
             
@@ -816,17 +815,17 @@
             console.log('Raw grains generated:', currentRawGrains);
             visualizeRawGrains(currentRawGrains);
             
-            // Generate layers
+            // Generate grain structure
             currentLayers = visualizer.generateLayerStructure();
-            console.log('Layers generated:', currentLayers);
-            console.log('Layer grain counts:', currentLayers.map(l => ({ type: l.layerType, count: l.grains.length })));
+            console.log('Grain structure generated:', currentLayers);
+            console.log('Grain counts:', currentLayers.map(l => ({ type: l.layerType, count: l.grains.length })));
             
             // Log some sample grains for debugging
             if (currentLayers.length > 0 && currentLayers[0].grains.length > 0) {
-                console.log('Sample grains from first layer:', currentLayers[0].grains.slice(0, 5));
+                console.log('Sample grains from structure:', currentLayers[0].grains.slice(0, 5));
             }
             
-            visualizeLayers(currentLayers);
+            visualizeSizeCategories(currentLayers);
             
             // Show size distribution
             visualizeSizeDistribution(currentLayers);
@@ -835,21 +834,9 @@
             visualizeSpatialGrid(currentLayers);
         }
 
-        window.showLayer = function(layerType) {
-            if (!currentLayers) return;
-            
-            // Update button states
-            document.querySelectorAll('.layer-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            visualizeLayers(currentLayers, layerType);
-        };
-
         window.clearAllCanvases = function() {
-            ['rawGrainsCanvas', 'layersCanvas', 'sizesCanvas', 'gridCanvas'].forEach(clearCanvas);
-            ['rawGrainsStats', 'layersStats', 'sizesStats', 'gridStats'].forEach(clearStats);
+            ['rawGrainsCanvas', 'sizeCategoriesCanvas', 'sizesCanvas', 'gridCanvas'].forEach(clearCanvas);
+            ['rawGrainsStats', 'sizeCategoriesStats', 'sizesStats', 'gridStats'].forEach(clearStats);
         };
 
         // Generate initial visualization on load

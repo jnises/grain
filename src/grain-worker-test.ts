@@ -2,7 +2,7 @@
 // This file contains test functions to verify grain generation and distribution
 
 import { GrainGenerator } from './grain-generator';
-import type { GrainSettings, Point2D } from './types';
+import type { GrainSettings, Point2D, GrainPoint } from './types';
 import { assertPositiveInteger, assertPositiveNumber, assertArray, assertPoint2D, assertObject, assert } from './utils';
 
 // Test functions that use the main GrainGenerator class
@@ -33,7 +33,7 @@ export function testGrainGeneration(
   width: number,
   height: number,
   settings: GrainSettings
-): Point2D[] {
+): GrainPoint[] {
   // Validate input parameters with custom assertions
   assertPositiveInteger(width, 'width');
   assertPositiveInteger(height, 'height');
@@ -47,8 +47,7 @@ export function testGrainGeneration(
   );
 
   const generator = new GrainGenerator(width, height, settings);
-  const params = generator.calculateGrainParameters();
-  return generator.generatePoissonDiskSampling(params.minDistance, params.grainDensity);
+  return generator.generateGrainStructure();
 }
 
 // Type guard helper
@@ -86,7 +85,7 @@ export function validatePointDistribution(points: Point2D[], minDistance: number
 }
 
 // Debug function to analyze grain distribution
-export function analyzeGrainDistribution(points: Point2D[], width: number, height: number) {
+export function analyzeGrainDistribution(points: Point2D[] | GrainPoint[], width: number, height: number) {
   // Validate input parameters with custom assertions
   assertArray(points, 'points');
   assertPositiveInteger(width, 'width');
@@ -100,6 +99,25 @@ export function analyzeGrainDistribution(points: Point2D[], width: number, heigh
   console.log(`Generated ${points.length} grain points`);
   console.log(`Canvas size: ${width}x${height} (${width * height} pixels)`);
   console.log(`Grain density: ${((points.length / (width * height)) * 10000).toFixed(2)} grains per 10k pixels`);
+  
+  // Check if we have variable grain sizes
+  const hasVariableSizes = points.length > 0 && 'size' in points[0];
+  if (hasVariableSizes) {
+    const grainPoints = points as GrainPoint[];
+    const sizes = grainPoints.map(p => p.size);
+    const minSize = Math.min(...sizes);
+    const maxSize = Math.max(...sizes);
+    const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
+    
+    console.log(`Grain sizes - Min: ${minSize.toFixed(2)}, Max: ${maxSize.toFixed(2)}, Avg: ${avgSize.toFixed(2)}`);
+    
+    // Size distribution analysis
+    const smallGrains = grainPoints.filter(p => p.size < avgSize * 0.8).length;
+    const mediumGrains = grainPoints.filter(p => p.size >= avgSize * 0.8 && p.size <= avgSize * 1.2).length;
+    const largeGrains = grainPoints.filter(p => p.size > avgSize * 1.2).length;
+    
+    console.log(`Size distribution - Small: ${smallGrains}, Medium: ${mediumGrains}, Large: ${largeGrains}`);
+  }
   
   if (points.length > 0) {
     // Calculate bounds
