@@ -6,10 +6,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: [],
-    exclude: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/*.{test,spec}.performance.{js,ts}',
+    include: [
       '**/performance-benchmark.test.ts',
       '**/grain-worker-performance.test.ts'
     ],

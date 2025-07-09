@@ -11,7 +11,7 @@
     "test:watch": "vitest",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "benchmark": "vitest run test/performance-benchmark.test.ts"
+    "benchmark": "vitest run --config vitest.benchmark.config.ts"
   },
   "dependencies": {
     "react": "^19.1.0",
