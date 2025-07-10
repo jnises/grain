@@ -6,7 +6,6 @@
 - [x] When running generateGrains in grain-visualizer.html the fallback points overlap with the poisson points. **Completed**: Modified the `generateFallbackGrains` method to accept an optional `minDistance` parameter and check against existing Poisson points before placing new fallback grains. The distance checking uses a relaxed constraint (70% of minimum distance) to prevent visual overlap while maintaining performance and ensuring target grain counts are achieved.
 - [x] **Make the random number generator dependency injected so we can make it deterministic for tests to avoid spurious failures.** **Completed**: Implemented dependency injection for random number generation by adding a `RandomNumberGenerator` interface with two implementations: `DefaultRandomNumberGenerator` (uses Math.random) and `SeededRandomNumberGenerator` (deterministic). Updated `GrainGenerator` constructor to accept optional RNG parameter. All Math.random() calls have been replaced with this.rng.random(). Added comprehensive tests to verify deterministic behavior with seeded RNG and non-deterministic behavior with different seeds.
 - [x] **Add instruction for coding agent for where it should put temporary tools and files to avoid having them clutter the repo.** **Completed**: Created `CODING_AGENT_GUIDELINES.md` with comprehensive guidelines for file organization, temporary file locations, naming conventions, and development workflow. Added appropriate `.gitignore` patterns and created directory structure with README files for: `scripts/temp/`, `scripts/dev/`, `test/temp/`, `test/fixtures/`, `test/benchmarks/`, and `public/debug/`. This provides clear guidance for AI coding agents on maintaining a clean repository structure.
-- [ ] The current algorithm iterates each pixel and checks which grain it is close to. Wouldn't it make more sense to iterate the grains and check its nearby pixels? The pixels are already efficiently searchable data structure.
 - [ ] Use something like a flamegraph to find the hotspots in the code and optimize those
 - [ ] Go through the repo and check if anything can be simplified
 
@@ -28,8 +27,16 @@
 - [ ] **Implement grain bridging and clustering effects**: Add simulation of grains connecting during development through clustering algorithms. This creates more realistic grain patterns that match actual film behavior.
 - [ ] **Add edge effects near high-contrast boundaries**: Implement grain density changes near high-contrast image boundaries to simulate developer depletion and chemical diffusion effects.
 
-- [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense.
+- [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
+- [ ] **Reverse pixel-grain algorithm to iterate grains instead of pixels**: The current algorithm iterates each pixel and checks which grain it is close to. Wouldn't it make more sense to iterate the grains and check its nearby pixels? This could significantly improve performance for sparse grain scenarios.
+  - [ ] Create baseline performance benchmark for current pixel-centric algorithm across different image sizes and grain densities
+  - [ ] Create grain-centric rendering algorithm that iterates grains and affects nearby pixels
+  - [ ] Implement efficient pixel accumulation system to handle overlapping grain effects
+  - [ ] Add performance comparison benchmarks between pixel-centric vs grain-centric approaches
+  - [ ] Handle edge cases like grain effects near image boundaries
+  - [ ] Ensure consistent results between old and new algorithms through comprehensive testing
+  - [ ] Verify performance improvement with comprehensive benchmarks before finalizing the change
 - [ ] Create a separate assert util for slow checks that is only run when in dev mode.
 - [ ] Update agent instructions on how to use the asserts.
 - [ ] Update hot code to use the dev assert.
