@@ -226,7 +226,7 @@ export class GrainGenerator {
   }
 
   // Fallback grain generation for better coverage
-  public generateFallbackGrains(existingGrains: Point2D[], targetCount: number): Point2D[] {
+  public generateFallbackGrains(existingGrains: Point2D[], targetCount: number, minDistance?: number): Point2D[] {
     // Validate input parameters with custom assertions
     assertArray(existingGrains, 'existingGrains');
     assertNonNegativeNumber(targetCount, 'targetCount');
@@ -241,11 +241,12 @@ export class GrainGenerator {
       assertPoint2D(grain, `existingGrains[${index}]`);
     });
 
-    console.log(`Generating fallback grains: ${existingGrains.length} existing, ${targetCount} target`);
+    console.log(`Generating fallback grains: ${existingGrains.length} existing, ${targetCount} target${minDistance ? `, minDistance=${minDistance.toFixed(2)}` : ''}`);
 
     // Fallback grid generation constants
     const FALLBACK_GRID_CENTER_OFFSET = 0.5;
     const FALLBACK_GRID_RANDOMNESS = 0.6;
+    const FALLBACK_DISTANCE_RELAXATION = 0.7; // Allow grains at 70% of minimum distance for fallback
     
     const fallbackGrains: Point2D[] = [...existingGrains];
     const remainingCount = targetCount - existingGrains.length;
@@ -276,6 +277,54 @@ export class GrainGenerator {
     
     console.log(`Fallback grid: ${cols}x${rows} cells, gridSize=${gridSize.toFixed(2)}`);
     
+    // Create spatial hash for existing grains for efficient distance checking
+    const spatialGridSize = minDistance ? minDistance * FALLBACK_DISTANCE_RELAXATION * 2 : 10;
+    const spatialGrid = new Map<string, Point2D[]>();
+    
+    // Populate spatial grid with existing grains
+    for (const grain of existingGrains) {
+      const gridX = Math.floor(grain.x / spatialGridSize);
+      const gridY = Math.floor(grain.y / spatialGridSize);
+      const key = `${gridX},${gridY}`;
+      
+      if (!spatialGrid.has(key)) {
+        spatialGrid.set(key, []);
+      }
+      spatialGrid.get(key)!.push(grain);
+    }
+    
+    // Helper function to check if a point is too close to existing grains using spatial hash
+    const isTooCloseToOriginalGrains = (newPoint: Point2D): boolean => {
+      if (!minDistance || existingGrains.length === 0) return false;
+      
+      const relaxedDistance = minDistance * FALLBACK_DISTANCE_RELAXATION;
+      const checkRadius = Math.ceil(relaxedDistance / spatialGridSize);
+      const baseGridX = Math.floor(newPoint.x / spatialGridSize);
+      const baseGridY = Math.floor(newPoint.y / spatialGridSize);
+      
+      // Check nearby grid cells that could contain grains within the relaxed distance
+      for (let dx = -checkRadius; dx <= checkRadius; dx++) {
+        for (let dy = -checkRadius; dy <= checkRadius; dy++) {
+          const gridX = baseGridX + dx;
+          const gridY = baseGridY + dy;
+          const key = `${gridX},${gridY}`;
+          const cellGrains = spatialGrid.get(key);
+          
+          if (cellGrains) {
+            for (const existingGrain of cellGrains) {
+              const dx = newPoint.x - existingGrain.x;
+              const dy = newPoint.y - existingGrain.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              if (distance < relaxedDistance) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    };
+    
     // Generate grains in grid pattern
     for (let row = 0; row < rows && fallbackGrains.length < targetCount; row++) {
       for (let col = 0; col < cols && fallbackGrains.length < targetCount; col++) {
@@ -286,14 +335,20 @@ export class GrainGenerator {
         // Add random offset to avoid perfect grid
         const offsetX = (Math.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
         const offsetY = (Math.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
-         const x = Math.max(0, Math.min(this.width - 1, baseX + offsetX));
+        const x = Math.max(0, Math.min(this.width - 1, baseX + offsetX));
         const y = Math.max(0, Math.min(this.height - 1, baseY + offsetY));
         
         // Validate final coordinates with custom assertion
         assertInRange(x, 0, this.width - 1, 'fallback grain x coordinate');
         assertInRange(y, 0, this.height - 1, 'fallback grain y coordinate');
 
-        fallbackGrains.push({ x, y });
+        const newPoint = { x, y };
+        
+        // Only check distance against original existing grains, not all fallback grains
+        // This prevents overlap with Poisson points while maintaining performance
+        if (!isTooCloseToOriginalGrains(newPoint)) {
+          fallbackGrains.push(newPoint);
+        }
       }
     }
     
@@ -339,7 +394,7 @@ export class GrainGenerator {
     
     // Check distribution quality and use fallback if needed
     if (finalGrainPoints.length < params.grainDensity * GRAIN_DENSITY_THRESHOLD) {
-      const fallbackGrains = this.generateFallbackGrains([], params.grainDensity);
+      const fallbackGrains = this.generateFallbackGrains([], params.grainDensity, params.minDistance);
       
       // Convert fallback grains to variable-size grains
       return fallbackGrains.map((point, index) => {

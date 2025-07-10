@@ -122,7 +122,7 @@
                 let finalPoints = poissonPoints;
                 if (poissonPoints.length < params.grainDensity * 0.5) {
                     log(`Using fallback: ${poissonPoints.length} < ${params.grainDensity * 0.5}`);
-                    finalPoints = this.grainGenerator.generateFallbackGrains(poissonPoints, params.grainDensity);
+                    finalPoints = this.grainGenerator.generateFallbackGrains(poissonPoints, params.grainDensity, params.minDistance);
                 }
                 
                 log(`Final count: ${finalPoints.length}`);
@@ -142,7 +142,7 @@
             testFallbackOnly() {
                 const params = this.grainGenerator.calculateGrainParameters();
                 log(`Fallback: target=${params.grainDensity}`);
-                const points = this.grainGenerator.generateFallbackGrains([], params.grainDensity);
+                const points = this.grainGenerator.generateFallbackGrains([], params.grainDensity, params.minDistance);
                 log(`Fallback result: ${points.length} points`);
                 return points;
             }

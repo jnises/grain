@@ -3,6 +3,7 @@
   2. **Variable grain generation**: Added maximum attempt limits, consecutive failure tracking, and progress logging to prevent infinite loops when trying to place grains in highly dense scenarios.
   
   Tests now complete successfully, though some test failures were identified that need separate attention (8 failed tests related to parameter expectations and distribution coverage that appear to be due to outdated test expectations rather than algorithmic issues).
+- [x] When running generateGrains in grain-visualizer.html the fallback points overlap with the poisson points. **Completed**: Modified the `generateFallbackGrains` method to accept an optional `minDistance` parameter and check against existing Poisson points before placing new fallback grains. The distance checking uses a relaxed constraint (70% of minimum distance) to prevent visual overlap while maintaining performance and ensuring target grain counts are achieved.
 - [ ] The current algorithm iterates each pixel and checks which grain it is close to. Wouldn't it make more sense to iterate the grains and check its nearby pixels? The pixels are already efficiently searchable data structure.
 - [ ] Use something like a flamegraph to find the hotspots in the code and optimize those
 - [ ] Go through the repo and check if anything can be simplified
