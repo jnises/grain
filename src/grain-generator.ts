@@ -143,8 +143,8 @@ export class GrainGenerator {
     
     // Start with a single well-positioned initial point
     const initialPoint = {
-      x: this.width * (0.3 + Math.random() * 0.4), // Center-ish but with some randomness
-      y: this.height * (0.3 + Math.random() * 0.4)
+      x: this.width * (0.4 + Math.random() * 0.2), // More centered: 0.4 to 0.6 range
+      y: this.height * (0.4 + Math.random() * 0.2)
     };
     addPoint(initialPoint);
     
@@ -207,7 +207,7 @@ export class GrainGenerator {
       pointsAddedInLastRound = points.length - pointsAtRoundStart;
       
       // More aggressive early termination if we're not making progress
-      if (pointsAddedInLastRound === 0 && generationRounds > 5) {
+      if (pointsAddedInLastRound === 0 && generationRounds > 10) { // Increased from 5 to 10
         console.log(`Early termination: no points added in round ${generationRounds}`);
         break;
       }

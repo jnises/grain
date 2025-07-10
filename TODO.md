@@ -41,3 +41,4 @@
 - [ ] Update dependencies.
 - [ ] Is it possible to parallelize the algorithm? Or move parts of it to the gpu using webgpu?
 - [ ] Go through the repo and clean up any unused files
+- [ ] Go through the code and clean up any comments left by a coding agent to indicate what it has changed. Comments should typically describe "why" not "what. And while comments describing changes is useful when iteracting with an agent we don't want that in the final code.
