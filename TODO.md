@@ -29,6 +29,7 @@
 
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
+- [ ] Do the film type settings refer to common industry standard settings? Or do they just result in some made up parameters? If made up, convert them to use some non-brand names instead.
 - [ ] **Reverse pixel-grain algorithm to iterate grains instead of pixels**: The current algorithm iterates each pixel and checks which grain it is close to. Wouldn't it make more sense to iterate the grains and check its nearby pixels? This could significantly improve performance for sparse grain scenarios.
   - [ ] Create baseline performance benchmark for current pixel-centric algorithm across different image sizes and grain densities
   - [ ] Create grain-centric rendering algorithm that iterates grains and affects nearby pixels
