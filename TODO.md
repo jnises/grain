@@ -4,6 +4,8 @@
   
   Tests now complete successfully, though some test failures were identified that need separate attention (8 failed tests related to parameter expectations and distribution coverage that appear to be due to outdated test expectations rather than algorithmic issues).
 - [x] When running generateGrains in grain-visualizer.html the fallback points overlap with the poisson points. **Completed**: Modified the `generateFallbackGrains` method to accept an optional `minDistance` parameter and check against existing Poisson points before placing new fallback grains. The distance checking uses a relaxed constraint (70% of minimum distance) to prevent visual overlap while maintaining performance and ensuring target grain counts are achieved.
+- [x] **Make the random number generator dependency injected so we can make it deterministic for tests to avoid spurious failures.** **Completed**: Implemented dependency injection for random number generation by adding a `RandomNumberGenerator` interface with two implementations: `DefaultRandomNumberGenerator` (uses Math.random) and `SeededRandomNumberGenerator` (deterministic). Updated `GrainGenerator` constructor to accept optional RNG parameter. All Math.random() calls have been replaced with this.rng.random(). Added comprehensive tests to verify deterministic behavior with seeded RNG and non-deterministic behavior with different seeds.
+- [x] **Add instruction for coding agent for where it should put temporary tools and files to avoid having them clutter the repo.** **Completed**: Created `CODING_AGENT_GUIDELINES.md` with comprehensive guidelines for file organization, temporary file locations, naming conventions, and development workflow. Added appropriate `.gitignore` patterns and created directory structure with README files for: `scripts/temp/`, `scripts/dev/`, `test/temp/`, `test/fixtures/`, `test/benchmarks/`, and `public/debug/`. This provides clear guidance for AI coding agents on maintaining a clean repository structure.
 - [ ] The current algorithm iterates each pixel and checks which grain it is close to. Wouldn't it make more sense to iterate the grains and check its nearby pixels? The pixels are already efficiently searchable data structure.
 - [ ] Use something like a flamegraph to find the hotspots in the code and optimize those
 - [ ] Go through the repo and check if anything can be simplified
@@ -39,4 +41,5 @@
 - [ ] Update dependencies.
 - [ ] Is it possible to parallelize the algorithm? Or move parts of it to the gpu using webgpu?
 - [ ] Go through the repo and clean up any unused files
+- [ ] Go through the code looking for repeating patterns and refactor them into shared code if it makes sense.
 - [ ] Go through the code and clean up any comments left by a coding agent to indicate what it has changed. Comments should typically describe "why" not "what. And while comments describing changes is useful when iteracting with an agent we don't want that in the final code.

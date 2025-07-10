@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Temporary files and debug utilities
+scripts/temp/
+test/temp/
+*.temp.*
+temp_*
+debug_*
+public/debug/

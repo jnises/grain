@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GrainGenerator } from '../src/grain-generator';
+import { GrainGenerator, SeededRandomNumberGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
 import { assert, assertPositiveInteger, assertObject } from '../src/utils';
 
@@ -530,6 +530,63 @@ describe('GrainGenerator', () => {
       const highIsoAvgSize = highIsoGrains.reduce((sum, g) => sum + g.size, 0) / highIsoGrains.length;
       
       expect(highIsoAvgSize).toBeGreaterThan(lowIsoAvgSize);
+    });
+  });
+
+  describe('Random Number Generation', () => {
+    it('should produce deterministic results with seeded RNG', () => {
+      const seededRng = new SeededRandomNumberGenerator(12345);
+      const generator1 = new GrainGenerator(100, 100, settings, seededRng);
+      
+      // Reset and create another generator with same seed
+      seededRng.reset();
+      const generator2 = new GrainGenerator(100, 100, settings, seededRng);
+      
+      // Test that Poisson sampling is deterministic
+      const points1 = generator1.generatePoissonDiskSampling(5, 20);
+      seededRng.reset();
+      const points2 = generator2.generatePoissonDiskSampling(5, 20);
+      
+      expect(points1.length).toBe(points2.length);
+      
+      // Check that positions are the same
+      for (let i = 0; i < points1.length; i++) {
+        expect(points1[i].x).toBeCloseTo(points2[i].x, 10);
+        expect(points1[i].y).toBeCloseTo(points2[i].y, 10);
+      }
+    });
+
+    it('should produce different results with different seeds', () => {
+      const rng1 = new SeededRandomNumberGenerator(12345);
+      const rng2 = new SeededRandomNumberGenerator(67890);
+      const generator1 = new GrainGenerator(100, 100, settings, rng1);
+      const generator2 = new GrainGenerator(100, 100, settings, rng2);
+      
+      const points1 = generator1.generatePoissonDiskSampling(5, 20);
+      const points2 = generator2.generatePoissonDiskSampling(5, 20);
+      
+      // Should have different results
+      let hasDifference = false;
+      if (points1.length !== points2.length) {
+        hasDifference = true;
+      } else {
+        for (let i = 0; i < points1.length; i++) {
+          if (Math.abs(points1[i].x - points2[i].x) > 0.001 || Math.abs(points1[i].y - points2[i].y) > 0.001) {
+            hasDifference = true;
+            break;
+          }
+        }
+      }
+      
+      expect(hasDifference).toBe(true);
+    });
+
+    it('should use default RNG when no RNG is provided', () => {
+      const defaultGenerator = new GrainGenerator(100, 100, settings);
+      const points = defaultGenerator.generatePoissonDiskSampling(5, 20);
+      
+      expect(points.length).toBeGreaterThan(0);
+      expect(points.length).toBeLessThanOrEqual(20);
     });
   });
 });

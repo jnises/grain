@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GrainGenerator } from '../src/grain-generator';
+import { GrainGenerator, SeededRandomNumberGenerator } from '../src/grain-generator';
 import type { GrainSettings, Point2D } from '../src/types';
 import { assert, assertPositiveInteger, assertObject } from '../src/utils';
 
@@ -201,7 +201,9 @@ describe('Grain Distribution Bug Tests', () => {
     // 4. Uses proper density calculations to maximize space utilization
     
     it('should distribute Poisson samples across entire image area', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      // Use seeded RNG for deterministic test results
+      const seededRng = new SeededRandomNumberGenerator(12345);
+      const generator = new GrainGenerator(400, 300, settings, seededRng);
       const params = generator.calculateGrainParameters();
       
       // Generate Poisson samples directly (not full grain structure)

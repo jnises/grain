@@ -1,5 +1,10 @@
 // Shared types for film grain processing
 
+// Random number generator interface for dependency injection
+export interface RandomNumberGenerator {
+  random(): number;
+}
+
 export interface GrainSettings {
   iso: number;
   filmType: 'kodak' | 'fuji' | 'ilford';

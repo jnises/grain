@@ -1,7 +1,7 @@
 // Core grain generation logic extracted for testing
 // This file contains the grain generation algorithms without Web Worker dependencies
 
-import type { GrainSettings, Point2D, GrainPoint } from './types';
+import type { GrainSettings, Point2D, GrainPoint, RandomNumberGenerator } from './types';
 import { SEEDED_RANDOM_MULTIPLIER } from './constants';
 import { 
   assertPositiveInteger, 
@@ -14,6 +14,35 @@ import {
   assertFiniteNumber,
   assert
 } from './utils';
+
+// Default implementation using Math.random
+export class DefaultRandomNumberGenerator implements RandomNumberGenerator {
+  random(): number {
+    return Math.random();
+  }
+}
+
+// Seeded implementation for deterministic testing
+export class SeededRandomNumberGenerator implements RandomNumberGenerator {
+  private seed: number;
+  private current: number;
+
+  constructor(seed: number = 12345) {
+    this.seed = seed;
+    this.current = seed;
+  }
+
+  random(): number {
+    const x = Math.sin(this.current) * SEEDED_RANDOM_MULTIPLIER;
+    this.current++;
+    return x - Math.floor(x);
+  }
+
+  // Reset to original seed
+  reset(): void {
+    this.current = this.seed;
+  }
+}
 
 // File-level constants shared across multiple methods
 const ISO_TO_GRAIN_SIZE_DIVISOR = 200;
@@ -32,8 +61,9 @@ export class GrainGenerator {
   private width: number;
   private height: number;
   private settings: GrainSettings;
+  private rng: RandomNumberGenerator;
 
-  constructor(width: number, height: number, settings: GrainSettings) {
+  constructor(width: number, height: number, settings: GrainSettings, rng?: RandomNumberGenerator) {
     // Validate input parameters with custom assertions that provide type narrowing
     assertPositiveInteger(width, 'width');
     assertPositiveInteger(height, 'height');
@@ -54,6 +84,7 @@ export class GrainGenerator {
     this.width = width;
     this.height = height;
     this.settings = settings;
+    this.rng = rng || new DefaultRandomNumberGenerator();
   }
 
   // Generate pseudorandom number with seed
@@ -143,8 +174,8 @@ export class GrainGenerator {
     
     // Start with a single well-positioned initial point
     const initialPoint = {
-      x: this.width * (0.4 + Math.random() * 0.2), // More centered: 0.4 to 0.6 range
-      y: this.height * (0.4 + Math.random() * 0.2)
+      x: this.width * (0.4 + this.rng.random() * 0.2), // More centered: 0.4 to 0.6 range
+      y: this.height * (0.4 + this.rng.random() * 0.2)
     };
     addPoint(initialPoint);
     
@@ -169,8 +200,8 @@ export class GrainGenerator {
         // Try to generate new points around this active point
         for (let attempt = 0; attempt < POISSON_CANDIDATES_PER_POINT; attempt++) {
           // Generate point in annulus between minDistance and 2*minDistance
-          const angle = Math.random() * 2 * Math.PI;
-          const radius = minDistance * (1 + Math.random()); // Between minDistance and 2*minDistance
+          const angle = this.rng.random() * 2 * Math.PI;
+          const radius = minDistance * (1 + this.rng.random()); // Between minDistance and 2*minDistance
           
           const candidate = {
             x: activePoint.x + Math.cos(angle) * radius,
@@ -333,8 +364,8 @@ export class GrainGenerator {
         const baseY = (row + FALLBACK_GRID_CENTER_OFFSET) * gridSize;
         
         // Add random offset to avoid perfect grid
-        const offsetX = (Math.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
-        const offsetY = (Math.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
+        const offsetX = (this.rng.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
+        const offsetY = (this.rng.random() - FALLBACK_GRID_CENTER_OFFSET) * gridSize * FALLBACK_GRID_RANDOMNESS;
         const x = Math.max(0, Math.min(this.width - 1, baseX + offsetX));
         const y = Math.max(0, Math.min(this.height - 1, baseY + offsetY));
         
@@ -646,6 +677,4 @@ export class GrainGenerator {
     
     return true;
   }
-
-  // ...existing code...
 }
