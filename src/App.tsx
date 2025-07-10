@@ -304,6 +304,13 @@ function App() {
             >
               🔧 Debug Visualizer (Dev Mode)
             </a>
+            <a 
+              href="/grain-visualizer.html" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              👁️ Grain Visualizer (Dev Mode)
+            </a>
           </div>
         )}
       </header>
