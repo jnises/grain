@@ -151,20 +151,19 @@ export class GrainGenerator {
     // Track generation progress for early termination
     let generationRounds = 0;
     let pointsAddedInLastRound = 0;
-    const maxGenerationRounds = 1000; // Prevent infinite loops
-    const minPointsPerRound = Math.max(1, Math.ceil(maxSamples / 1000)); // Require some progress
+    const maxGenerationRounds = 100; // Prevent infinite loops - reduced from 1000
     
     // Process active points until no more can be added
     while (activeList.length > 0 && points.length < maxSamples && generationRounds < maxGenerationRounds) {
       generationRounds++;
       const pointsAtRoundStart = points.length;
       
-      // Process all current active points in this round
-      const activePointsThisRound = [...activeList]; // Copy to avoid modification during iteration
+      // Process active points one by one, removing immediately when they can't generate new points
+      let processedInThisRound = 0;
+      const maxPointsToProcessPerRound = Math.max(1, activeList.length);
       
-      for (const activePoint of activePointsThisRound) {
-        if (points.length >= maxSamples) break;
-        
+      while (activeList.length > 0 && points.length < maxSamples && processedInThisRound < maxPointsToProcessPerRound) {
+        const activePoint = activeList[0]; // Always process the first point
         let foundValidPoint = false;
         
         // Try to generate new points around this active point
@@ -193,18 +192,29 @@ export class GrainGenerator {
         
         // If no valid point was found after all attempts, remove this point from active list
         if (!foundValidPoint) {
-          const index = activeList.indexOf(activePoint);
-          if (index >= 0) {
-            activeList.splice(index, 1);
-          }
+          activeList.shift(); // Remove the first point
+        }
+        
+        processedInThisRound++;
+        
+        // Safety check to prevent infinite loops within a round
+        if (processedInThisRound > 100) {
+          console.log(`Safety break in round ${generationRounds}: processed ${processedInThisRound} points`);
+          break;
         }
       }
       
       pointsAddedInLastRound = points.length - pointsAtRoundStart;
       
-      // Early termination if we're not making progress
-      if (pointsAddedInLastRound < minPointsPerRound && generationRounds > 10) {
-        console.log(`Early termination: only ${pointsAddedInLastRound} points added in round ${generationRounds}`);
+      // More aggressive early termination if we're not making progress
+      if (pointsAddedInLastRound === 0 && generationRounds > 5) {
+        console.log(`Early termination: no points added in round ${generationRounds}`);
+        break;
+      }
+      
+      // Alternative termination: if activeList is empty (no more points can generate candidates)
+      if (activeList.length === 0) {
+        console.log(`Early termination: no active points remaining after round ${generationRounds}`);
         break;
       }
     }
@@ -476,14 +486,18 @@ export class GrainGenerator {
   // Generate grains with varying sizes using adaptive Poisson disk sampling
   private generateVariableSizeGrains(baseSize: number, targetCount: number): GrainPoint[] {
     const grains: GrainPoint[] = [];
-    const maxAttempts = targetCount * 10;
+    const maxAttempts = Math.min(targetCount * 50, 50000); // Cap total attempts to prevent infinite loops
     let attempts = 0;
+    let consecutiveFailures = 0;
+    const maxConsecutiveFailures = 1000; // Stop if we can't place any grains for 1000 attempts
     
     // Constants for grain size distribution
     const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
     const SHAPE_VARIATION_SEED_MULTIPLIER = 345.678;
     
-    while (grains.length < targetCount && attempts < maxAttempts) {
+    console.log(`Generating variable size grains: target=${targetCount}, maxAttempts=${maxAttempts}`);
+    
+    while (grains.length < targetCount && attempts < maxAttempts && consecutiveFailures < maxConsecutiveFailures) {
       // Generate random position
       const x = this.seededRandom(attempts * 12.34) * this.width;
       const y = this.seededRandom(attempts * 56.78) * this.height;
@@ -505,11 +519,21 @@ export class GrainGenerator {
           sensitivity: 0.8 + sensitivityVariation * 0.4,
           shape: shapeVariation
         });
+        
+        consecutiveFailures = 0; // Reset failure counter on success
+      } else {
+        consecutiveFailures++;
       }
       
       attempts++;
+      
+      // Log progress occasionally
+      if (attempts % 10000 === 0) {
+        console.log(`Variable grain generation progress: ${grains.length}/${targetCount} grains, ${attempts} attempts, ${consecutiveFailures} consecutive failures`);
+      }
     }
     
+    console.log(`Variable grain generation completed: ${grains.length}/${targetCount} grains in ${attempts} attempts`);
     return grains;
   }
   
