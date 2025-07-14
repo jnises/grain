@@ -1,8 +1,3 @@
-- [x] Run the tests and make sure they pass. **Completed**: Fixed infinite loops in the Poisson disk sampling and variable grain generation algorithms that were causing tests to hang indefinitely. The main issues were:
-  1. **Poisson disk sampling**: Modified the algorithm to use a more efficient active point processing strategy and added better termination conditions including consecutive failure tracking and safety breaks.
-  2. **Variable grain generation**: Added maximum attempt limits, consecutive failure tracking, and progress logging to prevent infinite loops when trying to place grains in highly dense scenarios.
-  
-  Tests now complete successfully, though some test failures were identified that need separate attention (8 failed tests related to parameter expectations and distribution coverage that appear to be due to outdated test expectations rather than algorithmic issues).
 - [x] When running generateGrains in grain-visualizer.html the fallback points overlap with the poisson points. **Completed**: Modified the `generateFallbackGrains` method to accept an optional `minDistance` parameter and check against existing Poisson points before placing new fallback grains. The distance checking uses a relaxed constraint (70% of minimum distance) to prevent visual overlap while maintaining performance and ensuring target grain counts are achieved.
 - [x] **Make the random number generator dependency injected so we can make it deterministic for tests to avoid spurious failures.** **Completed**: Implemented dependency injection for random number generation by adding a `RandomNumberGenerator` interface with two implementations: `DefaultRandomNumberGenerator` (uses Math.random) and `SeededRandomNumberGenerator` (deterministic). Updated `GrainGenerator` constructor to accept optional RNG parameter. All Math.random() calls have been replaced with this.rng.random(). Added comprehensive tests to verify deterministic behavior with seeded RNG and non-deterministic behavior with different seeds.
 - [x] **Add instruction for coding agent for where it should put temporary tools and files to avoid having them clutter the repo.** **Completed**: Created `CODING_AGENT_GUIDELINES.md` with comprehensive guidelines for file organization, temporary file locations, naming conventions, and development workflow. Added appropriate `.gitignore` patterns and created directory structure with README files for: `scripts/temp/`, `scripts/dev/`, `test/temp/`, `test/fixtures/`, `test/benchmarks/`, and `public/debug/`. This provides clear guidance for AI coding agents on maintaining a clean repository structure.
@@ -13,6 +8,8 @@
   4. **Eliminated duplicate constants**: Consolidated repeated seed multiplier constants (`SENSITIVITY_VARIATION_SEED_MULTIPLIER`, `SHAPE_VARIATION_SEED_MULTIPLIER`) by moving them to file-level scope instead of having duplicates in multiple functions.
   
   All tests continue to pass after these simplifications, confirming the changes don't break functionality while making the codebase cleaner and more maintainable.
+
+- [x] grain-visualizer.html now handles poission and fallback points correctly. but grain-debug.html still have them overlapping. **Completed**: Fixed `grain-debug.html` to pass the `minDistance` parameter to `generateFallbackGrains()` method, preventing overlap between Poisson and fallback points. Now both visualizer files handle grain point generation consistently.
 
 ## Partially Implemented Features (Complete these for better photographic accuracy)
 

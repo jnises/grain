@@ -338,7 +338,7 @@
                 
                 if (poissonPoints.length < params.grainDensity * 0.5) {
                     console.log(`Using fallback: ${poissonPoints.length} < ${params.grainDensity * 0.5}`);
-                    finalPoints = this.grainGenerator.generateFallbackGrains(poissonPoints, params.grainDensity);
+                    finalPoints = this.grainGenerator.generateFallbackGrains(poissonPoints, params.grainDensity, params.minDistance);
                     fallbackPoints = finalPoints.slice(poissonPoints.length);
                 }
                 
