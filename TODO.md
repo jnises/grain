@@ -1,20 +1,3 @@
-- [x] **Go through the repo and check if anything can be simplified** **Completed**: Successfully simplified the repository by:
-  1. **Removed redundant documentation**: Deleted agent-generated analysis files (`ALGORITHM_IMPLEMENTATION_ANALYSIS.md`, `GRAIN_COMPOSITING_ANALYSIS.md`, `IMPLEMENTATION_SUMMARY.md`) that were no longer needed.
-  2. **Moved temporary files**: Moved `test-random-injection.mjs` from root to `scripts/temp/` following proper organization guidelines.
-  3. **Reduced verbose logging**: Streamlined console.log statements in `grain-generator.ts` and `grain-worker.ts` by removing debug/progress messages and keeping only essential error/summary logs.
-  4. **Eliminated duplicate constants**: Consolidated repeated seed multiplier constants (`SENSITIVITY_VARIATION_SEED_MULTIPLIER`, `SHAPE_VARIATION_SEED_MULTIPLIER`) by moving them to file-level scope instead of having duplicates in multiple functions.
-  
-  All tests continue to pass after these simplifications, confirming the changes don't break functionality while making the codebase cleaner and more maintainable.
-
-- [x] grain-visualizer.html now handles poission and fallback points correctly. but grain-debug.html still have them overlapping. **Completed**: Fixed `grain-debug.html` to pass the `minDistance` parameter to `generateFallbackGrains()` method, preventing overlap between Poisson and fallback points. Now both visualizer files handle grain point generation consistently.
-
-- [x] **Go through the code and check for any non-idiomatic code. For example idioms that are typically used in another language, but not typically in typescript.** **Completed**: Successfully reviewed and updated non-idiomatic TypeScript patterns:
-  1. **Replaced Math.pow() with exponentiation operator (**)**: Updated all 20+ instances of `Math.pow(x, y)` with the more modern and idiomatic `x ** y` operator across all source files including `grain-generator.ts`, `grain-worker.ts`, `grain-worker-test.ts`, and test files.
-  2. **Simplified verbose object initialization patterns**: Replaced `Object.fromEntries(Object.keys(regions).map(key => [key, 0]))` with more readable explicit object initialization using for...of loops in test files.
-  3. **Maintained idiomatic TypeScript practices**: Verified that existing patterns like proper type guards, assertion functions, optional chaining usage, and variable declarations with `const`/`let` were already following TypeScript best practices.
-  
-  All tests continue to pass after these improvements, confirming the changes maintain functionality while making the codebase more idiomatic and readable according to modern TypeScript standards.
-
 ## Partially Implemented Features (Complete these for better photographic accuracy)
 
 - [x] **Enhance luminance-dependent grain response**: **Completed**: Enhanced the `calculateGrainStrength()` method with a new `calculateLuminanceBasedGrainStrength()` function that implements proper photographic-style grain response. The new implementation follows the algorithm design by defining distinct luminance zones (shadows, mid-tones, highlights) with appropriate strength multipliers. Grain is now most visible in mid-tones (peak at 0.5 luminance), strong in shadows, and properly reduced in highlights using exponential saturation reduction. This creates more film-like grain characteristics with proper emphasis on mid-tones and shadows while reducing grain visibility in blown highlights.
