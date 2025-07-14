@@ -82,3 +82,24 @@ When creating temporary files, debug utilities, or development tools, please fol
 2. Update documentation if needed
 3. Ensure all tests pass
 4. Check that no unnecessary files were added to the repository
+
+# Memory and Learned Preferences
+
+This section captures user preferences and project-specific patterns that should be remembered for future work.
+
+## Code Style Preferences
+- (Add specific style preferences as they emerge)
+
+## Architecture Decisions
+- (Record architectural patterns and decisions made during development)
+
+## User Workflow Preferences
+- (Track how the user prefers to work, debug, test, etc.)
+
+## Project-Specific Patterns
+- (Document patterns specific to this grain simulation project)
+
+## Common Corrections
+- (Record frequently needed corrections to avoid repeating mistakes)
+
+**Note**: When the user provides feedback that seems like a lasting preference rather than a one-time correction, add it to the appropriate section above with context about when and why it applies.
