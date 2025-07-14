@@ -1,4 +1,5 @@
 # Coding Guidelines
+- This is a prototype, no need to worry about backwards compatibility and such.
 
 ## Core Principles
 
