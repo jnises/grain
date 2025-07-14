@@ -2,6 +2,7 @@
 // Implements physically plausible analog film grain algorithm
 
 import { GrainGenerator } from './grain-generator';
+import { FILM_CHARACTERISTICS } from './constants';
 import type {
   GrainSettings,
   LabColor,
@@ -343,10 +344,26 @@ class GrainProcessor {
             const grainStrength = this.calculateGrainStrength(luminance, grain, x, y);
             const grainDensity = this.calculateGrainDensity(grainStrength, grain, 1.0); // No layer multiplier
             
-            // Apply different grain characteristics per channel
-            totalGrainDensity.r += grainDensity * weight * 0.7; // Red channel less affected
-            totalGrainDensity.g += grainDensity * weight * 0.9; // Green channel moderate
-            totalGrainDensity.b += grainDensity * weight * 1.0; // Blue channel most affected
+            // Apply film-specific channel characteristics with enhanced color effects
+            const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];
+            const channelSensitivity = filmCharacteristics.channelSensitivity;
+            const baseColorShift = filmCharacteristics.colorShift;
+            
+            // Calculate position-dependent color temperature shift
+            const normalizedDistance = distance / grain.size;
+            const temperatureShift = this.calculateTemperatureShift(grain, normalizedDistance);
+            
+            // Calculate chromatic aberration based on distance from grain center
+            const chromaticAberration = this.calculateChromaticAberration(normalizedDistance);
+            
+            // Apply enhanced color response with temperature and chromatic effects
+            const redSensitivity = channelSensitivity.red * (1 + baseColorShift.red + temperatureShift.red);
+            const greenSensitivity = channelSensitivity.green * (1 + baseColorShift.green + temperatureShift.green);
+            const blueSensitivity = channelSensitivity.blue * (1 + baseColorShift.blue + temperatureShift.blue);
+            
+            totalGrainDensity.r += grainDensity * weight * redSensitivity * chromaticAberration.red;
+            totalGrainDensity.g += grainDensity * weight * greenSensitivity * chromaticAberration.green;
+            totalGrainDensity.b += grainDensity * weight * blueSensitivity * chromaticAberration.blue;
             
             totalWeight += weight;
           }
@@ -527,6 +544,40 @@ class GrainProcessor {
       g * (1 - Math.min(0.8, grainDensity.g)),
       b * (1 - Math.min(0.8, grainDensity.b))
     ];
+  }
+
+  /**
+   * Calculate temperature-dependent color shift based on grain properties
+   * Simulates color temperature variations within individual grains
+   */
+  private calculateTemperatureShift(grain: GrainPoint, normalizedDistance: number): { red: number; green: number; blue: number } {
+    // Use grain's shape and sensitivity properties to create per-grain color variation
+    const grainVariation = grain.shape * grain.sensitivity * 0.01; // Small variation factor
+    
+    // Simulate warmer center, cooler edges (typical of film grain)
+    const distanceFactor = 1 - normalizedDistance;
+    const temperatureIntensity = grainVariation * distanceFactor;
+    
+    return {
+      red: temperatureIntensity * 0.02,    // Warmer tones toward grain center
+      green: temperatureIntensity * 0.005, // Slight green adjustment
+      blue: -temperatureIntensity * 0.015  // Cooler at edges
+    };
+  }
+
+  /**
+   * Calculate chromatic aberration effect
+   * Simulates slight color separation based on distance from grain center
+   */
+  private calculateChromaticAberration(normalizedDistance: number): { red: number; green: number; blue: number } {
+    // Chromatic aberration is strongest at edges
+    const aberrationStrength = normalizedDistance * 0.02; // Very subtle effect
+    
+    return {
+      red: 1 + aberrationStrength * 0.5,   // Red slightly displaced outward
+      green: 1,                             // Green remains centered (reference)
+      blue: 1 - aberrationStrength * 0.3   // Blue slightly displaced inward
+    };
   }
 }
 
