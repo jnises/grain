@@ -1,5 +1,5 @@
 - [x] Change the title of the page to be the name of the project.
-- [ ] Replace the vite favicon with a custom one for this project.
+- [x] Replace the vite favicon with a custom one for this project.
 - [ ] When looking a the image with grains added in the gui I can see jpeg artifacts, even though the source image was a png. Why is that?
 - [ ] When adding grain in the gui I don't see any actual grains in the resulting image even if I set the grain intensity to max and set the iso to a high value. What could be the issue?
 
