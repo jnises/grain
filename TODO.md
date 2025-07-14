@@ -1,3 +1,6 @@
+- [ ] Change the title of the page to be the name of the project.
+- [ ] Replace the vite favicon with a custom one for this project.
+
 ## Partially Implemented Features (Complete these for better photographic accuracy)
 
 - [x] **Enhance luminance-dependent grain response**: **Completed**: Enhanced the `calculateGrainStrength()` method with a new `calculateLuminanceBasedGrainStrength()` function that implements proper photographic-style grain response. The new implementation follows the algorithm design by defining distinct luminance zones (shadows, mid-tones, highlights) with appropriate strength multipliers. Grain is now most visible in mid-tones (peak at 0.5 luminance), strong in shadows, and properly reduced in highlights using exponential saturation reduction. This creates more film-like grain characteristics with proper emphasis on mid-tones and shadows while reducing grain visibility in blown highlights.
@@ -8,6 +11,10 @@
   - [x] **Implement color shift effects within grains**: **Completed**: Implemented sophisticated color shift effects including position-dependent color temperature variations (warmer centers, cooler edges), chromatic aberration effects (subtle color separation based on distance from grain center), and per-grain color variation based on individual grain properties (shape and sensitivity). Added comprehensive tests to verify the temperature shift and chromatic aberration calculations work correctly.
   - [x] **Add comprehensive tests for color response**: **Completed**: Created `film-color-response.test.ts` with comprehensive tests verifying correct channel sensitivity configuration, color shift properties, expected film characteristics, and backward compatibility.
 - [ ] **Implement proper exposure simulation**: Current `filmCurve()` and exposure calculation needs enhancement. Add logarithmic scaling for RGB to exposure conversion and proper kernel-based sampling for grain area instead of point sampling.
+  - [x] **Replace linear LAB luminance with logarithmic exposure scaling**: **Completed**: Replaced current `lab.l / 100` luminance calculation with proper logarithmic RGB-to-exposure conversion that follows photographic principles. Added `EXPOSURE_CONVERSION` constants and `rgbToExposure()` method that uses ITU-R BT.709 luminance weights, logarithmic scaling, and proper normalization. Updated `calculateGrainStrength()` to use exposure instead of linear luminance, providing more realistic photographic behavior.
+  - [ ] **Enhance filmCurve() with proper photographic S-curve**: Replace basic sigmoid with realistic film characteristic curve that properly maps digital values to photographic density
+  - [ ] **Implement kernel-based grain area sampling**: Replace point sampling with proper kernel-based sampling that averages exposure over each grain's shape and size
+  - [ ] **Add exposure unit conversion system**: Create proper conversion from RGB values to photographic exposure units using logarithmic scaling
 - [ ] **Enhance development threshold system**: Current grain sensitivity is too simplified. Implement proper per-grain development thresholds based on local exposure level, base sensitivity, and development time simulation as designed.
 - [ ] **Implement Beer-Lambert law compositing**: Current density compositing uses simplified model `final = original * (1 - density)`. Implement proper Beer-Lambert law: `final = original * exp(-density)` for more physically accurate results.
 

@@ -2,7 +2,7 @@
 // Implements physically plausible analog film grain algorithm
 
 import { GrainGenerator } from './grain-generator';
-import { FILM_CHARACTERISTICS } from './constants';
+import { FILM_CHARACTERISTICS, EXPOSURE_CONVERSION } from './constants';
 import type {
   GrainSettings,
   LabColor,
@@ -245,6 +245,44 @@ class GrainProcessor {
     return 1 / (1 + Math.exp(-FILM_CURVE_CONTRAST * (input - FILM_CURVE_MIDPOINT)));
   }
 
+  // Convert RGB to photographic exposure using logarithmic scaling
+  // This replaces the linear LAB luminance conversion with proper exposure simulation
+  private rgbToExposure(r: number, g: number, b: number): number {
+    // Validate input parameters
+    assertInRange(r, 0, 255, 'r');
+    assertInRange(g, 0, 255, 'g');
+    assertInRange(b, 0, 255, 'b');
+
+    // Normalize RGB values to [0, 1] range
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
+
+    // Calculate weighted luminance using photographic weights
+    // These weights account for human eye sensitivity (ITU-R BT.709)
+    const luminance = 
+      rNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
+      gNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +
+      bNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.blue;
+
+    // Add small offset to prevent log(0) in pure black areas
+    const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;
+
+    // Convert to logarithmic exposure scale
+    // This follows photographic principles where exposure is measured in stops (log scale)
+    // Formula: exposure = log(luminance / middle_gray) * scale_factor
+    const logExposure = Math.log(safeLuminance / EXPOSURE_CONVERSION.MIDDLE_GRAY_LUMINANCE) / 
+                       Math.log(EXPOSURE_CONVERSION.LOG_BASE);
+    
+    // Scale and normalize exposure to [0, 1] range for grain calculations
+    // This maps the exposure range to usable values for grain strength calculations
+    const normalizedExposure = (logExposure + EXPOSURE_CONVERSION.EXPOSURE_SCALE) / 
+                              (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
+
+    // Clamp to [0, 1] range to handle extreme values
+    return Math.max(0, Math.min(1, normalizedExposure));
+  }
+
   // Generate grain structure (single layer with varying sizes)
   private generateGrainStructure(): GrainPoint[] {
     return this.grainGenerator.generateGrainStructure();
@@ -305,9 +343,12 @@ class GrainProcessor {
         const b = data[pixelIndex + 2];
         const a = data[pixelIndex + 3];
         
-        // Convert to LAB for better color processing
+        // Convert RGB to photographic exposure using logarithmic scaling
+        // This replaces the linear LAB luminance with proper exposure simulation
+        const exposure = this.rgbToExposure(r, g, b);
+        
+        // Keep LAB conversion for color processing (still needed for color shifts)
         const lab = this.rgbToLab(r, g, b);
-        const luminance = lab.l / 100;
         
         // Initialize grain density
         let totalGrainDensity: GrainDensity = { r: 0, g: 0, b: 0 };
@@ -341,7 +382,7 @@ class GrainProcessor {
           
           if (distance < grain.size * 2) {
             const weight = Math.exp(-distance / grain.size);
-            const grainStrength = this.calculateGrainStrength(luminance, grain, x, y);
+            const grainStrength = this.calculateGrainStrength(exposure, grain, x, y);
             const grainDensity = this.calculateGrainDensity(grainStrength, grain, 1.0); // No layer multiplier
             
             // Apply film-specific channel characteristics with enhanced color effects
@@ -443,8 +484,8 @@ class GrainProcessor {
     return result;
   }
 
-  // Calculate grain strength based on luminance and grain properties
-  private calculateGrainStrength(luminance: number, grain: GrainPoint, x: number, y: number): number {
+  // Calculate grain strength based on exposure and grain properties
+  private calculateGrainStrength(exposure: number, grain: GrainPoint, x: number, y: number): number {
     // Noise texture generation constants
     const NOISE_SCALE_FINE = 0.15;
     const NOISE_SCALE_MEDIUM = 0.08;
@@ -453,8 +494,8 @@ class GrainProcessor {
     const NOISE_WEIGHT_MEDIUM = 0.3;
     const NOISE_WEIGHT_COARSE = 0.1;
 
-    // Enhanced luminance-dependent grain response based on photographic principles
-    const luminanceResponse = this.calculateLuminanceBasedGrainStrength(luminance);
+    // Enhanced exposure-dependent grain response based on photographic principles
+    const exposureResponse = this.calculateExposureBasedGrainStrength(exposure);
     
     // Add noise for grain texture with multiple octaves
     const noiseValue = this.noise(x * NOISE_SCALE_FINE, y * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
@@ -462,10 +503,10 @@ class GrainProcessor {
                       this.noise(x * NOISE_SCALE_COARSE, y * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
     
     // Film characteristic curve
-    const filmResponse = this.filmCurve(luminance);
+    const filmResponse = this.filmCurve(exposure);
     
     // Combine all factors
-    const baseStrength = grain.sensitivity * luminanceResponse * filmResponse;
+    const baseStrength = grain.sensitivity * exposureResponse * filmResponse;
     const finalStrength = baseStrength * (0.3 + Math.abs(noiseValue) * 0.7);
     
     // Apply grain shape variation
@@ -474,9 +515,9 @@ class GrainProcessor {
     return finalStrength * shapeModifier * 0.5; // Increased multiplier for better visibility
   }
 
-  // Enhanced luminance-dependent grain response following photographic principles
-  private calculateLuminanceBasedGrainStrength(luminance: number): number {
-    // Define key luminance zones for film-like grain response
+  // Enhanced exposure-dependent grain response following photographic principles
+  private calculateExposureBasedGrainStrength(exposure: number): number {
+    // Define key exposure zones for film-like grain response
     const SHADOW_THRESHOLD = 0.2;    // Below this: deep shadows
     const MIDTONE_START = 0.25;      // Start of mid-tone emphasis
     const MIDTONE_PEAK = 0.5;        // Peak grain visibility
@@ -489,33 +530,33 @@ class GrainProcessor {
     const HIGHLIGHT_STRENGTH = 0.4;  // Reduced grain in highlights
     const BLOWN_HIGHLIGHT_STRENGTH = 0.1; // Minimal grain in blown highlights
     
-    if (luminance <= SHADOW_THRESHOLD) {
+    if (exposure <= SHADOW_THRESHOLD) {
       // Deep shadows: strong grain with slight variation
-      const shadowFactor = luminance / SHADOW_THRESHOLD;
+      const shadowFactor = exposure / SHADOW_THRESHOLD;
       return SHADOW_STRENGTH * (0.8 + shadowFactor * 0.2);
-    } else if (luminance <= MIDTONE_START) {
+    } else if (exposure <= MIDTONE_START) {
       // Shadow to mid-tone transition: increasing grain strength
-      const transitionFactor = (luminance - SHADOW_THRESHOLD) / (MIDTONE_START - SHADOW_THRESHOLD);
+      const transitionFactor = (exposure - SHADOW_THRESHOLD) / (MIDTONE_START - SHADOW_THRESHOLD);
       return SHADOW_STRENGTH + (MIDTONE_STRENGTH - SHADOW_STRENGTH) * transitionFactor;
-    } else if (luminance <= MIDTONE_PEAK) {
+    } else if (exposure <= MIDTONE_PEAK) {
       // Rising mid-tones: approach peak grain visibility
-      const midtoneFactor = (luminance - MIDTONE_START) / (MIDTONE_PEAK - MIDTONE_START);
+      const midtoneFactor = (exposure - MIDTONE_START) / (MIDTONE_PEAK - MIDTONE_START);
       // Use a slight curve to make the peak more pronounced
       const curvedFactor = Math.sin(midtoneFactor * Math.PI * 0.5);
       return SHADOW_STRENGTH + (MIDTONE_STRENGTH - SHADOW_STRENGTH) * curvedFactor;
-    } else if (luminance <= MIDTONE_END) {
+    } else if (exposure <= MIDTONE_END) {
       // Peak mid-tones: maximum grain visibility with slight variation
-      const peakVariation = Math.sin((luminance - MIDTONE_PEAK) / (MIDTONE_END - MIDTONE_PEAK) * Math.PI);
+      const peakVariation = Math.sin((exposure - MIDTONE_PEAK) / (MIDTONE_END - MIDTONE_PEAK) * Math.PI);
       return MIDTONE_STRENGTH * (0.95 + peakVariation * 0.05);
-    } else if (luminance <= HIGHLIGHT_THRESHOLD) {
+    } else if (exposure <= HIGHLIGHT_THRESHOLD) {
       // Mid-tone to highlight transition: decreasing grain strength
-      const transitionFactor = (luminance - MIDTONE_END) / (HIGHLIGHT_THRESHOLD - MIDTONE_END);
+      const transitionFactor = (exposure - MIDTONE_END) / (HIGHLIGHT_THRESHOLD - MIDTONE_END);
       // Use exponential decay for more realistic highlight rolloff
       const decayFactor = (1 - transitionFactor) ** 2;
       return MIDTONE_STRENGTH * decayFactor + HIGHLIGHT_STRENGTH * (1 - decayFactor);
     } else {
       // Highlights: strong saturation reduction (grain becomes less visible)
-      const highlightFactor = (luminance - HIGHLIGHT_THRESHOLD) / (1.0 - HIGHLIGHT_THRESHOLD);
+      const highlightFactor = (exposure - HIGHLIGHT_THRESHOLD) / (1.0 - HIGHLIGHT_THRESHOLD);
       // Exponential saturation reduction in highlights
       const saturationReduction = (1 - highlightFactor) ** 3;
       return HIGHLIGHT_STRENGTH * saturationReduction + BLOWN_HIGHLIGHT_STRENGTH * (1 - saturationReduction);

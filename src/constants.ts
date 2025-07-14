@@ -66,3 +66,31 @@ export const FILM_CHARACTERISTICS = {
 // Common image processing constants that could be shared
 export const ALPHA_CHANNEL_INDEX = 3;
 export const RGBA_CHANNELS = 4;
+
+// Exposure simulation constants for photographic modeling
+export const EXPOSURE_CONVERSION = {
+  // Logarithmic scaling factors for RGB to exposure conversion
+  // Based on photographic principles where exposure follows log scale
+  LOG_BASE: Math.E,                    // Natural logarithm base
+  EXPOSURE_SCALE: 5.0,                 // Scale factor for exposure range
+  LUMINANCE_OFFSET: 0.001,             // Prevent log(0) issues in shadows
+  
+  // Photographic luminance weights (ITU-R BT.709)
+  // These differ from simple average as they account for human eye sensitivity
+  LUMINANCE_WEIGHTS: {
+    red: 0.2126,
+    green: 0.7152,
+    blue: 0.0722
+  },
+  
+  // Exposure zone mapping (Ansel Adams zone system inspired)
+  // Maps 10 zones from pure black (Zone 0) to pure white (Zone IX)
+  ZONE_RANGE: 10,
+  MIDDLE_GRAY_ZONE: 5,                 // Zone V = 18% middle gray
+  MIDDLE_GRAY_LUMINANCE: 0.18,         // 18% reflectance standard
+  
+  // Film sensitivity scaling
+  // Maps ISO values to exposure sensitivity
+  ISO_BASE: 100,                       // Base ISO for calculations
+  ISO_LOG_FACTOR: Math.log(2) / Math.log(10) // ISO doubles = 1 stop = log base conversion
+} as const;
