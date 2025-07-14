@@ -428,13 +428,6 @@ class GrainProcessor {
 
   // Calculate grain strength based on luminance and grain properties
   private calculateGrainStrength(luminance: number, grain: GrainPoint, x: number, y: number): number {
-    // Grain strength calculation constants
-    const SHADOW_LUMINANCE_THRESHOLD = 0.5;
-    const SHADOW_STRENGTH_BASE = 1.2;
-    const SHADOW_STRENGTH_MULTIPLIER = 0.6;
-    const HIGHLIGHT_STRENGTH_BASE = 0.6;
-    const HIGHLIGHT_STRENGTH_MULTIPLIER = 0.8;
-
     // Noise texture generation constants
     const NOISE_SCALE_FINE = 0.15;
     const NOISE_SCALE_MEDIUM = 0.08;
@@ -443,10 +436,8 @@ class GrainProcessor {
     const NOISE_WEIGHT_MEDIUM = 0.3;
     const NOISE_WEIGHT_COARSE = 0.1;
 
-    // Grain is most visible in mid-tones and shadows
-    const luminanceResponse = luminance < SHADOW_LUMINANCE_THRESHOLD 
-      ? SHADOW_STRENGTH_BASE - luminance * SHADOW_STRENGTH_MULTIPLIER  // Stronger in shadows
-      : HIGHLIGHT_STRENGTH_BASE + (1.0 - luminance) * HIGHLIGHT_STRENGTH_MULTIPLIER; // Moderate in highlights
+    // Enhanced luminance-dependent grain response based on photographic principles
+    const luminanceResponse = this.calculateLuminanceBasedGrainStrength(luminance);
     
     // Add noise for grain texture with multiple octaves
     const noiseValue = this.noise(x * NOISE_SCALE_FINE, y * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
@@ -464,6 +455,54 @@ class GrainProcessor {
     const shapeModifier = 0.7 + grain.shape * 0.6;
     
     return finalStrength * shapeModifier * 0.5; // Increased multiplier for better visibility
+  }
+
+  // Enhanced luminance-dependent grain response following photographic principles
+  private calculateLuminanceBasedGrainStrength(luminance: number): number {
+    // Define key luminance zones for film-like grain response
+    const SHADOW_THRESHOLD = 0.2;    // Below this: deep shadows
+    const MIDTONE_START = 0.25;      // Start of mid-tone emphasis
+    const MIDTONE_PEAK = 0.5;        // Peak grain visibility
+    const MIDTONE_END = 0.75;        // End of strong mid-tone response
+    const HIGHLIGHT_THRESHOLD = 0.85; // Above this: highlight saturation reduction
+    
+    // Strength multipliers for different zones
+    const SHADOW_STRENGTH = 1.4;     // Strong grain in shadows
+    const MIDTONE_STRENGTH = 1.8;    // Maximum grain in mid-tones
+    const HIGHLIGHT_STRENGTH = 0.4;  // Reduced grain in highlights
+    const BLOWN_HIGHLIGHT_STRENGTH = 0.1; // Minimal grain in blown highlights
+    
+    if (luminance <= SHADOW_THRESHOLD) {
+      // Deep shadows: strong grain with slight variation
+      const shadowFactor = luminance / SHADOW_THRESHOLD;
+      return SHADOW_STRENGTH * (0.8 + shadowFactor * 0.2);
+    } else if (luminance <= MIDTONE_START) {
+      // Shadow to mid-tone transition: increasing grain strength
+      const transitionFactor = (luminance - SHADOW_THRESHOLD) / (MIDTONE_START - SHADOW_THRESHOLD);
+      return SHADOW_STRENGTH + (MIDTONE_STRENGTH - SHADOW_STRENGTH) * transitionFactor;
+    } else if (luminance <= MIDTONE_PEAK) {
+      // Rising mid-tones: approach peak grain visibility
+      const midtoneFactor = (luminance - MIDTONE_START) / (MIDTONE_PEAK - MIDTONE_START);
+      // Use a slight curve to make the peak more pronounced
+      const curvedFactor = Math.sin(midtoneFactor * Math.PI * 0.5);
+      return SHADOW_STRENGTH + (MIDTONE_STRENGTH - SHADOW_STRENGTH) * curvedFactor;
+    } else if (luminance <= MIDTONE_END) {
+      // Peak mid-tones: maximum grain visibility with slight variation
+      const peakVariation = Math.sin((luminance - MIDTONE_PEAK) / (MIDTONE_END - MIDTONE_PEAK) * Math.PI);
+      return MIDTONE_STRENGTH * (0.95 + peakVariation * 0.05);
+    } else if (luminance <= HIGHLIGHT_THRESHOLD) {
+      // Mid-tone to highlight transition: decreasing grain strength
+      const transitionFactor = (luminance - MIDTONE_END) / (HIGHLIGHT_THRESHOLD - MIDTONE_END);
+      // Use exponential decay for more realistic highlight rolloff
+      const decayFactor = Math.pow(1 - transitionFactor, 2);
+      return MIDTONE_STRENGTH * decayFactor + HIGHLIGHT_STRENGTH * (1 - decayFactor);
+    } else {
+      // Highlights: strong saturation reduction (grain becomes less visible)
+      const highlightFactor = (luminance - HIGHLIGHT_THRESHOLD) / (1.0 - HIGHLIGHT_THRESHOLD);
+      // Exponential saturation reduction in highlights
+      const saturationReduction = Math.pow(1 - highlightFactor, 3);
+      return HIGHLIGHT_STRENGTH * saturationReduction + BLOWN_HIGHLIGHT_STRENGTH * (1 - saturationReduction);
+    }
   }
 
   // Calculate grain density for density-based compositing
