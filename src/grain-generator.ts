@@ -57,6 +57,10 @@ const GRAIN_SIZE_VARIATION_RANGE = 2.0; // Size can vary from 0.5x to 2.5x base 
 const GRAIN_SIZE_VARIATION_SEED_MULTIPLIER = 456.789;
 const GRAIN_SIZE_DISTRIBUTION_BIAS = 0.6; // Bias towards smaller grains (0.5 = uniform, >0.5 = more small grains)
 
+// Grain variation seed multipliers (shared across methods)
+const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
+const SHAPE_VARIATION_SEED_MULTIPLIER = 345.678;
+
 export class GrainGenerator {
   private width: number;
   private height: number;
@@ -415,8 +419,6 @@ export class GrainGenerator {
   public generateGrainStructure(): GrainPoint[] {
     // Grain analysis and variation constants
     const GRAIN_DENSITY_THRESHOLD = 0.5;
-    const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
-    const SHAPE_VARIATION_SEED_MULTIPLIER = 345.678;
     
     const params = this.calculateGrainParameters();
     
@@ -576,10 +578,6 @@ export class GrainGenerator {
     let attempts = 0;
     let consecutiveFailures = 0;
     const maxConsecutiveFailures = 1000; // Stop if we can't place any grains for 1000 attempts
-    
-    // Constants for grain size distribution
-    const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
-    const SHAPE_VARIATION_SEED_MULTIPLIER = 345.678;
     
     console.log(`Generating variable size grains: target=${targetCount}, maxAttempts=${maxAttempts}`);
     
