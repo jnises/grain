@@ -156,8 +156,8 @@ export class GrainGenerator {
               grid[checkX][checkY]) {
             const existingPoint = grid[checkX][checkY]!;
             const distance = Math.sqrt(
-              Math.pow(candidate.x - existingPoint.x, 2) + 
-              Math.pow(candidate.y - existingPoint.y, 2)
+              (candidate.x - existingPoint.x) ** 2 + 
+              (candidate.y - existingPoint.y) ** 2
             );
             if (distance < minDistance) {
               return false;
@@ -493,8 +493,8 @@ export class GrainGenerator {
     for (let i = 0; i < sampleSize; i++) {
       for (let j = i + 1; j < sampleSize; j++) {
         const dist = Math.sqrt(
-          Math.pow(grains[i].x - grains[j].x, 2) + 
-          Math.pow(grains[i].y - grains[j].y, 2)
+          (grains[i].x - grains[j].x) ** 2 + 
+          (grains[i].y - grains[j].y) ** 2
         );
         distances.push(dist);
       }
@@ -626,7 +626,7 @@ export class GrainGenerator {
     const sizeVariation = this.seededRandom(index * GRAIN_SIZE_VARIATION_SEED_MULTIPLIER);
     
     // Apply distribution bias (more small grains than large ones)
-    const biasedVariation = Math.pow(sizeVariation, 1.0 / GRAIN_SIZE_DISTRIBUTION_BIAS);
+    const biasedVariation = sizeVariation ** (1.0 / GRAIN_SIZE_DISTRIBUTION_BIAS);
     
     // Size ranges from 0.5x to 2.5x base size
     const minSizeMultiplier = 0.5;
@@ -646,7 +646,7 @@ export class GrainGenerator {
     const NEARBY_GRAIN_RADIUS = grainSize * 4; // Check in a radius of 4x grain size
     
     for (const grain of existingGrains) {
-      const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
+      const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
       
       if (distance < NEARBY_GRAIN_RADIUS) {
         // Adjust minimum distance based on nearby grain size
@@ -667,7 +667,7 @@ export class GrainGenerator {
     
     // Check distance to existing grains
     for (const grain of existingGrains) {
-      const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
+      const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
       if (distance < minDistance) {
         return false;
       }

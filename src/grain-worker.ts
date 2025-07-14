@@ -181,9 +181,9 @@ class GrainProcessor {
     b /= RGB_MAX_VALUE;
 
     // Apply gamma correction
-    r = r > RGB_GAMMA_THRESHOLD ? Math.pow((r + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER, RGB_GAMMA_POWER) : r / RGB_GAMMA_LINEAR_DIVISOR;
-    g = g > RGB_GAMMA_THRESHOLD ? Math.pow((g + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER, RGB_GAMMA_POWER) : g / RGB_GAMMA_LINEAR_DIVISOR;
-    b = b > RGB_GAMMA_THRESHOLD ? Math.pow((b + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER, RGB_GAMMA_POWER) : b / RGB_GAMMA_LINEAR_DIVISOR;
+    r = r > RGB_GAMMA_THRESHOLD ? ((r + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER) ** RGB_GAMMA_POWER : r / RGB_GAMMA_LINEAR_DIVISOR;
+    g = g > RGB_GAMMA_THRESHOLD ? ((g + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER) ** RGB_GAMMA_POWER : g / RGB_GAMMA_LINEAR_DIVISOR;
+    b = b > RGB_GAMMA_THRESHOLD ? ((b + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER) ** RGB_GAMMA_POWER : b / RGB_GAMMA_LINEAR_DIVISOR;
 
     // Convert to XYZ
     let x = r * RGB_TO_XYZ_MATRIX.x.r + g * RGB_TO_XYZ_MATRIX.x.g + b * RGB_TO_XYZ_MATRIX.x.b;
@@ -207,9 +207,9 @@ class GrainProcessor {
     );
 
     // Convert to LAB
-    x = x > LAB_EPSILON ? Math.pow(x, 1/3) : (LAB_KAPPA * x + LAB_DELTA);
-    y = y > LAB_EPSILON ? Math.pow(y, 1/3) : (LAB_KAPPA * y + LAB_DELTA);
-    z = z > LAB_EPSILON ? Math.pow(z, 1/3) : (LAB_KAPPA * z + LAB_DELTA);
+    x = x > LAB_EPSILON ? x ** (1/3) : (LAB_KAPPA * x + LAB_DELTA);
+    y = y > LAB_EPSILON ? y ** (1/3) : (LAB_KAPPA * y + LAB_DELTA);
+    z = z > LAB_EPSILON ? z ** (1/3) : (LAB_KAPPA * z + LAB_DELTA);
 
     const labResult = {
       l: LAB_L_MULTIPLIER * y - LAB_L_OFFSET,
@@ -337,7 +337,7 @@ class GrainProcessor {
         
         // Process nearby grains directly (already filtered by spatial grid)
         for (const grain of nearbyGrains) {
-          const distance = Math.sqrt(Math.pow(x - grain.x, 2) + Math.pow(y - grain.y, 2));
+          const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
           
           if (distance < grain.size * 2) {
             const weight = Math.exp(-distance / grain.size);
@@ -511,13 +511,13 @@ class GrainProcessor {
       // Mid-tone to highlight transition: decreasing grain strength
       const transitionFactor = (luminance - MIDTONE_END) / (HIGHLIGHT_THRESHOLD - MIDTONE_END);
       // Use exponential decay for more realistic highlight rolloff
-      const decayFactor = Math.pow(1 - transitionFactor, 2);
+      const decayFactor = (1 - transitionFactor) ** 2;
       return MIDTONE_STRENGTH * decayFactor + HIGHLIGHT_STRENGTH * (1 - decayFactor);
     } else {
       // Highlights: strong saturation reduction (grain becomes less visible)
       const highlightFactor = (luminance - HIGHLIGHT_THRESHOLD) / (1.0 - HIGHLIGHT_THRESHOLD);
       // Exponential saturation reduction in highlights
-      const saturationReduction = Math.pow(1 - highlightFactor, 3);
+      const saturationReduction = (1 - highlightFactor) ** 3;
       return HIGHLIGHT_STRENGTH * saturationReduction + BLOWN_HIGHLIGHT_STRENGTH * (1 - saturationReduction);
     }
   }

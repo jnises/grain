@@ -236,8 +236,8 @@ describe('GrainGenerator', () => {
       for (let i = 0; i < points.length; i++) {
         for (let j = i + 1; j < points.length; j++) {
           const distance = Math.sqrt(
-            Math.pow(points[i].x - points[j].x, 2) + 
-            Math.pow(points[i].y - points[j].y, 2)
+            (points[i].x - points[j].x) ** 2 + 
+            (points[i].y - points[j].y) ** 2
           );
           totalDistances++;
           if (distance >= minDistance * 0.9) {

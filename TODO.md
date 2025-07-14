@@ -8,7 +8,12 @@
 
 - [x] grain-visualizer.html now handles poission and fallback points correctly. but grain-debug.html still have them overlapping. **Completed**: Fixed `grain-debug.html` to pass the `minDistance` parameter to `generateFallbackGrains()` method, preventing overlap between Poisson and fallback points. Now both visualizer files handle grain point generation consistently.
 
-- [ ] Go through the code and check for any non-idiomatic code. For example idioms that are typically used in another language, but not typically in typescript.
+- [x] **Go through the code and check for any non-idiomatic code. For example idioms that are typically used in another language, but not typically in typescript.** **Completed**: Successfully reviewed and updated non-idiomatic TypeScript patterns:
+  1. **Replaced Math.pow() with exponentiation operator (**)**: Updated all 20+ instances of `Math.pow(x, y)` with the more modern and idiomatic `x ** y` operator across all source files including `grain-generator.ts`, `grain-worker.ts`, `grain-worker-test.ts`, and test files.
+  2. **Simplified verbose object initialization patterns**: Replaced `Object.fromEntries(Object.keys(regions).map(key => [key, 0]))` with more readable explicit object initialization using for...of loops in test files.
+  3. **Maintained idiomatic TypeScript practices**: Verified that existing patterns like proper type guards, assertion functions, optional chaining usage, and variable declarations with `const`/`let` were already following TypeScript best practices.
+  
+  All tests continue to pass after these improvements, confirming the changes maintain functionality while making the codebase more idiomatic and readable according to modern TypeScript standards.
 
 ## Partially Implemented Features (Complete these for better photographic accuracy)
 

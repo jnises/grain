@@ -71,7 +71,7 @@ describe('Grain Distribution Bug Tests', () => {
         bottomRight: { minX: 266, maxX: 400, minY: 200, maxY: 300 }
       };
 
-      const regionCounts = Object.fromEntries(
+      const regionCounts: Record<string, number> = Object.fromEntries(
         Object.keys(regions).map(key => [key, 0])
       );
 
@@ -231,7 +231,7 @@ describe('Grain Distribution Bug Tests', () => {
         bottomRight: { minX: 266, maxX: 400, minY: 200, maxY: 300 }
       };
 
-      const regionCounts = Object.fromEntries(
+      const regionCounts: Record<string, number> = Object.fromEntries(
         Object.keys(regions).map(key => [key, 0])
       );
 
@@ -293,7 +293,7 @@ describe('Grain Distribution Bug Tests', () => {
           const p2 = poissonPoints[j];
           
           const distance = Math.sqrt(
-            Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)
+            (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2
           );
           
           if (distance < params.minDistance) {

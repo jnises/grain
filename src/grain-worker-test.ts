@@ -73,8 +73,8 @@ export function validatePointDistribution(points: Point2D[], minDistance: number
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
       const distance = Math.sqrt(
-        Math.pow(points[i].x - points[j].x, 2) + 
-        Math.pow(points[i].y - points[j].y, 2)
+        (points[i].x - points[j].x) ** 2 + 
+        (points[i].y - points[j].y) ** 2
       );
       if (distance < minDistance) {
         return false;
@@ -136,8 +136,8 @@ export function analyzeGrainDistribution(points: Point2D[] | GrainPoint[], width
     for (let i = 0; i < Math.min(points.length, 100); i++) {
       for (let j = i + 1; j < Math.min(points.length, 100); j++) {
         const distance = Math.sqrt(
-          Math.pow(points[i].x - points[j].x, 2) + 
-          Math.pow(points[i].y - points[j].y, 2)
+          (points[i].x - points[j].x) ** 2 + 
+          (points[i].y - points[j].y) ** 2
         );
         totalDistance += distance;
         distanceCount++;
