@@ -1,62 +1,51 @@
-import { describe, it, expect } from 'vitest';
-import { EXPOSURE_CONVERSION } from '../src/constants';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { GrainProcessor } from '../src/grain-worker';
+import type { GrainSettings } from '../src/types';
 
-// Test helper class to access private rgbToExposure method
-class ExposureConverter {
-  rgbToExposure(r: number, g: number, b: number): number {
-    // Normalize RGB values to [0, 1] range
-    const rNorm = r / 255;
-    const gNorm = g / 255;
-    const bNorm = b / 255;
-
-    // Calculate weighted luminance using photographic weights
-    const luminance = 
-      rNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
-      gNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +
-      bNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.blue;
-
-    // Add small offset to prevent log(0) in pure black areas
-    const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;
-
-    // Convert to logarithmic exposure scale
-    const logExposure = Math.log(safeLuminance / EXPOSURE_CONVERSION.MIDDLE_GRAY_LUMINANCE) / 
-                       Math.log(EXPOSURE_CONVERSION.LOG_BASE);
-    
-    // Scale and normalize exposure to [0, 1] range
-    const normalizedExposure = (logExposure + EXPOSURE_CONVERSION.EXPOSURE_SCALE) / 
-                              (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
-
-    // Clamp to [0, 1] range
-    return Math.max(0, Math.min(1, normalizedExposure));
+// Create a test class that extends GrainProcessor to access protected methods
+class TestableGrainProcessor extends GrainProcessor {
+  public testRgbToExposure(r: number, g: number, b: number): number {
+    return this.rgbToExposure(r, g, b);
   }
 }
 
 describe('Exposure Conversion', () => {
-  const converter = new ExposureConverter();
+  let processor: TestableGrainProcessor;
+  let settings: GrainSettings;
+
+  beforeEach(() => {
+    settings = {
+      iso: 400,
+      filmType: 'kodak',
+      grainIntensity: 1.0,
+      upscaleFactor: 1.0
+    };
+    processor = new TestableGrainProcessor(100, 100, settings);
+  });
 
   it('should convert RGB to logarithmic exposure following photographic principles', () => {
     // Test key photographic reference points:
     
     // 1. Pure black (0,0,0) should give zero exposure due to clamping
-    const blackExposure = converter.rgbToExposure(0, 0, 0);
+    const blackExposure = processor.testRgbToExposure(0, 0, 0);
     expect(blackExposure).toBe(0); // Clamped to 0 due to extreme log value
     
     // 2. 18% middle gray (~46 RGB) should give mid-range exposure around 0.5
     // Calculate RGB value for 18% gray: 0.18 * 255 ≈ 46
     const middleGrayRgb = Math.round(0.18 * 255);
-    const middleGrayExposure = converter.rgbToExposure(middleGrayRgb, middleGrayRgb, middleGrayRgb);
+    const middleGrayExposure = processor.testRgbToExposure(middleGrayRgb, middleGrayRgb, middleGrayRgb);
     expect(middleGrayExposure).toBeGreaterThan(0.49);
     expect(middleGrayExposure).toBeLessThan(0.51);
     
     // 3. Pure white (255,255,255) should give high exposure near (but not at) 1.0
-    const whiteExposure = converter.rgbToExposure(255, 255, 255);
+    const whiteExposure = processor.testRgbToExposure(255, 255, 255);
     expect(whiteExposure).toBeGreaterThan(0.65);
     expect(whiteExposure).toBeLessThan(0.7);
     
     // 4. Exposure should increase monotonically with brightness
     // Use values in order: black < mid-gray < slightly-brighter-gray < light-gray < white
-    const slightlyBrighterGrayExposure = converter.rgbToExposure(64, 64, 64);
-    const lightGrayExposure = converter.rgbToExposure(192, 192, 192);
+    const slightlyBrighterGrayExposure = processor.testRgbToExposure(64, 64, 64);
+    const lightGrayExposure = processor.testRgbToExposure(192, 192, 192);
     
     expect(blackExposure).toBeLessThan(middleGrayExposure);
     expect(middleGrayExposure).toBeLessThan(slightlyBrighterGrayExposure);
@@ -68,22 +57,22 @@ describe('Exposure Conversion', () => {
     // Test edge cases without crashing:
     
     // Pure black should not crash due to log(0)
-    expect(() => converter.rgbToExposure(0, 0, 0)).not.toThrow();
+    expect(() => processor.testRgbToExposure(0, 0, 0)).not.toThrow();
     
     // Pure white should not exceed bounds
-    const whiteExposure = converter.rgbToExposure(255, 255, 255);
+    const whiteExposure = processor.testRgbToExposure(255, 255, 255);
     expect(whiteExposure).toBeLessThanOrEqual(1.0);
     expect(whiteExposure).toBeGreaterThanOrEqual(0.0);
     
     // Single channel extremes should work
-    expect(() => converter.rgbToExposure(255, 0, 0)).not.toThrow();
-    expect(() => converter.rgbToExposure(0, 255, 0)).not.toThrow();
-    expect(() => converter.rgbToExposure(0, 0, 255)).not.toThrow();
+    expect(() => processor.testRgbToExposure(255, 0, 0)).not.toThrow();
+    expect(() => processor.testRgbToExposure(0, 255, 0)).not.toThrow();
+    expect(() => processor.testRgbToExposure(0, 0, 255)).not.toThrow();
     
     // All results should be in [0, 1] range
-    const redExposure = converter.rgbToExposure(255, 0, 0);
-    const greenExposure = converter.rgbToExposure(0, 255, 0);
-    const blueExposure = converter.rgbToExposure(0, 0, 255);
+    const redExposure = processor.testRgbToExposure(255, 0, 0);
+    const greenExposure = processor.testRgbToExposure(0, 255, 0);
+    const blueExposure = processor.testRgbToExposure(0, 0, 255);
     
     [redExposure, greenExposure, blueExposure].forEach(exposure => {
       expect(exposure).toBeGreaterThanOrEqual(0);
@@ -96,9 +85,9 @@ describe('Exposure Conversion', () => {
     // Red: 0.2126, Green: 0.7152, Blue: 0.0722
     // This means pure green should have highest exposure, then red, then blue
     
-    const redExposure = converter.rgbToExposure(255, 0, 0);
-    const greenExposure = converter.rgbToExposure(0, 255, 0);
-    const blueExposure = converter.rgbToExposure(0, 0, 255);
+    const redExposure = processor.testRgbToExposure(255, 0, 0);
+    const greenExposure = processor.testRgbToExposure(0, 255, 0);
+    const blueExposure = processor.testRgbToExposure(0, 0, 255);
     
     // Green should have highest exposure due to highest weight (0.7152)
     expect(greenExposure).toBeGreaterThan(redExposure);
@@ -108,9 +97,9 @@ describe('Exposure Conversion', () => {
     expect(redExposure).toBeGreaterThan(blueExposure);
     
     // Verify the weights work correctly for smaller values too
-    const smallRed = converter.rgbToExposure(50, 0, 0);
-    const smallGreen = converter.rgbToExposure(0, 50, 0);
-    const smallBlue = converter.rgbToExposure(0, 0, 50);
+    const smallRed = processor.testRgbToExposure(50, 0, 0);
+    const smallGreen = processor.testRgbToExposure(0, 50, 0);
+    const smallBlue = processor.testRgbToExposure(0, 0, 50);
     
     // Same ordering should hold for smaller values
     expect(smallGreen).toBeGreaterThan(smallRed);
@@ -123,17 +112,17 @@ describe('Exposure Conversion', () => {
 
   it('should produce consistent logarithmic scaling', () => {
     // Test that doubling brightness doesn't double exposure (due to log scale)
-    const lowExposure = converter.rgbToExposure(32, 32, 32);
-    const highExposure = converter.rgbToExposure(64, 64, 64);
+    const lowExposure = processor.testRgbToExposure(32, 32, 32);
+    const highExposure = processor.testRgbToExposure(64, 64, 64);
     
     // Doubling RGB shouldn't double exposure in log scale
     expect(highExposure).toBeLessThan(lowExposure * 2);
     expect(highExposure).toBeGreaterThan(lowExposure);
     
     // Test stops progression (photographic concept)
-    const stop1 = converter.rgbToExposure(46, 46, 46); // ~18% gray
-    const stop2 = converter.rgbToExposure(92, 92, 92); // ~36% gray (1 stop higher)
-    const stop3 = converter.rgbToExposure(184, 184, 184); // ~72% gray (2 stops higher)
+    const stop1 = processor.testRgbToExposure(46, 46, 46); // ~18% gray
+    const stop2 = processor.testRgbToExposure(92, 92, 92); // ~36% gray (1 stop higher)
+    const stop3 = processor.testRgbToExposure(184, 184, 184); // ~72% gray (2 stops higher)
     
     // Each stop should increase exposure, but not linearly
     expect(stop2).toBeGreaterThan(stop1);

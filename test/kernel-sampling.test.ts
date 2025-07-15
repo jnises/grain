@@ -5,6 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
+import { EXPOSURE_CONVERSION } from '../src/constants';
 
 // Simple mock image data structure (avoiding DOM ImageData)
 interface MockImageData {
@@ -64,10 +65,32 @@ async function testGrainExposureVariability(
   });
   const grains = generator.generateGrainStructure().slice(0, sampleCount);
   
-  // Mock exposure calculations similar to grain-worker
+  // Use the same RGB to exposure conversion as production code for accurate testing
   function rgbToExposure(r: number, g: number, b: number): number {
-    const luminance = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 255;
-    return Math.max(0, Math.min(1, Math.log(luminance + 0.01) / Math.log(2) + 1));
+    // Normalize RGB values to [0, 1] range
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
+
+    // Calculate weighted luminance using photographic weights (ITU-R BT.709)
+    const luminance = 
+      rNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
+      gNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +
+      bNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.blue;
+
+    // Add small offset to prevent log(0) in pure black areas
+    const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;
+
+    // Convert to logarithmic exposure scale
+    const logExposure = Math.log(safeLuminance / EXPOSURE_CONVERSION.MIDDLE_GRAY_LUMINANCE) / 
+                       Math.log(EXPOSURE_CONVERSION.LOG_BASE);
+    
+    // Scale and normalize exposure to [0, 1] range
+    const normalizedExposure = (logExposure + EXPOSURE_CONVERSION.EXPOSURE_SCALE) / 
+                              (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
+
+    // Clamp to [0, 1] range
+    return Math.max(0, Math.min(1, normalizedExposure));
   }
   
   // Simulate point sampling (current approach)

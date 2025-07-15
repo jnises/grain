@@ -564,7 +564,7 @@ export class GrainProcessor {
 
   // Convert RGB to photographic exposure using logarithmic scaling
   // This replaces the linear LAB luminance conversion with proper exposure simulation
-  private rgbToExposure(r: number, g: number, b: number): number {
+  protected rgbToExposure(r: number, g: number, b: number): number {
     // Validate input parameters
     assertInRange(r, 0, 255, 'r');
     assertInRange(g, 0, 255, 'g');
