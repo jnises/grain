@@ -2,7 +2,9 @@
 - [x] should the lint and type-check package.json scripts be separate? could they be combined? is there a reason to run them separately?
 - [x] add debugging option in dev mode that draws a point at the center of each grain on the generated image
 - [x] fix the eslint warning
-- [ ] Explain the GrainProcessor.processImage algorithm
+- [ ] In GrainProcessor.processImage, split out the code into two parts, first calculate the density of all the grains, then calculate how the grains affect each pixel.
+  Currently the grain strength (what does that represent?) seems to depend in the position of the pixel being shaded. Why is that? If that is to affect the shape of the grains perhaps that should be applied in the second part as described above?
+  
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] Do the film type settings refer to common industry standard settings? Or do they just result in some made up parameters? If made up, convert them to use some non-brand names instead.
