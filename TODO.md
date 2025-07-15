@@ -1,29 +1,3 @@
-- [x] run linting and fix any issues
-- [x] should the lint and type-check package.json scripts be separate? could they be combined? is there a reason to run them separately?
-- [x] add debugging option in dev mode that draws a point at the center of each grain on the generated image
-- [x] fix the eslint warning
-- [x] In GrainProcessor.processImage, split out the code into two parts, first calculate the density of all the grains, then calculate how the grains affect each pixel.
-  Currently the grain strength (what does that represent?) seems to depend in the position of the pixel being shaded. Why is that? If that is to affect the shape of the grains perhaps that should be applied in the second part as described above?
-  - [x] **ANALYSIS COMPLETE**: The issue is that `calculateGrainStrength()` uses pixel coordinates `(x,y)` to apply noise, making grain strength position-dependent rather than an intrinsic grain property.
-  - [x] **Phase 1: Refactor grain strength calculation**
-    - [x] Create new method `calculateIntrinsicGrainDensity()` that takes only `(exposure, grain)` parameters (no pixel coords)
-    - [x] Move development threshold logic, sensitivity, and shape modifiers to intrinsic calculation
-    - [x] Remove pixel-position noise from grain strength calculation
-    - [x] Update grain exposure calculation to store intrinsic density for each grain
-  - [x] **Phase 2: Create pixel-level grain effects**
-    - [x] Create new method `calculatePixelGrainEffect()` that takes intrinsic grain density and pixel position
-    - [x] Move pixel-level noise texture (using x,y coordinates) to this method
-    - [x] Add distance falloff calculation based on grain position and radius
-    - [x] Add grain shape effects (elliptical distortion) based on pixel offset from grain center
-  - [x] **Phase 3: Update processImage workflow**
-    - [x] Modify processImage to use two-phase approach: 1) Pre-calculate intrinsic density for all grains, 2) For each pixel, calculate effects from nearby grains
-    - [x] Update the main pixel loop to call `calculatePixelGrainEffect()` instead of `calculateGrainStrength()`
-    - [x] Ensure grain compositing logic works with the new structure
-  - [x] **Phase 4: Add verification tests**
-    - [x] Add tests to verify that grain intrinsic properties are position-independent
-    - [x] Add tests to verify that visual effects properly vary by position
-    - [x] Add performance tests to ensure the refactor doesn't impact performance negatively
-  
 - [x] Why does applyBeerLambertCompositing take originalColor as a parameter? Shouldn't the final color only depend on the grains? The original color should have been used to calculate the grain responses, but after that why are they used?
   **ANALYSIS REVEALS CONCEPTUAL ERROR**: The current implementation incorrectly uses the input image color as both exposure light AND viewing light. Correct physics: 1) Input image determines grain density during "exposure", 2) When "viewing" the film, WHITE printing light passes through grains: `final = white_light * exp(-density)`. The current approach conflates exposure and viewing steps. We should use white light [255,255,255] for Beer-Lambert compositing to create proper film negative, then optionally invert for positive print.
   **FIXED**: Updated `applyBeerLambertCompositing()` to use white light (255) instead of original color for physically accurate film viewing simulation. The method now properly implements the two-phase process: 1) input image determines grain exposure/density, 2) white viewing light passes through developed grains following Beer-Lambert law. Tests updated to verify correct white light behavior.
