@@ -95,6 +95,7 @@ This section captures user preferences and project-specific patterns that should
 
 ## User Workflow Preferences
 - (Track how the user prefers to work, debug, test, etc.)
+- Before running `npm run dev` make sure it isn't already running.
 
 ## Project-Specific Patterns
 - (Document patterns specific to this grain simulation project)
