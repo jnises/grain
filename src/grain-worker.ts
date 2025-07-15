@@ -709,7 +709,7 @@ export class GrainProcessor {
             );
             
             const grainStrength = this.calculateGrainStrength(grainExposure, grain, x, y);
-            const grainDensity = this.calculateGrainDensity(grainStrength, grain, 1.0); // No layer multiplier
+            const grainDensity = this.calculateGrainDensity(grainStrength, grain);
             
             // Apply film-specific channel characteristics with enhanced color effects
             const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];
@@ -877,9 +877,9 @@ export class GrainProcessor {
   }
 
   // Calculate grain density for density-based compositing
-  private calculateGrainDensity(grainStrength: number, grain: GrainPoint, layerMultiplier: number = 1.0): number {
+  private calculateGrainDensity(grainStrength: number, grain: GrainPoint): number {
     // Convert grain strength to optical density
-    const baseDensity = grainStrength * grain.sensitivity * layerMultiplier;
+    const baseDensity = grainStrength * grain.sensitivity;
     
     // Normalize density to [0, 1] range for film curve
     // Maximum reasonable density is around 3.0 (very dense grain)
