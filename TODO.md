@@ -1,3 +1,7 @@
+- [ ] grain-worker-test.ts has comments saying there are testcases in it. if so, why isn't it in the test folder?
+- [ ] Add wording in the main app and in the readme that this is just a prototype to test coding agent workflows, and not to expect usable functionality.
+- [ ] When applying grain to an image it currently looks like a pattern is just superimposed on the image. All high sharp edges of the original image are still sharp in the result for example. Shouldn't the grains rough that up?
+
 ## Partially Implemented Features (Complete these for better photographic accuracy)
 
 - [x] **Enhance luminance-dependent grain response**: **Completed**: Enhanced the `calculateGrainStrength()` method with a new `calculateLuminanceBasedGrainStrength()` function that implements proper photographic-style grain response. The new implementation follows the algorithm design by defining distinct luminance zones (shadows, mid-tones, highlights) with appropriate strength multipliers. Grain is now most visible in mid-tones (peak at 0.5 luminance), strong in shadows, and properly reduced in highlights using exponential saturation reduction. This creates more film-like grain characteristics with proper emphasis on mid-tones and shadows while reducing grain visibility in blown highlights.
@@ -35,9 +39,6 @@
 - [ ] **Implement grain bridging and clustering effects**: Add simulation of grains connecting during development through clustering algorithms. This creates more realistic grain patterns that match actual film behavior.
 - [ ] **Add edge effects near high-contrast boundaries**: Implement grain density changes near high-contrast image boundaries to simulate developer depletion and chemical diffusion effects.
 
-- [ ] grain-worker-test.ts has comments saying there are testcases in it. if so, why isn't it in the test folder?
-- [ ] Add wording in the main app and in the readme that this is just a prototype to test coding agent workflows, and not to expect usable functionality.
-- [ ] When applying grain to an image it currently looks like a pattern is just superimposed on the image. All high sharp edges of the original image are still sharp in the result for example. Shouldn't the grains rough that up?
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] Do the film type settings refer to common industry standard settings? Or do they just result in some made up parameters? If made up, convert them to use some non-brand names instead.
