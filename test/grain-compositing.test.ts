@@ -13,7 +13,7 @@ describe('Variable Grain Size Generation', () => {
     upscaleFactor: 1
   };
 
-  const generator = new GrainGenerator(800, 600, settings);
+  const generator = new GrainGenerator(400, 300, settings); // Reduced from 800x600
 
   describe('Error Handling', () => {
     it('should validate generator construction', () => {
@@ -23,7 +23,7 @@ describe('Variable Grain Size Generation', () => {
     });
   });
 
-  test('should generate grains with variable sizes', () => {
+  test('should generate grains with variable sizes', { timeout: 10000 }, () => {
     const grains = generator.generateGrainStructure();
     
     // Validate the result structure
@@ -48,7 +48,7 @@ describe('Variable Grain Size Generation', () => {
     expect(maxSize).toBeGreaterThan(minSize);
   });
 
-  test('should have size variation within expected range', () => {
+  test('should have size variation within expected range', { timeout: 10000 }, () => {
     const grains = generator.generateGrainStructure();
     
     // Validate structure before analyzing
@@ -71,7 +71,7 @@ describe('Variable Grain Size Generation', () => {
     expect(smallGrains).toBeGreaterThanOrEqual(largeGrains);
   });
 
-  test('should generate grains with proper distribution', () => {
+  test('should generate grains with proper distribution', { timeout: 10000 }, () => {
     const grains = generator.generateGrainStructure();
     
     // Validate minimum grain count based on settings

@@ -47,8 +47,8 @@ export class SeededRandomNumberGenerator implements RandomNumberGenerator {
 // File-level constants shared across multiple methods
 const ISO_TO_GRAIN_SIZE_DIVISOR = 200;
 const MIN_GRAIN_SIZE = 0.5;
-const ISO_TO_DENSITY_DIVISOR = 3000; // Reduced from 10000 to increase density
-const MAX_DENSITY_FACTOR = 0.15; // Increased from 0.05 to allow much higher densities
+const ISO_TO_DENSITY_DIVISOR = 10000; // Increased to reduce density and make it more realistic
+const MAX_DENSITY_FACTOR = 0.8; // Allow high coverage but respect geometric constraints
 const GRAIN_DISTANCE_MULTIPLIER = 1.2; // Increased from 0.3 to give more reasonable distances
 const MIN_GRAIN_DISTANCE = 0.5; // Reduced from 1 to allow smaller grains when appropriate
 
@@ -402,15 +402,25 @@ export class GrainGenerator {
   } {
     const baseGrainSize = Math.max(MIN_GRAIN_SIZE, this.settings.iso / ISO_TO_GRAIN_SIZE_DIVISOR);
     const imageArea = this.width * this.height;
-    const densityFactor = Math.min(MAX_DENSITY_FACTOR, this.settings.iso / ISO_TO_DENSITY_DIVISOR); // Increased max from 0.01 to 0.05
-    const grainDensity = Math.floor(imageArea * densityFactor);
     const minDistance = Math.max(MIN_GRAIN_DISTANCE, baseGrainSize * GRAIN_DISTANCE_MULTIPLIER);
+    
+    // Calculate maximum grains that can geometrically fit
+    const grainArea = Math.PI * (minDistance / 2) ** 2;
+    const maxPossibleGrains = Math.floor(imageArea / grainArea);
+    
+    // Calculate desired density factor based on ISO
+    const desiredDensityFactor = Math.min(MAX_DENSITY_FACTOR, this.settings.iso / ISO_TO_DENSITY_DIVISOR);
+    const desiredGrainCount = Math.floor(imageArea * desiredDensityFactor);
+    
+    // Respect geometric constraints - don't try to place more grains than can fit
+    const grainDensity = Math.min(desiredGrainCount, Math.floor(maxPossibleGrains * 0.85)); // Use 85% of max for realistic packing
+    const actualDensityFactor = grainDensity / imageArea;
 
     return {
       baseGrainSize,
       grainDensity,
       minDistance,
-      densityFactor,
+      densityFactor: actualDensityFactor,
       imageArea
     };
   }
@@ -643,14 +653,14 @@ export class GrainGenerator {
     let minDistance = Math.max(MIN_GRAIN_DISTANCE, grainSize * GRAIN_DISTANCE_MULTIPLIER);
     
     // Find nearby grains and adjust distance based on their sizes
-    const NEARBY_GRAIN_RADIUS = grainSize * 4; // Check in a radius of 4x grain size
+    const NEARBY_GRAIN_RADIUS = grainSize * 3; // Reduced from 4x to 3x for less strict checking
     
     for (const grain of existingGrains) {
       const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
       
       if (distance < NEARBY_GRAIN_RADIUS) {
-        // Adjust minimum distance based on nearby grain size
-        const combinedSizeDistance = (grainSize + grain.size) * 0.8;
+        // Adjust minimum distance based on nearby grain size (more relaxed)
+        const combinedSizeDistance = (grainSize + grain.size) * 0.6; // Reduced from 0.8 to 0.6
         minDistance = Math.max(minDistance, combinedSizeDistance);
       }
     }

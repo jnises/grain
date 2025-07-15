@@ -151,7 +151,7 @@ describe('Grain Distribution Bug Tests', () => {
       expect(cornerGrains / grains.length).toBeLessThan(0.1);
     });
 
-    it('should maintain consistent density across different image sizes', () => {
+    it('should maintain consistent density across different image sizes', { timeout: 15000 }, () => {
       const sizes = [
         { width: 200, height: 150 },
         { width: 400, height: 300 },

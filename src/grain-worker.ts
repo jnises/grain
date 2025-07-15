@@ -142,6 +142,8 @@ class GrainProcessor {
   }
 
   // Convert RGB to LAB color space
+  // Currently unused but preserved for potential future color processing features
+  // @ts-expect-error - Preserved for future use
   private rgbToLab(r: number, g: number, b: number): LabColor {
     // Validate input parameters with custom assertions
     assertInRange(r, 0, 255, 'r');
@@ -347,9 +349,6 @@ class GrainProcessor {
         // This replaces the linear LAB luminance with proper exposure simulation
         const exposure = this.rgbToExposure(r, g, b);
         
-        // Keep LAB conversion for color processing (still needed for color shifts)
-        const lab = this.rgbToLab(r, g, b);
-        
         // Initialize grain density
         let totalGrainDensity: GrainDensity = { r: 0, g: 0, b: 0 };
         let totalWeight = 0;
@@ -512,7 +511,7 @@ class GrainProcessor {
     // Apply grain shape variation
     const shapeModifier = 0.7 + grain.shape * 0.6;
     
-    return finalStrength * shapeModifier * 0.5; // Increased multiplier for better visibility
+    return finalStrength * shapeModifier * 1.0; // Increased multiplier for better visibility
   }
 
   // Enhanced exposure-dependent grain response following photographic principles
@@ -572,7 +571,7 @@ class GrainProcessor {
     const densityResponse = this.filmCurve(baseDensity);
     
     // Scale by grain intensity setting
-    return densityResponse * this.settings.grainIntensity * 0.3; // Reduced multiplier for density model
+    return densityResponse * this.settings.grainIntensity * 0.8; // Increased multiplier for density model
   }
 
   // Apply simplified multiplicative compositing

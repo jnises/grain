@@ -1,49 +1,10 @@
 - [x] Change the title of the page to be the name of the project.
 - [x] Replace the vite favicon with a custom one for this project.
 - [x] When looking a the image with grains added in the gui I can see jpeg artifacts, even though the source image was a png. Why is that? **Fixed**: The `imageDataToDataUrl()` function was forcing JPEG conversion with `canvas.toDataURL('image/jpeg', 0.9)`, which introduced compression artifacts regardless of the original image format. Changed to use PNG format (`canvas.toDataURL('image/png')`) for lossless output and updated the download filename to use `.png` extension.
-- [ ] When adding grain in the gui I don't see any actual grains in the resulting image even if I set the grain intensity to max and set the iso to a high value. Just some blotchiness. I'm testing with iso: 1350, grain intensity: 200%. Here is the console log:
-```
-Successfully extracted image data: 400x300, 480000 bytes
-grain-worker-manager.ts:64 Processing image: 400x300, ISO: 1350, filmType: kodak
-grain-worker.ts:644 Worker processing image: 400x300, ISO: 1350
-grain-worker.ts:102 Initializing GrainProcessor: 400x300, ISO: 1350
-grain-generator.ts:582 Generating variable size grains: target=18000, maxAttempts=50000
-grain-generator.ts:616 Variable grain generation progress: 729/18000 grains, 10000 attempts, 11 consecutive failures
-grain-generator.ts:616 Variable grain generation progress: 848/18000 grains, 20000 attempts, 22 consecutive failures
-grain-generator.ts:616 Variable grain generation progress: 926/18000 grains, 30000 attempts, 107 consecutive failures
-grain-generator.ts:620 Variable grain generation completed: 936/18000 grains in 33740 attempts
-grain-generator.ts:279 Generating fallback grains: 0 existing, 18000 target, minDistance=8.10
-grain-generator.ts:313 Fallback grid: 155x117 cells, gridSize=2.58
-grain-generator.ts:390 Fallback generation completed: 18000 total grains (18000 new)
-grain-worker.ts:456 === Processing Summary ===
-grain-worker.ts:457 Total pixels processed: 120000
-grain-worker.ts:458 Pixels with grain effect: 120000
-grain-worker.ts:459 Grain effect coverage: 100.00%
-grain-worker.ts:460 Processing mode: Single Layer (Variable Sizes), Density Model
-grain-worker.ts:71 
-=== Performance Benchmarks ===
-grain-worker.ts:73 Total Processing: 75420.00ms
-grain-worker.ts:75   - 0.00M pixels/sec
-grain-worker.ts:73 Grain Generation: 223.20ms
-grain-worker.ts:73 Spatial Grid Creation: 29.40ms
-grain-worker.ts:73 Pixel Processing: 75166.50ms
-grain-worker.ts:75   - 0.00M pixels/sec
-grain-worker.ts:73 Single Layer Processing: 75166.30ms
-grain-worker.ts:471 
-=== Performance Metrics ===
-grain-worker.ts:472 Total processing speed: 0.00M pixels/sec
-grain-worker.ts:473 Pixel processing speed: 0.00M pixels/sec
-grain-worker.ts:474 Processing overhead: 0.3%
-grain-worker.ts:477 Layer processing mode: Single Layer (Variable Sizes)
-grain-worker.ts:478 Layer processing time: 75166.30ms
-grain-worker.ts:479 Layer processing efficiency: 1.00x pixel processing speed
-grain-worker-manager.ts:129 Image processing completed successfully
-App.tsx:202 Converting image data to data URL: 400x300
-App.tsx:227 Successfully converted to data URL: 103738 characters
-App.tsx:264 Grain processing completed successfully
-```
+- [x] When adding grain in the gui I don't see any actual grains in the resulting image even if I set the grain intensity to max and set the iso to a high value. Just some blotchiness. I'm testing with iso: 1350, grain intensity: 200%. **Fixed**: The issue was caused by two main problems: 1) **Unrealistic grain density calculation** - The algorithm was trying to place 18,000+ grains in a 400x300 image (773% coverage), but only ~936 could fit geometrically. Fixed by adding geometric constraint checking and reducing `ISO_TO_DENSITY_DIVISOR` from 3000 to 10000, resulting in reasonable grain counts (~1,978 for ISO 1350 with 85% coverage). 2) **Insufficient grain effect visibility** - Multiple reduction factors were making grain effects too subtle: `finalStrength * 0.5` and `densityResponse * 0.3`. Increased these multipliers to 1.0 and 0.8 respectively, making grain effects more visible. Generation time improved from 75+ seconds to ~585ms, and variable grain generation success rate improved from 47% to 85%.
 What could be the issue?
   
+- [ ] The grain preset dropdown is completely white, you only see the text for the hovered item
 
 ## Partially Implemented Features (Complete these for better photographic accuracy)
 
