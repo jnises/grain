@@ -5,11 +5,24 @@
 - [ ] In GrainProcessor.processImage, split out the code into two parts, first calculate the density of all the grains, then calculate how the grains affect each pixel.
   Currently the grain strength (what does that represent?) seems to depend in the position of the pixel being shaded. Why is that? If that is to affect the shape of the grains perhaps that should be applied in the second part as described above?
   - [ ] **ANALYSIS COMPLETE**: The issue is that `calculateGrainStrength()` uses pixel coordinates `(x,y)` to apply noise, making grain strength position-dependent rather than an intrinsic grain property.
-  - [ ] Refactor `calculateGrainStrength()` to remove pixel-position dependency and calculate intrinsic grain density based only on exposure and grain properties
-  - [ ] Create new method `calculatePixelGrainEffect()` that takes intrinsic grain density and applies position-dependent effects (distance falloff, shape, noise texture)
-  - [ ] Update `processImage()` to use two-phase approach: 1) Calculate intrinsic density for all grains, 2) For each pixel, calculate effects from nearby grains
-  - [ ] Move pixel-level noise from grain strength calculation to pixel effect calculation (where it belongs for grain texture)
-  - [ ] Add tests to verify that grain intrinsic properties are position-independent while visual effects properly vary by position
+  - [ ] **Phase 1: Refactor grain strength calculation**
+    - [ ] Create new method `calculateIntrinsicGrainDensity()` that takes only `(exposure, grain)` parameters (no pixel coords)
+    - [ ] Move development threshold logic, sensitivity, and shape modifiers to intrinsic calculation
+    - [ ] Remove pixel-position noise from grain strength calculation
+    - [ ] Update grain exposure calculation to store intrinsic density for each grain
+  - [ ] **Phase 2: Create pixel-level grain effects**
+    - [ ] Create new method `calculatePixelGrainEffect()` that takes intrinsic grain density and pixel position
+    - [ ] Move pixel-level noise texture (using x,y coordinates) to this method
+    - [ ] Add distance falloff calculation based on grain position and radius
+    - [ ] Add grain shape effects (elliptical distortion) based on pixel offset from grain center
+  - [ ] **Phase 3: Update processImage workflow**
+    - [ ] Modify processImage to use two-phase approach: 1) Pre-calculate intrinsic density for all grains, 2) For each pixel, calculate effects from nearby grains
+    - [ ] Update the main pixel loop to call `calculatePixelGrainEffect()` instead of `calculateGrainStrength()`
+    - [ ] Ensure grain compositing logic works with the new structure
+  - [ ] **Phase 4: Add verification tests**
+    - [ ] Add tests to verify that grain intrinsic properties are position-independent
+    - [ ] Add tests to verify that visual effects properly vary by position
+    - [ ] Add performance tests to ensure the refactor doesn't impact performance negatively
   
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
