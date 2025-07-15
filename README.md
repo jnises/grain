@@ -45,6 +45,15 @@ npm install
 npm run dev
 ```
 
+## 🔧 Development Scripts
+
+### Server Management
+- `npm run dev` - Start the Vite development server
+- `npm run dev:stop` - Safely stop any running development servers (targets Vite ports 5173, 5174)
+- `npm run dev:restart` - Stop existing servers and start a fresh development server
+
+The `dev:stop` script safely targets only processes using Vite's default ports to avoid accidentally killing other processes.
+
 ## 🧪 Testing
 
 This project uses Vitest for testing with separate configurations for unit tests and performance benchmarks.

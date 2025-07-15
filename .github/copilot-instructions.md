@@ -60,7 +60,12 @@ When creating temporary files, debug utilities, or development tools, please fol
 - Use the existing assertion utilities in `src/utils.ts`
 
 ## Development Workflow
-- Before running `npm run dev` make sure it isn't already running.
+
+### Server Management (CRITICAL)
+- **ALWAYS check for running servers before starting new ones** to avoid port conflicts
+- If you need to restart the server, use `npm run dev:restart` or `npm run dev:stop` first
+- `npm run dev:stop` safely kills only processes using Vite ports (5173, 5174) without affecting other processes
+- Before running `npm run dev`, `npm start`, or any long-running command, either check existing terminals or use `npm run dev:stop` to ensure no conflicts
 
 ### Before Starting Work
 1. Check existing code structure and patterns

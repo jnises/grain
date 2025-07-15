@@ -711,9 +711,6 @@ export class GrainProcessor {
         const pixelIndex = (y * this.width + x) * 4;
         processedPixels++;
         
-        const r = data[pixelIndex];
-        const g = data[pixelIndex + 1];
-        const b = data[pixelIndex + 2];
         const a = data[pixelIndex + 3];
         
         // Initialize grain density
@@ -807,7 +804,7 @@ export class GrainProcessor {
           let finalColor: [number, number, number];
           
           // Use Beer-Lambert law compositing for physically accurate results
-          finalColor = this.applyBeerLambertCompositing([r, g, b], totalGrainDensity);
+          finalColor = this.applyBeerLambertCompositing(totalGrainDensity);
           
           result.data[pixelIndex] = finalColor[0];
           result.data[pixelIndex + 1] = finalColor[1];
@@ -1010,15 +1007,16 @@ export class GrainProcessor {
   }
 
   // Apply Beer-Lambert law compositing for physically accurate results
-  protected applyBeerLambertCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
-    const [r, g, b] = originalColor;
+  protected applyBeerLambertCompositing(grainDensity: GrainDensity): [number, number, number] {
+    // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
+    // When "viewing" the film, WHITE printing light passes through the developed grains.
+    // Beer-Lambert law: final = white_light * exp(-density)
+    const WHITE_LIGHT = 255;
     
-    // Beer-Lambert law: final = original * exp(-density)
-    // This properly simulates how light passes through film grain
     return [
-      r * Math.exp(-grainDensity.r),
-      g * Math.exp(-grainDensity.g),
-      b * Math.exp(-grainDensity.b)
+      WHITE_LIGHT * Math.exp(-grainDensity.r),
+      WHITE_LIGHT * Math.exp(-grainDensity.g),
+      WHITE_LIGHT * Math.exp(-grainDensity.b)
     ];
   }
 

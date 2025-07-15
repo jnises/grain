@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:stop": "node scripts/stop-dev-server.js",
+    "dev:restart": "npm run dev:stop && npm run dev",
     "build": "vite build",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
