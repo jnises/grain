@@ -10,9 +10,9 @@
  * @param context Optional context object to include in error logging
  */
 export function assert(
-  condition: any,
+  condition: unknown,
   message: string,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): asserts condition {
   if (!condition) {
     // Log error with context for debugging
@@ -30,7 +30,7 @@ export function assert(
  * Assert that a value is a positive integer
  */
 export function assertPositiveInteger(
-  value: any,
+  value: unknown,
   name: string
 ): asserts value is number {
   assert(
@@ -44,7 +44,7 @@ export function assertPositiveInteger(
  * Assert that a value is a positive number
  */
 export function assertPositiveNumber(
-  value: any,
+  value: unknown,
   name: string
 ): asserts value is number {
   assert(
@@ -58,7 +58,7 @@ export function assertPositiveNumber(
  * Assert that a value is a non-negative number
  */
 export function assertNonNegativeNumber(
-  value: any,
+  value: unknown,
   name: string
 ): asserts value is number {
   assert(
@@ -88,7 +88,7 @@ export function assertInRange(
  * Assert that a value is an array
  */
 export function assertArray<T>(
-  value: any,
+  value: unknown,
   name: string
 ): asserts value is T[] {
   assert(
@@ -102,9 +102,9 @@ export function assertArray<T>(
  * Assert that a value is a non-null object
  */
 export function assertObject(
-  value: any,
+  value: unknown,
   name: string
-): asserts value is Record<string, any> {
+): asserts value is Record<string, unknown> {
   assert(
     value && typeof value === 'object' && !Array.isArray(value),
     `${name} must be a non-null object`,
@@ -116,7 +116,7 @@ export function assertObject(
  * Type guard and assertion for Point2D objects
  */
 export function assertPoint2D(
-  point: any,
+  point: unknown,
   name: string
 ): asserts point is { x: number; y: number } {
   assertObject(point, name);
@@ -136,32 +136,33 @@ export function assertPoint2D(
  * Type guard and assertion for ImageData objects
  */
 export function assertImageData(
-  imageData: any,
+  imageData: unknown,
   name: string
 ): asserts imageData is ImageData {
   assertObject(imageData, name);
+  const obj = imageData as Record<string, unknown>;
   assert(
-    typeof imageData.width === 'number' && 
-    typeof imageData.height === 'number' && 
-    imageData.data && 
-    typeof imageData.data.length === 'number',
+    typeof obj.width === 'number' && 
+    typeof obj.height === 'number' && 
+    obj.data && 
+    typeof (obj.data as ArrayLike<number>).length === 'number',
     `${name} must be a valid ImageData object`,
     { 
       [name]: imageData,
-      hasWidth: 'width' in imageData,
-      hasHeight: 'height' in imageData,
-      hasData: 'data' in imageData,
-      widthType: typeof imageData.width,
-      heightType: typeof imageData.height,
-      dataLength: imageData.data?.length
+      hasWidth: 'width' in obj,
+      hasHeight: 'height' in obj,
+      hasData: 'data' in obj,
+      widthType: typeof obj.width,
+      heightType: typeof obj.height,
+      dataLength: (obj.data as ArrayLike<number>)?.length
     }
   );
-  assertPositiveInteger(imageData.width, `${name}.width`);
-  assertPositiveInteger(imageData.height, `${name}.height`);
+  assertPositiveInteger(obj.width, `${name}.width`);
+  assertPositiveInteger(obj.height, `${name}.height`);
   assert(
-    imageData.data.length > 0,
+    (obj.data as ArrayLike<number>).length > 0,
     `${name}.data must not be empty`,
-    { dataLength: imageData.data.length }
+    { dataLength: (obj.data as ArrayLike<number>).length }
   );
 }
 
@@ -191,7 +192,7 @@ export function assertValidGridCoordinates(
  * Assert that a number is finite and not NaN
  */
 export function assertFiniteNumber(
-  value: any,
+  value: unknown,
   name: string
 ): asserts value is number {
   assert(

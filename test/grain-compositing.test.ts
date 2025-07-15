@@ -1,4 +1,5 @@
 // Test file to verify grain structure generation and variable grain sizes
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it, test, expect } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';

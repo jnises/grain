@@ -131,7 +131,7 @@ function App() {
     setCustomSettings(FILM_PRESETS[presetKey])
   }
 
-  const handleCustomSettingChange = (key: keyof GrainSettings, value: any) => {
+  const handleCustomSettingChange = (key: keyof GrainSettings, value: string | number) => {
     setCustomSettings(prev => ({
       ...prev,
       [key]: value

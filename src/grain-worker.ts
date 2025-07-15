@@ -130,13 +130,18 @@ export class GrainProcessor {
   }
 
   // Type guard for GrainSettings
-  private isValidGrainSettings(settings: any): settings is GrainSettings {
-    return settings &&
-           typeof settings.iso === 'number' && settings.iso > 0 &&
-           typeof settings.filmType === 'string' &&
-           ['kodak', 'fuji', 'ilford'].includes(settings.filmType) &&
-           typeof settings.grainIntensity === 'number' && settings.grainIntensity >= 0 &&
-           typeof settings.upscaleFactor === 'number' && settings.upscaleFactor > 0;
+  private isValidGrainSettings(settings: unknown): settings is GrainSettings {
+    return typeof settings === 'object' &&
+           settings !== null &&
+           'iso' in settings &&
+           typeof (settings as GrainSettings).iso === 'number' && (settings as GrainSettings).iso > 0 &&
+           'filmType' in settings &&
+           typeof (settings as GrainSettings).filmType === 'string' &&
+           ['kodak', 'fuji', 'ilford'].includes((settings as GrainSettings).filmType) &&
+           'grainIntensity' in settings &&
+           typeof (settings as GrainSettings).grainIntensity === 'number' && (settings as GrainSettings).grainIntensity >= 0 &&
+           'upscaleFactor' in settings &&
+           typeof (settings as GrainSettings).upscaleFactor === 'number' && (settings as GrainSettings).upscaleFactor > 0;
   }
 
   // Kernel-based grain area sampling methods

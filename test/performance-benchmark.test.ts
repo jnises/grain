@@ -86,6 +86,7 @@ async function compareBenchmarks(width: number, height: number): Promise<Benchma
 }
 
 // Run comprehensive benchmarks
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function runPerformanceBenchmarks(): Promise<void> {
   console.log('🚀 Starting Grain Processing Performance Benchmarks...');
   console.log('This test verifies grain generation performance across different settings.');

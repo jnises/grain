@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from 'vitest';
 import {
   assert,
@@ -36,6 +37,7 @@ describe('Utils - Assertion Functions', () => {
       
       try {
         assert(false, 'Test message', { testKey: 'testValue', number: 42 });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         // Error should be thrown
       }

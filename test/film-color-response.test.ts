@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { GrainSettings, GrainPoint } from '../src/types';
+import type { GrainPoint } from '../src/types';
 import { FILM_CHARACTERISTICS } from '../src/constants';
 
 // Test the film-specific color response functionality

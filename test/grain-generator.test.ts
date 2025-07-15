@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainGenerator, SeededRandomNumberGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
-import { assert, assertPositiveInteger, assertObject } from '../src/utils';
+import { assert } from '../src/utils';
 
 describe('GrainGenerator', () => {
   let generator: GrainGenerator;

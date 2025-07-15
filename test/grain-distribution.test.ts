@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainGenerator, SeededRandomNumberGenerator } from '../src/grain-generator';
 import type { GrainSettings, Point2D } from '../src/types';
-import { assert, assertPositiveInteger, assertObject } from '../src/utils';
+import { assert, assertObject } from '../src/utils';
 
 describe('Grain Distribution Bug Tests', () => {
   let settings: GrainSettings;
@@ -97,8 +98,8 @@ describe('Grain Distribution Bug Tests', () => {
       // Each region should have at least some grains
       // This test will fail if grains are clustered in one area
       const emptyRegions = Object.entries(regionCounts)
-        .filter(([_, count]) => count === 0)
-        .map(([name, _]) => name);
+        .filter(([, count]) => count === 0)
+        .map(([name]) => name);
 
       expect(emptyRegions.length).toBeLessThanOrEqual(2); // Allow max 2 empty regions
       
@@ -257,8 +258,8 @@ describe('Grain Distribution Bug Tests', () => {
 
       // Poisson distribution should have complete coverage with such small min-distance
       const emptyRegions = Object.entries(regionCounts)
-        .filter(([_, count]) => count === 0)
-        .map(([name, _]) => name);
+        .filter(([, count]) => count === 0)
+        .map(([name]) => name);
 
       expect(emptyRegions.length).toBe(0); // No empty regions should be acceptable with min-distance of 2.4 in 133x100 regions
       

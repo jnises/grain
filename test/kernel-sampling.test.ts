@@ -326,6 +326,7 @@ describe('Kernel Sampling Integration', () => {
     }
     
     // Use mock image data structure instead of real ImageData
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const imageData = { data, width, height };
     
     const settings = {

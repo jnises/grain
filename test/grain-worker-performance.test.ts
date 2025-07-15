@@ -1,5 +1,6 @@
 // Integration benchmarks for grain generation performance measurement
 // Pure performance measurement without testing logic
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it } from 'vitest';
 import type { GrainSettings } from '../src/types';
@@ -22,30 +23,10 @@ async function createGrainProcessor(width: number, height: number, settings: Gra
   return new GrainGenerator(width, height, settings);
 }
 
-// Create test image data
-function createTestImageData(width: number, height: number): any {
-  const data = new Uint8ClampedArray(width * height * 4);
-  
-  // Create a test pattern with varying luminance
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4;
-      const luminance = Math.floor(128 + 127 * Math.sin(x / 20) * Math.cos(y / 20));
-      data[i] = luminance;     // R
-      data[i + 1] = luminance; // G 
-      data[i + 2] = luminance; // B
-      data[i + 3] = 255;       // A
-    }
-  }
-  
-  return { data, width, height };
-}
-
 describe('Grain Generation Performance Integration Benchmarks', () => {
   it('runs variable grain size processing benchmark', async () => {
     const width = 300;
     const height = 200;
-    const totalPixels = width * height;
     
     console.log(`\n🧪 Variable Grain Size Processing Benchmark for ${width}x${height} image...`);
     
