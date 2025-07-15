@@ -58,7 +58,6 @@ This project uses Vitest for testing with separate configurations for unit tests
 ### Test Structure
 - Unit tests are in the `/test/` directory (excluding performance benchmark files)
 - Performance benchmarks: `test/performance-benchmark.test.ts` and `test/grain-worker-performance.test.ts`
-- Test utilities that reuse main classes are in `/src/grain-worker-test.ts`
 - Tests focus on behavior verification rather than implementation details
 - Benchmarks focus on performance measurement without assertions
 
