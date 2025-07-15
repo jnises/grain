@@ -4,12 +4,12 @@
 - [x] fix the eslint warning
 - [ ] In GrainProcessor.processImage, split out the code into two parts, first calculate the density of all the grains, then calculate how the grains affect each pixel.
   Currently the grain strength (what does that represent?) seems to depend in the position of the pixel being shaded. Why is that? If that is to affect the shape of the grains perhaps that should be applied in the second part as described above?
-  - [ ] **ANALYSIS COMPLETE**: The issue is that `calculateGrainStrength()` uses pixel coordinates `(x,y)` to apply noise, making grain strength position-dependent rather than an intrinsic grain property.
-  - [ ] **Phase 1: Refactor grain strength calculation**
-    - [ ] Create new method `calculateIntrinsicGrainDensity()` that takes only `(exposure, grain)` parameters (no pixel coords)
-    - [ ] Move development threshold logic, sensitivity, and shape modifiers to intrinsic calculation
-    - [ ] Remove pixel-position noise from grain strength calculation
-    - [ ] Update grain exposure calculation to store intrinsic density for each grain
+  - [x] **ANALYSIS COMPLETE**: The issue is that `calculateGrainStrength()` uses pixel coordinates `(x,y)` to apply noise, making grain strength position-dependent rather than an intrinsic grain property.
+  - [x] **Phase 1: Refactor grain strength calculation**
+    - [x] Create new method `calculateIntrinsicGrainDensity()` that takes only `(exposure, grain)` parameters (no pixel coords)
+    - [x] Move development threshold logic, sensitivity, and shape modifiers to intrinsic calculation
+    - [x] Remove pixel-position noise from grain strength calculation
+    - [x] Update grain exposure calculation to store intrinsic density for each grain
   - [ ] **Phase 2: Create pixel-level grain effects**
     - [ ] Create new method `calculatePixelGrainEffect()` that takes intrinsic grain density and pixel position
     - [ ] Move pixel-level noise texture (using x,y coordinates) to this method

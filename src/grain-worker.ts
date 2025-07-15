@@ -817,14 +817,14 @@ export class GrainProcessor {
     return result;
   }
 
-  // Calculate grain strength based on development threshold system
-  // This implements the proper development threshold algorithm from the design
-  private calculateGrainStrength(exposure: number, grain: GrainPoint, x: number, y: number): number {
+  // Calculate intrinsic grain density based on exposure and grain properties (Phase 1)
+  // This method computes grain-specific properties that don't depend on pixel position
+  private calculateIntrinsicGrainDensity(exposure: number, grain: GrainPoint): number {
     // Implementation of development threshold system as designed
     // Formula: grain_activation = (local_exposure + random_sensitivity) > development_threshold
     
     // Calculate random sensitivity variation for this grain
-    // Use position-based randomness for consistent grain behavior
+    // Use grain-based randomness for consistent grain behavior (position-independent)
     const randomSeed = (grain.x * 12345 + grain.y * 67890) % 1000000;
     const randomSensitivity = (randomSeed / 1000000) * 0.3 - 0.15; // Range: [-0.15, +0.15]
     
@@ -851,7 +851,31 @@ export class GrainProcessor {
     // Apply grain sensitivity for individual grain variation
     grainDensity *= grain.sensitivity;
     
-    // Add noise for grain texture with multiple octaves (reduced impact)
+    // Apply grain shape variation (intrinsic property)
+    const shapeModifier = 0.8 + grain.shape * 0.4;
+    grainDensity *= shapeModifier;
+    
+    // Ensure grainDensity is within [0,1] range before applying film curve
+    grainDensity = Math.max(0, Math.min(1, grainDensity));
+    
+    // Apply film characteristic curve for density response
+    const filmResponse = this.filmCurve(grainDensity);
+    
+    return filmResponse * 1.2; // Slight multiplier for visibility
+  }
+
+  // Calculate grain strength based on development threshold system
+  // This implements the proper development threshold algorithm from the design
+  private calculateGrainStrength(exposure: number, grain: GrainPoint, x: number, y: number): number {
+    // Get intrinsic grain density (position-independent)
+    const intrinsicDensity = this.calculateIntrinsicGrainDensity(exposure, grain);
+    
+    // If grain not activated, return 0
+    if (intrinsicDensity === 0) {
+      return 0;
+    }
+    
+    // Add pixel-level noise for grain texture with multiple octaves
     const NOISE_SCALE_FINE = 0.15;
     const NOISE_SCALE_MEDIUM = 0.08;
     const NOISE_SCALE_COARSE = 0.03;
@@ -863,17 +887,10 @@ export class GrainProcessor {
                       this.noise(x * NOISE_SCALE_MEDIUM, y * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
                       this.noise(x * NOISE_SCALE_COARSE, y * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
     
-    // Apply noise modulation (reduced impact to let development threshold dominate)
-    grainDensity *= (0.7 + Math.abs(noiseValue) * 0.3);
+    // Apply noise modulation to intrinsic density (reduced impact to let development threshold dominate)
+    const pixelModulatedDensity = intrinsicDensity * (0.7 + Math.abs(noiseValue) * 0.3);
     
-    // Apply grain shape variation
-    const shapeModifier = 0.8 + grain.shape * 0.4;
-    grainDensity *= shapeModifier;
-    
-    // Apply film characteristic curve for density response
-    const filmResponse = this.filmCurve(grainDensity);
-    
-    return filmResponse * 1.2; // Slight multiplier for visibility
+    return pixelModulatedDensity;
   }
 
   // Calculate grain density for density-based compositing
