@@ -1,5 +1,5 @@
 - [x] grain-worker-test.ts has comments saying there are testcases in it. if so, why isn't it in the test folder? **Completed**: Moved `grain-worker-test.ts` from `src/` to `test/` folder where it belongs since it contains test functions and test runners, not production code. Updated README to reflect the new location.
-- [ ] Add wording in the main app and in the readme that this is just a prototype to test coding agent workflows, and not to expect usable functionality.
+- [x] Add wording in the main app and in the readme that this is just a prototype to test coding agent workflows, and not to expect usable functionality. **Completed**: Added prominent prototype disclaimer to both README.md (with warning box at the top) and main app UI (with styled notice in the header). The disclaimers clearly indicate this is a development prototype for testing coding agent workflows with incomplete functionality.
 - [ ] When applying grain to an image it currently looks like a pattern is just superimposed on the image. All high sharp edges of the original image are still sharp in the result for example. Shouldn't the grains rough that up?
 
 ## Partially Implemented Features (Complete these for better photographic accuracy)

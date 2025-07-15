@@ -296,6 +296,9 @@ function App() {
       <header className="app-header">
         <h1>Analog Film Grain Simulator</h1>
         <p>Upload an image to add physically plausible analog film grain</p>
+        <div className="prototype-notice">
+          <p>⚠️ <strong>Prototype:</strong> This is a development prototype for testing coding agent workflows. Functionality is incomplete.</p>
+        </div>
         {import.meta.env.DEV && (
           <div className="dev-debug-link">
             <a 

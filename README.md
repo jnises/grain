@@ -1,5 +1,7 @@
 # Grain - Physically Plausible Analog Film Grain Simulation
 
+> **⚠️ Prototype Notice**: This is a prototype project designed to test coding agent workflows and development processes. While it implements sophisticated grain simulation algorithms, the functionality is not yet complete and should not be expected to produce production-ready results.
+
 A TypeScript/React application that simulates realistic analog film grain effects for digital images. This project implements sophisticated algorithms that model the actual structure and behavior of silver halide crystals in photographic emulsion, creating grain that appears authentic even when zoomed in.
 
 ## 🎯 Features
