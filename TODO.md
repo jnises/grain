@@ -7,7 +7,12 @@
   - **kernel-sampling.test.ts**: Updated the duplicated `rgbToExposure` function to use the actual production constants and algorithm from EXPOSURE_CONVERSION
   
   Made both `applyBeerLambertCompositing` and `rgbToExposure` methods protected instead of private and exported the GrainProcessor class to enable proper testing. Updated coding guidelines to explicitly prohibit reimplementing production functions in tests and provide clear guidance on testing private methods by making them protected or extracting to testable utility modules.
-- [ ] Go through the code and make sure there are tests for any easily testable function.
+- [x] Go through the code and make sure there are tests for any easily testable function. **Completed**: Added comprehensive tests for easily testable functions across three new test files:
+  - **utils.test.ts**: Created 39 tests covering all assertion functions in `utils.ts` including `assert`, `assertPositiveInteger`, `assertPositiveNumber`, `assertNonNegativeNumber`, `assertInRange`, `assertArray`, `assertObject`, `assertPoint2D`, `assertImageData`, `assertValidGridCoordinates`, and `assertFiniteNumber`. Tests verify both success and failure cases with proper error messages and context logging.
+  - **random-number-generators.test.ts**: Created 16 tests for `DefaultRandomNumberGenerator` and `SeededRandomNumberGenerator` classes. Tests verify number ranges, deterministic behavior, state management, reset functionality, edge cases, and reproducibility for testing purposes.
+  - **constants.test.ts**: Created 28 tests validating all constants in `constants.ts` including `SEEDED_RANDOM_MULTIPLIER`, `FILM_CHARACTERISTICS` (for all three film types with comprehensive validation of contrast, grain clumping, color variation, channel sensitivity, color shifts, and film curve parameters), `RGBA_CHANNELS`, `ALPHA_CHANNEL_INDEX`, and `EXPOSURE_CONVERSION` (luminance weights, zone system parameters, ISO parameters). All tests ensure values are in expected ranges and have proper structure.
+  
+  These tests provide comprehensive coverage for utility functions that are used throughout the codebase, ensuring they work correctly and providing documentation of their expected behavior. All 83 new tests pass and integrate seamlessly with the existing test suite (total 179 tests passing).
 
 ## Partially Implemented Features (Complete these for better photographic accuracy)
 
@@ -46,7 +51,7 @@
 - [ ] **Implement grain bridging and clustering effects**: Add simulation of grains connecting during development through clustering algorithms. This creates more realistic grain patterns that match actual film behavior.
 - [ ] **Add edge effects near high-contrast boundaries**: Implement grain density changes near high-contrast image boundaries to simulate developer depletion and chemical diffusion effects.
 
-- [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense.
+- [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] Do the film type settings refer to common industry standard settings? Or do they just result in some made up parameters? If made up, convert them to use some non-brand names instead.
 - [ ] The current algorithm iterates each pixel and checks which grain it is close to. Wouldn't it make more sense to iterate the grains and check its nearby pixels? Will we have move pixels or grains?
