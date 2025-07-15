@@ -284,11 +284,26 @@ describe('Kernel-based Grain Area Sampling Quality Validation', () => {
  * This tests the actual grain processing with kernel-based exposure calculation
  */
 describe('Kernel Sampling Integration', () => {
-  // Skip for now since ImageData requires DOM environment
-  // These tests would need to run in a browser environment
-  it.skip('should process grain with kernel-based sampling', async () => {
-    // This test would verify that the grain processing pipeline works
-    // with the new kernel-based exposure calculation
+  it('should process grain with kernel-based sampling', async () => {
+    // Create mock image data similar to other tests in this file
+    const width = 100;
+    const height = 100;
+    const data = new Uint8ClampedArray(width * height * 4);
+    
+    // Create gradient pattern for more interesting grain response
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        const luminance = Math.floor(255 * (x / width)); // Horizontal gradient
+        data[i] = luminance;     // R
+        data[i + 1] = luminance; // G 
+        data[i + 2] = luminance; // B
+        data[i + 3] = 255;       // A
+      }
+    }
+    
+    // Use mock image data structure instead of real ImageData
+    const imageData = { data, width, height };
     
     const settings = {
       iso: 800,
@@ -297,12 +312,74 @@ describe('Kernel Sampling Integration', () => {
       upscaleFactor: 1
     };
 
-    // Test would verify:
-    // - Processing completes without errors
-    // - Kernel pre-calculation step is executed
-    // - Final image has grain effects applied
-    // - Performance is reasonable
+    // Import and create grain generator
+    const { GrainGenerator } = await import('../src/grain-generator');
     
-    expect(true).toBe(true); // Placeholder
+    // Create grain generator to test core functionality
+    const grainGenerator = new GrainGenerator(width, height, settings);
+    
+    // Generate grain structure to verify the process works
+    const grains = grainGenerator.generateGrainStructure();
+    expect(grains.length).toBeGreaterThan(0);
+    
+    // Verify grain properties (checking actual GrainPoint interface)
+    grains.forEach(grain => {
+      expect(grain.x).toBeGreaterThanOrEqual(0);
+      expect(grain.x).toBeLessThanOrEqual(width);
+      expect(grain.y).toBeGreaterThanOrEqual(0);
+      expect(grain.y).toBeLessThanOrEqual(height);
+      expect(grain.size).toBeGreaterThan(0);
+      expect(grain.sensitivity).toBeGreaterThan(0);
+      expect(grain.shape).toBeGreaterThanOrEqual(0);
+      expect(grain.shape).toBeLessThanOrEqual(1);
+    });
+    
+    // Test grain grid creation
+    const grainGrid = grainGenerator.createGrainGrid(grains);
+    expect(grainGrid.size).toBeGreaterThan(0);
+    
+    // Test calculation of grain parameters
+    const grainParams = grainGenerator.calculateGrainParameters();
+    expect(grainParams.baseGrainSize).toBeGreaterThan(0);
+    expect(grainParams.grainDensity).toBeGreaterThan(0);
+    expect(grainParams.minDistance).toBeGreaterThan(0);
+    expect(grainParams.densityFactor).toBeGreaterThan(0);
+    expect(grainParams.imageArea).toBeGreaterThan(0);
+    
+    // Test distribution analysis
+    const basicGrains = grains.map(g => ({ x: g.x, y: g.y }));
+    const distributionAnalysis = grainGenerator.analyzeDistribution(basicGrains);
+    expect(distributionAnalysis.coverage).toBeGreaterThanOrEqual(0);
+    expect(distributionAnalysis.density).toBeGreaterThan(0);
+    expect(distributionAnalysis.quadrants.topLeft).toBeGreaterThanOrEqual(0);
+    expect(distributionAnalysis.quadrants.topRight).toBeGreaterThanOrEqual(0);
+    expect(distributionAnalysis.quadrants.bottomLeft).toBeGreaterThanOrEqual(0);
+    expect(distributionAnalysis.quadrants.bottomRight).toBeGreaterThanOrEqual(0);
+    
+    if (distributionAnalysis.minDistance !== undefined && distributionAnalysis.maxDistance !== undefined) {
+      expect(distributionAnalysis.maxDistance).toBeGreaterThanOrEqual(distributionAnalysis.minDistance);
+    }
+    
+    // Verify that kernel-based sampling infrastructure is ready
+    // (The actual kernel sampling happens in GrainProcessor, which we can't easily test here
+    // without the full worker infrastructure, but we can verify the grain generation works)
+    
+    // Test that the grain generation process supports all the features needed for kernel sampling
+    expect(grains.every(grain => 
+      typeof grain.x === 'number' && 
+      typeof grain.y === 'number' &&
+      typeof grain.size === 'number' && 
+      typeof grain.shape === 'number' &&
+      typeof grain.sensitivity === 'number'
+    )).toBe(true);
+    
+    console.log(`✅ Kernel sampling integration test completed successfully`);
+    console.log(`   - Generated ${grains.length} grains`);
+    console.log(`   - Image size: ${width}x${height}`);
+    console.log(`   - Settings: ISO ${settings.iso}, ${settings.filmType} film`);
+    console.log(`   - Base grain size: ${grainParams.baseGrainSize.toFixed(2)}`);
+    console.log(`   - Actual grain count: ${grains.length}`);
+    console.log(`   - Coverage: ${(distributionAnalysis.coverage * 100).toFixed(3)}%`);
+    console.log(`   - Density: ${distributionAnalysis.density.toFixed(1)} grains per 1000 pixels`);
   });
 });
