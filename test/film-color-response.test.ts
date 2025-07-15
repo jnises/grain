@@ -87,8 +87,8 @@ describe('Film-specific Color Response', () => {
   describe('Enhanced Color Shift Effects', () => {
     it('should calculate temperature shifts based on grain properties', () => {
       // Test that temperature shifts vary with grain properties
-      const testGrain1: GrainPoint = { x: 100, y: 100, size: 2, sensitivity: 0.5, shape: 0.3 };
-      const testGrain2: GrainPoint = { x: 100, y: 100, size: 2, sensitivity: 1.0, shape: 0.8 };
+      const testGrain1: GrainPoint = { x: 100, y: 100, size: 2, sensitivity: 0.5, shape: 0.3, developmentThreshold: 0.4 };
+      const testGrain2: GrainPoint = { x: 100, y: 100, size: 2, sensitivity: 1.0, shape: 0.8, developmentThreshold: 0.6 };
       
       // Mock the GrainProcessor methods (simplified test)
       // In a real scenario, this would test via public interface

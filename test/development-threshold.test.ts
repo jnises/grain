@@ -84,8 +84,6 @@ describe('Development Threshold System', () => {
 
   describe('Grain Activation Logic', () => {
     it('should not activate grains below development threshold', () => {
-      const processor = new GrainProcessor(100, 100, settings);
-      
       // Create a test grain with known threshold
       const testGrain = {
         x: 50,
@@ -114,8 +112,6 @@ describe('Development Threshold System', () => {
     });
 
     it('should activate grains above development threshold with sigmoid response', () => {
-      const processor = new GrainProcessor(100, 100, settings);
-      
       // Create a test grain with known threshold
       const testGrain = {
         x: 50,
@@ -144,8 +140,6 @@ describe('Development Threshold System', () => {
     });
 
     it('should show sigmoid activation behavior', () => {
-      const processor = new GrainProcessor(100, 100, settings);
-      
       // Use a grain at position (0,0) to get predictable random sensitivity
       // At (0,0), randomSeed = 0, so randomSensitivity = -0.15
       const testGrain = {
@@ -194,8 +188,6 @@ describe('Development Threshold System', () => {
 
   describe('Deterministic Behavior', () => {
     it('should produce consistent results for same grain and exposure', () => {
-      const processor = new GrainProcessor(100, 100, settings);
-      
       const testGrain = {
         x: 30,
         y: 40,
@@ -222,8 +214,6 @@ describe('Development Threshold System', () => {
     });
 
     it('should produce different results for different grains with same exposure', () => {
-      const processor = new GrainProcessor(100, 100, settings);
-      
       const grain1 = {
         x: 30,
         y: 40,
@@ -263,9 +253,6 @@ describe('Development Threshold System', () => {
     it('should respect film-specific development parameters', () => {
       const kodakSettings = { ...settings, filmType: 'kodak' as const };
       const ilfordSettings = { ...settings, filmType: 'ilford' as const };
-      
-      const kodakProcessor = new GrainProcessor(100, 100, kodakSettings);
-      const ilfordProcessor = new GrainProcessor(100, 100, ilfordSettings);
       
       // Create similar grains but with different film types
       const kodakGrain = {

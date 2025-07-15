@@ -1,4 +1,5 @@
 - [x] run linting and fix any issues
+- [ ] should the lint and type-check package.json scripts be separate? could they be combined? is there a reason to run them separately?
 - [ ] add debugging option in dev mode that draws a point at the center of each grain on the generated image
 - [ ] Explain the GrainProcessor.processImage algorithm
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
@@ -30,4 +31,5 @@
 - [ ] Is it possible to parallelize the algorithm? Or move parts of it to the gpu using webgpu?
 - [ ] Go through the repo and clean up any unused files
 - [ ] Go through the code looking for repeating patterns and refactor them into shared code if it makes sense.
+- [ ] The html files in public shouldn't be included in the production build
 - [ ] Go through the code and clean up any comments left by a coding agent to indicate what it has changed. Comments should typically describe "why" not "what. And while comments describing changes is useful when iteracting with an agent we don't want that in the final code.

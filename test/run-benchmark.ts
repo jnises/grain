@@ -9,7 +9,7 @@ runPerformanceBenchmarks()
   .then(() => {
     console.log('\n✅ Performance benchmarks completed successfully!');
   })
-  .catch((error) => {
+  .catch((error: Error) => {
     console.error('\n❌ Error running performance benchmarks:', error);
     process.exit(1);
   });
