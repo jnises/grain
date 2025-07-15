@@ -864,33 +864,91 @@ export class GrainProcessor {
     return filmResponse * 1.2; // Slight multiplier for visibility
   }
 
+  // Calculate pixel-level grain effects (Phase 2)
+  // This method computes position-dependent visual effects that vary by pixel location
+  private calculatePixelGrainEffect(intrinsicDensity: number, grain: GrainPoint, pixelX: number, pixelY: number): number {
+    // If grain not activated, return 0
+    if (intrinsicDensity === 0) {
+      return 0;
+    }
+    
+    // Calculate offset from grain center
+    const offsetX = pixelX - grain.x;
+    const offsetY = pixelY - grain.y;
+    
+    // Calculate distance from grain center
+    const distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
+    
+    // Add distance falloff calculation based on grain position and radius
+    const falloffRadius = grain.size * 2; // Grain influence extends to 2x grain size
+    if (distance >= falloffRadius) {
+      return 0; // No effect beyond falloff radius
+    }
+    
+    // Apply distance-based falloff (exponential decay)
+    const falloffFactor = Math.exp(-distance / grain.size);
+    
+    // Add grain shape effects (elliptical distortion) based on pixel offset from grain center
+    const angle = Math.atan2(offsetY, offsetX);
+    const ellipticalDistortion = this.calculateEllipticalDistortion(grain, angle, distance);
+    
+    // Add pixel-level noise texture using x,y coordinates
+    const NOISE_SCALE_FINE = 0.15;
+    const NOISE_SCALE_MEDIUM = 0.08;
+    const NOISE_SCALE_COARSE = 0.03;
+    const NOISE_WEIGHT_FINE = 0.3;
+    const NOISE_WEIGHT_MEDIUM = 0.2;
+    const NOISE_WEIGHT_COARSE = 0.1;
+    
+    const noiseValue = this.noise(pixelX * NOISE_SCALE_FINE, pixelY * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
+                      this.noise(pixelX * NOISE_SCALE_MEDIUM, pixelY * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
+                      this.noise(pixelX * NOISE_SCALE_COARSE, pixelY * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
+    
+    // Combine all effects: intrinsic density × distance falloff × shape distortion × noise modulation
+    const noiseModulation = 0.7 + Math.abs(noiseValue) * 0.3;
+    const pixelEffect = intrinsicDensity * falloffFactor * ellipticalDistortion * noiseModulation;
+    
+    return pixelEffect;
+  }
+
+  // Calculate elliptical distortion for grain shape effects
+  private calculateEllipticalDistortion(grain: GrainPoint, angle: number, distance: number): number {
+    // Use grain.shape to control elliptical distortion
+    // shape = 0.5 is circular, < 0.5 is horizontally elongated, > 0.5 is vertically elongated
+    const shapeAngle = grain.shape * Math.PI; // Convert shape to angle for orientation
+    
+    // Calculate ellipse parameters
+    const majorAxis = 1.0 + (Math.abs(grain.shape - 0.5) * 0.6); // Up to 30% elongation
+    const minorAxis = 1.0 / majorAxis; // Maintain area
+    
+    // Rotate coordinate system based on grain orientation
+    const rotatedAngle = angle - shapeAngle;
+    const cosAngle = Math.cos(rotatedAngle);
+    const sinAngle = Math.sin(rotatedAngle);
+    
+    // Transform to elliptical coordinates using distance
+    const ellipticalX = distance * cosAngle / majorAxis;
+    const ellipticalY = distance * sinAngle / minorAxis;
+    const ellipticalDistance = Math.sqrt(ellipticalX * ellipticalX + ellipticalY * ellipticalY);
+    
+    // Apply shape-based modulation
+    // Stronger effect along the major axis, weaker along minor axis
+    const normalizedEllipticalDistance = ellipticalDistance / grain.size;
+    const shapeModulation = 0.8 + 0.4 * Math.exp(-normalizedEllipticalDistance);
+    
+    return shapeModulation;
+  }
+
   // Calculate grain strength based on development threshold system
   // This implements the proper development threshold algorithm from the design
   private calculateGrainStrength(exposure: number, grain: GrainPoint, x: number, y: number): number {
     // Get intrinsic grain density (position-independent)
     const intrinsicDensity = this.calculateIntrinsicGrainDensity(exposure, grain);
     
-    // If grain not activated, return 0
-    if (intrinsicDensity === 0) {
-      return 0;
-    }
+    // Apply pixel-level grain effects (position-dependent)
+    const pixelGrainEffect = this.calculatePixelGrainEffect(intrinsicDensity, grain, x, y);
     
-    // Add pixel-level noise for grain texture with multiple octaves
-    const NOISE_SCALE_FINE = 0.15;
-    const NOISE_SCALE_MEDIUM = 0.08;
-    const NOISE_SCALE_COARSE = 0.03;
-    const NOISE_WEIGHT_FINE = 0.3; // Reduced from 0.6
-    const NOISE_WEIGHT_MEDIUM = 0.2; // Reduced from 0.3
-    const NOISE_WEIGHT_COARSE = 0.1; // Same
-    
-    const noiseValue = this.noise(x * NOISE_SCALE_FINE, y * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
-                      this.noise(x * NOISE_SCALE_MEDIUM, y * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
-                      this.noise(x * NOISE_SCALE_COARSE, y * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
-    
-    // Apply noise modulation to intrinsic density (reduced impact to let development threshold dominate)
-    const pixelModulatedDensity = intrinsicDensity * (0.7 + Math.abs(noiseValue) * 0.3);
-    
-    return pixelModulatedDensity;
+    return pixelGrainEffect;
   }
 
   // Calculate grain density for density-based compositing

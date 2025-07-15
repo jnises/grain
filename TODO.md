@@ -10,11 +10,11 @@
     - [x] Move development threshold logic, sensitivity, and shape modifiers to intrinsic calculation
     - [x] Remove pixel-position noise from grain strength calculation
     - [x] Update grain exposure calculation to store intrinsic density for each grain
-  - [ ] **Phase 2: Create pixel-level grain effects**
-    - [ ] Create new method `calculatePixelGrainEffect()` that takes intrinsic grain density and pixel position
-    - [ ] Move pixel-level noise texture (using x,y coordinates) to this method
-    - [ ] Add distance falloff calculation based on grain position and radius
-    - [ ] Add grain shape effects (elliptical distortion) based on pixel offset from grain center
+  - [x] **Phase 2: Create pixel-level grain effects**
+    - [x] Create new method `calculatePixelGrainEffect()` that takes intrinsic grain density and pixel position
+    - [x] Move pixel-level noise texture (using x,y coordinates) to this method
+    - [x] Add distance falloff calculation based on grain position and radius
+    - [x] Add grain shape effects (elliptical distortion) based on pixel offset from grain center
   - [ ] **Phase 3: Update processImage workflow**
     - [ ] Modify processImage to use two-phase approach: 1) Pre-calculate intrinsic density for all grains, 2) For each pixel, calculate effects from nearby grains
     - [ ] Update the main pixel loop to call `calculatePixelGrainEffect()` instead of `calculateGrainStrength()`
