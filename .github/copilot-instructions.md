@@ -79,13 +79,13 @@ When creating temporary files, debug utilities, or development tools, please fol
 2. Follow existing code patterns and naming conventions
 3. Add appropriate assertions and error handling
 4. Write tests for new functionality
-5. Run `npm run type-check` to catch TypeScript errors that Vite build doesn't catch
+5. Run `npm run check` to verify code quality and TypeScript errors
 
 ### Before Completing
 1. Clean up temporary files
 2. Update documentation if needed
 3. Ensure all tests pass
-4. Run `npm run type-check` to verify no TypeScript errors
+4. Run `npm run check` to verify code quality and TypeScript errors
 5. Check that no unnecessary files were added to the repository
 
 # Memory and Learned Preferences

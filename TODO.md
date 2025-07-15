@@ -1,5 +1,5 @@
 - [x] run linting and fix any issues
-- [ ] should the lint and type-check package.json scripts be separate? could they be combined? is there a reason to run them separately?
+- [x] should the lint and type-check package.json scripts be separate? could they be combined? is there a reason to run them separately?
 - [ ] add debugging option in dev mode that draws a point at the center of each grain on the generated image
 - [ ] Explain the GrainProcessor.processImage algorithm
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.

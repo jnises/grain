@@ -54,6 +54,11 @@ This project uses Vitest for testing with separate configurations for unit tests
 - `npm run test:watch` - Run unit tests in watch mode (for development)
 - `npm run test:ui` - Run unit tests with UI interface
 
+**Code Quality:**
+- `npm run check` - Run both linting and type checking
+- `npm run lint` - Run ESLint for code style and quality checks
+- `npm run type-check` - Run TypeScript compiler for type checking
+
 **Performance Benchmarks:**
 - `npm run benchmark` - Run performance benchmarks (separate from unit tests)
 
