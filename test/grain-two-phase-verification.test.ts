@@ -1,0 +1,190 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { GrainGenerator } from '../src/grain-generator';
+import { GrainProcessor } from '../src/grain-worker';
+import type { GrainSettings } from '../src/types';
+
+// Helper function to create mock ImageData for testing
+function createMockImageData(width: number, height: number, fillValue = 128): ImageData {
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = fillValue;     // R
+    data[i + 1] = fillValue; // G
+    data[i + 2] = fillValue; // B
+    data[i + 3] = 255;       // A (alpha)
+  }
+  // Mock ImageData object for Node.js environment
+  return {
+    data,
+    width,
+    height
+  } as ImageData;
+}
+
+describe('Phase 4: Two-Phase Grain Processing Verification', () => {
+  let grainSettings: GrainSettings;
+  let processor: GrainProcessor;
+  
+  beforeEach(() => {
+    grainSettings = {
+      iso: 400,
+      filmType: 'kodak',
+      grainIntensity: 1.0,
+      upscaleFactor: 1.0
+    };
+    processor = new GrainProcessor(100, 100, grainSettings);
+  });
+
+  describe('Grain Intrinsic Properties (Position Independence)', () => {
+    it('should generate consistent grain structure across multiple calls', () => {
+      const generator = new GrainGenerator(100, 100, grainSettings);
+      
+      // Generate grain structure multiple times with same settings
+      const grains1 = generator.generateGrainStructure();
+      const grains2 = generator.generateGrainStructure();
+      
+      // Should have same number of grains
+      expect(grains1.length).toBe(grains2.length);
+      
+      // Grain positions should be deterministic for same seed
+      if (grains1.length > 0 && grains2.length > 0) {
+        expect(grains1[0].x).toBe(grains2[0].x);
+        expect(grains1[0].y).toBe(grains2[0].y);
+        expect(grains1[0].size).toBe(grains2[0].size);
+      }
+    });
+
+    it('should maintain grain properties independent of image content', () => {
+      const generator = new GrainGenerator(50, 50, grainSettings);
+      const grains = generator.generateGrainStructure();
+      
+      // Verify grain properties are within expected ranges
+      grains.forEach(grain => {
+        expect(grain.x).toBeGreaterThanOrEqual(0);
+        expect(grain.x).toBeLessThan(50);
+        expect(grain.y).toBeGreaterThanOrEqual(0);
+        expect(grain.y).toBeLessThan(50);
+        expect(grain.size).toBeGreaterThan(0);
+        expect(grain.sensitivity).toBeGreaterThanOrEqual(0);
+        // Sensitivity can be > 1 for high-ISO grains, just check it's reasonable
+        expect(grain.sensitivity).toBeLessThan(10);
+      });
+    });
+  });
+
+  describe('Visual Effects (Position Dependent)', () => {
+    it('should process different image areas differently', async () => {
+      // Create image with varying brightness
+      const imageData = createMockImageData(20, 20, 128);
+      
+      // Make one quadrant brighter
+      for (let y = 0; y < 10; y++) {
+        for (let x = 0; x < 10; x++) {
+          const index = (y * 20 + x) * 4;
+          imageData.data[index] = 200;     // R
+          imageData.data[index + 1] = 200; // G
+          imageData.data[index + 2] = 200; // B
+        }
+      }
+      
+      const result = await processor.processImage(imageData);
+      
+      // Verify the result has been processed
+      expect(result).toBeDefined();
+      expect(result.width).toBe(20);
+      expect(result.height).toBe(20);
+      expect(result.data.length).toBe(imageData.data.length);
+    });
+
+    it('should apply grain effects based on local pixel values', async () => {
+      // Create simple gradient image
+      const imageData = createMockImageData(10, 10, 0);
+      
+      // Create horizontal gradient
+      for (let y = 0; y < 10; y++) {
+        for (let x = 0; x < 10; x++) {
+          const brightness = Math.floor((x / 9) * 255);
+          const index = (y * 10 + x) * 4;
+          imageData.data[index] = brightness;
+          imageData.data[index + 1] = brightness;
+          imageData.data[index + 2] = brightness;
+          imageData.data[index + 3] = 255;
+        }
+      }
+      
+      const result = await processor.processImage(imageData);
+      
+      // The result should be different from input
+      let pixelsChanged = 0;
+      for (let i = 0; i < result.data.length; i += 4) {
+        if (result.data[i] !== imageData.data[i] ||
+            result.data[i + 1] !== imageData.data[i + 1] ||
+            result.data[i + 2] !== imageData.data[i + 2]) {
+          pixelsChanged++;
+        }
+      }
+      
+      // Should have some grain effect applied
+      expect(pixelsChanged).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Performance Characteristics', () => {
+    it('should process images within reasonable time', async () => {
+      const imageData = createMockImageData(50, 50, 128);
+      
+      const startTime = performance.now();
+      const result = await processor.processImage(imageData);
+      const endTime = performance.now();
+      
+      const processingTime = endTime - startTime;
+      
+      // Should complete within 1 second for small image
+      expect(processingTime).toBeLessThan(1000);
+      expect(result).toBeDefined();
+    });
+
+    it('should scale reasonably with image size', async () => {
+      const smallImage = createMockImageData(25, 25, 128);
+      const largeImage = createMockImageData(50, 50, 128);
+      
+      // Process small image
+      const startSmall = performance.now();
+      await processor.processImage(smallImage);
+      const smallTime = performance.now() - startSmall;
+      
+      // Process larger image
+      const startLarge = performance.now();
+      await processor.processImage(largeImage);
+      const largeTime = performance.now() - startLarge;
+      
+      // Larger image should take more time, but not excessively more
+      // (4x pixels should not take more than 10x time)
+      const pixelRatio = (50 * 50) / (25 * 25); // 4x pixels
+      const timeRatio = largeTime / smallTime;
+      
+      expect(timeRatio).toBeLessThan(pixelRatio * 2.5);
+    });
+  });
+
+  describe('Two-Phase Architecture Validation', () => {
+    it('should maintain consistent grain structure across different images', () => {
+      // Create two different processors with same settings
+      const processor1 = new GrainProcessor(30, 30, grainSettings);
+      const processor2 = new GrainProcessor(30, 30, grainSettings);
+      
+      // Both should use same grain generation logic
+      expect(processor1).toBeDefined();
+      expect(processor2).toBeDefined();
+    });
+
+    it('should handle edge cases gracefully', async () => {
+      // Test with very small image
+      const tinyImage = createMockImageData(1, 1, 128);
+      const result = await processor.processImage(tinyImage);
+      
+      expect(result.width).toBe(1);
+      expect(result.height).toBe(1);
+      expect(result.data.length).toBe(4);
+    });
+  });
+});

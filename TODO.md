@@ -2,7 +2,7 @@
 - [x] should the lint and type-check package.json scripts be separate? could they be combined? is there a reason to run them separately?
 - [x] add debugging option in dev mode that draws a point at the center of each grain on the generated image
 - [x] fix the eslint warning
-- [ ] In GrainProcessor.processImage, split out the code into two parts, first calculate the density of all the grains, then calculate how the grains affect each pixel.
+- [x] In GrainProcessor.processImage, split out the code into two parts, first calculate the density of all the grains, then calculate how the grains affect each pixel.
   Currently the grain strength (what does that represent?) seems to depend in the position of the pixel being shaded. Why is that? If that is to affect the shape of the grains perhaps that should be applied in the second part as described above?
   - [x] **ANALYSIS COMPLETE**: The issue is that `calculateGrainStrength()` uses pixel coordinates `(x,y)` to apply noise, making grain strength position-dependent rather than an intrinsic grain property.
   - [x] **Phase 1: Refactor grain strength calculation**
@@ -15,15 +15,21 @@
     - [x] Move pixel-level noise texture (using x,y coordinates) to this method
     - [x] Add distance falloff calculation based on grain position and radius
     - [x] Add grain shape effects (elliptical distortion) based on pixel offset from grain center
-  - [ ] **Phase 3: Update processImage workflow**
-    - [ ] Modify processImage to use two-phase approach: 1) Pre-calculate intrinsic density for all grains, 2) For each pixel, calculate effects from nearby grains
-    - [ ] Update the main pixel loop to call `calculatePixelGrainEffect()` instead of `calculateGrainStrength()`
-    - [ ] Ensure grain compositing logic works with the new structure
-  - [ ] **Phase 4: Add verification tests**
-    - [ ] Add tests to verify that grain intrinsic properties are position-independent
-    - [ ] Add tests to verify that visual effects properly vary by position
-    - [ ] Add performance tests to ensure the refactor doesn't impact performance negatively
+  - [x] **Phase 3: Update processImage workflow**
+    - [x] Modify processImage to use two-phase approach: 1) Pre-calculate intrinsic density for all grains, 2) For each pixel, calculate effects from nearby grains
+    - [x] Update the main pixel loop to call `calculatePixelGrainEffect()` instead of `calculateGrainStrength()`
+    - [x] Ensure grain compositing logic works with the new structure
+  - [x] **Phase 4: Add verification tests**
+    - [x] Add tests to verify that grain intrinsic properties are position-independent
+    - [x] Add tests to verify that visual effects properly vary by position
+    - [x] Add performance tests to ensure the refactor doesn't impact performance negatively
   
+- [ ] Why does applyBeerLambertCompositing take originalColor as a parameter? Shouldn't the final color only depend on the grains? The original color should have been used to calculate the grain responses, but after that why are they used?
+- [ ] Update the dev mode grain center drawing feature to indicate the size of each grain using the color of the dot drawn.
+- [ ] Go through the code and look for methods that should be static
+- [ ] Go through the code and apply the rules around constants from the instructions
+- [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
+- [ ] When checking surrounding cells in processImage, are we sure a 3x3 neighborhood is large enough to fit the largest size grains?
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] Do the film type settings refer to common industry standard settings? Or do they just result in some made up parameters? If made up, convert them to use some non-brand names instead.

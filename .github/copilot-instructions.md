@@ -12,6 +12,7 @@
 - Test behavior, not implementation details
 - Expose private methods via protected access or testing interfaces when needed
 - When testing is difficult due to private methods or complex dependencies, refactor production code to be more testable rather than duplicating functionality in tests
+- **NEVER use `new ImageData()` in tests** - Node.js test environment doesn't have DOM ImageData. Instead, create mock objects with `{ width, height, data: new Uint8ClampedArray(width * height * 4) }` structure
 
 ## Project Structure and File Organization
 
@@ -59,6 +60,7 @@ When creating temporary files, debug utilities, or development tools, please fol
 - Use the existing assertion utilities in `src/utils.ts`
 
 ## Development Workflow
+- Before running `npm run dev` make sure it isn't already running.
 
 ### Before Starting Work
 1. Check existing code structure and patterns
@@ -80,23 +82,4 @@ When creating temporary files, debug utilities, or development tools, please fol
 5. Check that no unnecessary files were added to the repository
 
 # Memory and Learned Preferences
-
-This section captures user preferences and project-specific patterns that should be remembered for future work.
-
-## Code Style Preferences
-- (Add specific style preferences as they emerge)
-
-## Architecture Decisions
-- (Record architectural patterns and decisions made during development)
-
-## User Workflow Preferences
-(Track how the user prefers to work, debug, test, etc.)
-- Before running `npm run dev` make sure it isn't already running.
-
-## Project-Specific Patterns
-- (Document patterns specific to this grain simulation project)
-
-## Common Corrections
-- (Record frequently needed corrections to avoid repeating mistakes)
-
-**Note**: When the user provides feedback that seems like a lasting preference rather than a one-time correction, add it to the appropriate section above with context about when and why it applies.
+- When the user provides feedback that seems like a lasting preference rather than a one-time correction, add it to the appropriate section above with context about when and why it applies.

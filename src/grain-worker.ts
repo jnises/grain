@@ -20,6 +20,18 @@ import {
   assert
 } from './utils';
 
+// Helper function to handle postMessage in both browser and Node.js environments
+function safePostMessage(message: any): void {
+  if (typeof postMessage !== 'undefined' && typeof postMessage === 'function') {
+    try {
+      safePostMessage(message);
+    } catch (error) {
+      // Silently ignore postMessage errors in test environment
+      console.debug('PostMessage skipped in test environment:', message);
+    }
+  }
+}
+
 // File-level constants shared across methods
 const RGB_MAX_VALUE = 255;
 
@@ -402,6 +414,36 @@ export class GrainProcessor {
     return exposureMap;
   }
 
+  /**
+   * Pre-calculate intrinsic grain densities for all grains (Phase 1 optimization)
+   * This computes grain-specific properties that don't depend on pixel position
+   * and caches them for efficient pixel processing
+   */
+  private calculateIntrinsicGrainDensities(grains: GrainPoint[], grainExposureMap: Map<GrainPoint, number>): Map<GrainPoint, number> {
+    console.log(`Pre-calculating intrinsic densities for ${grains.length} grains...`);
+    
+    const intrinsicDensityMap = new Map<GrainPoint, number>();
+    
+    for (const grain of grains) {
+      const grainExposure = grainExposureMap.get(grain);
+      assert(
+        grainExposure !== undefined,
+        'Grain exposure not found in calculated map during intrinsic density calculation',
+        { 
+          grain: { x: grain.x, y: grain.y, size: grain.size },
+          mapSize: grainExposureMap.size,
+          grainsLength: grains.length
+        }
+      );
+      
+      const intrinsicDensity = this.calculateIntrinsicGrainDensity(grainExposure, grain);
+      intrinsicDensityMap.set(grain, intrinsicDensity);
+    }
+    
+    console.log(`Completed intrinsic density calculation for ${intrinsicDensityMap.size} grains`);
+    return intrinsicDensityMap;
+  }
+
   // 2D Perlin noise implementation
   private noise(x: number, y: number): number {
     // Noise generation constants
@@ -610,29 +652,40 @@ export class GrainProcessor {
   // Apply grain to image
   public async processImage(imageData: ImageData): Promise<ImageData> {
     const data = new Uint8ClampedArray(imageData.data);
-    const result = new ImageData(data, this.width, this.height);
+    
+    // Create ImageData result - handle both browser and Node.js environments
+    const result = typeof ImageData !== 'undefined' 
+      ? new ImageData(data, this.width, this.height)
+      : { width: this.width, height: this.height, data } as ImageData;
+    
     const totalImagePixels = this.width * this.height;
     
     // Start overall benchmark
     this.performanceTracker.startBenchmark('Total Processing', totalImagePixels);
     
     // Step 1: Generate grain structure
-    postMessage({ type: 'progress', progress: 10, stage: 'Generating grain structure...' } as ProgressMessage);
+    safePostMessage({ type: 'progress', progress: 10, stage: 'Generating grain structure...' } as ProgressMessage);
     this.performanceTracker.startBenchmark('Grain Generation');
     const grainStructure = this.generateGrainStructure();
     this.performanceTracker.endBenchmark('Grain Generation');
     
     // Step 2: Create spatial acceleration grid
-    postMessage({ type: 'progress', progress: 20, stage: 'Creating spatial grid...' } as ProgressMessage);
+    safePostMessage({ type: 'progress', progress: 20, stage: 'Creating spatial grid...' } as ProgressMessage);
     this.performanceTracker.startBenchmark('Spatial Grid Creation');
     const grainGrid = this.createGrainGrid(grainStructure);
     this.performanceTracker.endBenchmark('Spatial Grid Creation');
     
     // Step 3: Calculate grain exposures using kernel-based sampling
-    postMessage({ type: 'progress', progress: 25, stage: 'Calculating kernel-based grain exposures...' } as ProgressMessage);
+    safePostMessage({ type: 'progress', progress: 25, stage: 'Calculating kernel-based grain exposures...' } as ProgressMessage);
     this.performanceTracker.startBenchmark('Kernel Exposure Calculation');
     const grainExposureMap = this.calculateGrainExposures(grainStructure, data);
     this.performanceTracker.endBenchmark('Kernel Exposure Calculation');
+    
+    // Step 3.5: Pre-calculate intrinsic grain densities (Phase 1)
+    safePostMessage({ type: 'progress', progress: 27, stage: 'Pre-calculating intrinsic grain densities...' } as ProgressMessage);
+    this.performanceTracker.startBenchmark('Intrinsic Density Calculation');
+    const grainIntrinsicDensityMap = this.calculateIntrinsicGrainDensities(grainStructure, grainExposureMap);
+    this.performanceTracker.endBenchmark('Intrinsic Density Calculation');
     
     // Determine grid size for spatial lookup
     let maxGrainSize = 1;
@@ -644,7 +697,7 @@ export class GrainProcessor {
     const gridSize = Math.max(8, Math.floor(maxGrainSize * 2));
     
     // Step 4: Process each pixel
-    postMessage({ type: 'progress', progress: 30, stage: 'Processing pixels...' } as ProgressMessage);
+    safePostMessage({ type: 'progress', progress: 30, stage: 'Processing pixels...' } as ProgressMessage);
     this.performanceTracker.startBenchmark('Pixel Processing', totalImagePixels);
     
     let grainEffectCount = 0;
@@ -696,20 +749,21 @@ export class GrainProcessor {
           if (distance < grain.size * 2) {
             const weight = Math.exp(-distance / grain.size);
             
-            // Use kernel-based grain exposure - should always exist after calculation
-            const grainExposure = grainExposureMap.get(grain);
+            // Use pre-calculated intrinsic grain density
+            const intrinsicDensity = grainIntrinsicDensityMap.get(grain);
             assert(
-              grainExposure !== undefined,
-              'Grain exposure not found in calculated map - this indicates a logic error',
+              intrinsicDensity !== undefined,
+              'Intrinsic grain density not found in calculated map - this indicates a logic error',
               { 
                 grain: { x: grain.x, y: grain.y, size: grain.size },
-                mapSize: grainExposureMap.size,
+                mapSize: grainIntrinsicDensityMap.size,
                 grainStructureLength: grainStructure.length
               }
             );
             
-            const grainStrength = this.calculateGrainStrength(grainExposure, grain, x, y);
-            const grainDensity = this.calculateGrainDensity(grainStrength, grain);
+            // Calculate pixel-level grain effects using pre-calculated intrinsic density
+            const pixelGrainEffect = this.calculatePixelGrainEffect(intrinsicDensity, grain, x, y);
+            const grainDensity = this.calculateGrainDensity(pixelGrainEffect, grain);
             
             // Apply film-specific channel characteristics with enhanced color effects
             const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];
@@ -765,7 +819,7 @@ export class GrainProcessor {
       // Update progress periodically
       if (y % Math.floor(this.height / 10) === 0) {
         const progress = 30 + (y / this.height) * 60;
-        postMessage({ 
+        safePostMessage({ 
           type: 'progress', 
           progress, 
           stage: `Processing pixels... ${Math.floor(progress)}%` 
@@ -808,12 +862,12 @@ export class GrainProcessor {
     
     // Debug: Draw grain center points if requested
     if (this.settings.debugGrainCenters) {
-      postMessage({ type: 'progress', progress: 95, stage: 'Drawing debug grain centers...' } as ProgressMessage);
+      safePostMessage({ type: 'progress', progress: 95, stage: 'Drawing debug grain centers...' } as ProgressMessage);
       console.log('Debug mode: Drawing grain center points');
       this.drawGrainCenters(result, grainStructure);
     }
     
-    postMessage({ type: 'progress', progress: 100, stage: 'Complete!' } as ProgressMessage);
+    safePostMessage({ type: 'progress', progress: 100, stage: 'Complete!' } as ProgressMessage);
     return result;
   }
 
@@ -937,18 +991,6 @@ export class GrainProcessor {
     const shapeModulation = 0.8 + 0.4 * Math.exp(-normalizedEllipticalDistance);
     
     return shapeModulation;
-  }
-
-  // Calculate grain strength based on development threshold system
-  // This implements the proper development threshold algorithm from the design
-  private calculateGrainStrength(exposure: number, grain: GrainPoint, x: number, y: number): number {
-    // Get intrinsic grain density (position-independent)
-    const intrinsicDensity = this.calculateIntrinsicGrainDensity(exposure, grain);
-    
-    // Apply pixel-level grain effects (position-dependent)
-    const pixelGrainEffect = this.calculatePixelGrainEffect(intrinsicDensity, grain, x, y);
-    
-    return pixelGrainEffect;
   }
 
   // Calculate grain density for density-based compositing
@@ -1086,7 +1128,7 @@ self.onmessage = async function(e: MessageEvent<ProcessMessage>) {
     // Validate result with custom assertion
     assertImageData(result, 'processing result');
 
-    postMessage({ type: 'result', imageData: result } as ResultMessage);
+    safePostMessage({ type: 'result', imageData: result } as ResultMessage);
   } catch (error) {
     console.error('Worker processing error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred during processing';
@@ -1100,7 +1142,7 @@ self.onmessage = async function(e: MessageEvent<ProcessMessage>) {
       });
     }
     
-    postMessage({ type: 'error', error: errorMessage });
+    safePostMessage({ type: 'error', error: errorMessage });
   }
 };
 
