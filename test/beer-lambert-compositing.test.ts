@@ -1,22 +1,32 @@
 // Test to verify Beer-Lambert law compositing produces different results than linear compositing
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { GrainProcessor } from '../src/grain-worker';
+import type { GrainSettings, GrainDensity } from '../src/types';
+
+// Create a test class that extends GrainProcessor to access protected methods
+class TestableGrainProcessor extends GrainProcessor {
+  public testApplyBeerLambertCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
+    return this.applyBeerLambertCompositing(originalColor, grainDensity);
+  }
+}
 
 describe('Beer-Lambert Law Compositing', () => {
-  // Simulate the Beer-Lambert compositing function
-  function applyBeerLambertCompositing(originalColor: [number, number, number], grainDensity: { r: number; g: number; b: number }): [number, number, number] {
-    const [r, g, b] = originalColor;
-    
-    // Beer-Lambert law: final = original * exp(-density)
-    return [
-      r * Math.exp(-grainDensity.r),
-      g * Math.exp(-grainDensity.g),
-      b * Math.exp(-grainDensity.b)
-    ];
-  }
+  let processor: TestableGrainProcessor;
+  let settings: GrainSettings;
 
-  // Simulate the old linear compositing function
-  function applyLinearCompositing(originalColor: [number, number, number], grainDensity: { r: number; g: number; b: number }): [number, number, number] {
+  beforeEach(() => {
+    settings = {
+      iso: 400,
+      filmType: 'kodak',
+      grainIntensity: 1.0,
+      upscaleFactor: 1.0
+    };
+    processor = new TestableGrainProcessor(100, 100, settings);
+  });
+
+  // Simulate the old linear compositing function for comparison
+  function applyLinearCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
     const [r, g, b] = originalColor;
     
     // Old simplified model: final = original * (1 - density)
@@ -29,9 +39,9 @@ describe('Beer-Lambert Law Compositing', () => {
 
   it('should produce different results than linear compositing for moderate grain density', () => {
     const originalColor: [number, number, number] = [128, 128, 128]; // Mid-gray
-    const grainDensity = { r: 0.3, g: 0.3, b: 0.3 }; // Moderate grain density
+    const grainDensity: GrainDensity = { r: 0.3, g: 0.3, b: 0.3 }; // Moderate grain density
 
-    const beerLambertResult = applyBeerLambertCompositing(originalColor, grainDensity);
+    const beerLambertResult = processor.testApplyBeerLambertCompositing(originalColor, grainDensity);
     const linearResult = applyLinearCompositing(originalColor, grainDensity);
 
     // The results should be different
@@ -46,11 +56,11 @@ describe('Beer-Lambert Law Compositing', () => {
 
   it('should provide more physically accurate light transmission behavior', () => {
     const originalColor: [number, number, number] = [200, 150, 100]; // Bright warm color
-    const lightGrainDensity = { r: 0.1, g: 0.1, b: 0.1 };
-    const heavyGrainDensity = { r: 0.5, g: 0.5, b: 0.5 };
+    const lightGrainDensity: GrainDensity = { r: 0.1, g: 0.1, b: 0.1 };
+    const heavyGrainDensity: GrainDensity = { r: 0.5, g: 0.5, b: 0.5 };
 
-    const lightBeerLambert = applyBeerLambertCompositing(originalColor, lightGrainDensity);
-    const heavyBeerLambert = applyBeerLambertCompositing(originalColor, heavyGrainDensity);
+    const lightBeerLambert = processor.testApplyBeerLambertCompositing(originalColor, lightGrainDensity);
+    const heavyBeerLambert = processor.testApplyBeerLambertCompositing(originalColor, heavyGrainDensity);
 
     // Beer-Lambert should show exponential decay behavior
     // Light grain should preserve more of the original brightness
@@ -69,9 +79,9 @@ describe('Beer-Lambert Law Compositing', () => {
 
   it('should handle zero density correctly (no grain effect)', () => {
     const originalColor: [number, number, number] = [255, 128, 64];
-    const noDensity = { r: 0, g: 0, b: 0 };
+    const noDensity: GrainDensity = { r: 0, g: 0, b: 0 };
 
-    const result = applyBeerLambertCompositing(originalColor, noDensity);
+    const result = processor.testApplyBeerLambertCompositing(originalColor, noDensity);
 
     // With zero density, exp(-0) = 1, so result should equal original
     expect(result[0]).toBeCloseTo(originalColor[0], 6);
@@ -81,9 +91,9 @@ describe('Beer-Lambert Law Compositing', () => {
 
   it('should demonstrate natural light transmission falloff with high density', () => {
     const originalColor: [number, number, number] = [255, 255, 255]; // Pure white
-    const highDensity = { r: 2.0, g: 2.0, b: 2.0 }; // Very high density
+    const highDensity: GrainDensity = { r: 2.0, g: 2.0, b: 2.0 }; // Very high density
 
-    const beerLambertResult = applyBeerLambertCompositing(originalColor, highDensity);
+    const beerLambertResult = processor.testApplyBeerLambertCompositing(originalColor, highDensity);
     const linearResult = applyLinearCompositing(originalColor, highDensity);
 
     // Beer-Lambert should allow some light through even with high density

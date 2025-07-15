@@ -5,10 +5,13 @@
 
 ### Code Reuse and Testing
 - Import and use actual production classes in tests (e.g., `GrainGenerator`)
+- **NEVER reimplement production functions in test files** - always import and test the actual production code
+- If testing private methods, make them protected and create a test subclass, or extract to a testable utility module
 - Test files verify behavior, not reimplement functionality
-- Use dependency injection or factories for mocking
+- Use dependency injection or factories for mocking external dependencies
 - Test behavior, not implementation details
 - Expose private methods via protected access or testing interfaces when needed
+- When testing is difficult due to private methods or complex dependencies, refactor production code to be more testable rather than duplicating functionality in tests
 
 ## Project Structure and File Organization
 

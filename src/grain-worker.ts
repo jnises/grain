@@ -98,7 +98,7 @@ class PerformanceTracker {
 }
 
 // Utility functions for grain generation
-class GrainProcessor {
+export class GrainProcessor {
   private width: number;
   private height: number;
   private settings: GrainSettings;
@@ -903,7 +903,7 @@ class GrainProcessor {
   }
 
   // Apply Beer-Lambert law compositing for physically accurate results
-  private applyBeerLambertCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
+  protected applyBeerLambertCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
     const [r, g, b] = originalColor;
     
     // Beer-Lambert law: final = original * exp(-density)
