@@ -100,7 +100,9 @@ The conversion process models how photographic exposure and development translat
 *   **From Grain Density to Pixel Values:** The implementation supports two compositing models to balance physical accuracy with computational efficiency:
 
 *   **Density-Based Compositing (Physical Model):** 
-    - **Beer-Lambert Law:** `final_pixel = base_color * exp(-grain_density_total)` where grain_density_total is the sum of all grain layer densities
+    - **Beer-Lambert Law:** `final_pixel = WHITE_LIGHT * exp(-grain_density_total)` where WHITE_LIGHT = 255 (white viewing light) and grain_density_total is the sum of all grain layer densities
+    - **Physical Accuracy:** Uses white light as viewing light, NOT the original pixel color. The input image determines grain exposure/density during "photography", but viewing uses white light passing through developed grains.
+    - **Two-Phase Process:** 1) Input image determines grain exposure and density, 2) White viewing light passes through grains following Beer-Lambert law
     - **Simplified Physical Model:** `final_pixel = base_color * (1 - grain_density)` with density clamped to prevent complete blackness
     - **Multi-Layer Support:** Each grain layer contributes density independently: `total_density = sum(layer_density * layer_weight)`
     - **Channel-Specific Response:** Different density calculations for R, G, B channels (blue most affected, red least)
@@ -126,7 +128,18 @@ The conversion process models how photographic exposure and development translat
 *   **Development Simulation:** Apply threshold function, calculate final grain opacity/density, and apply grain interaction effects.
 *   **Final Compositing:** Combine all grain layers, apply color channel mixing, convert back to RGB, and downsample to final resolution.
 
-### 7. Practical Considerations
+### 7. Brightness Preservation Challenge
+
+*   **Current Issue:** The physically accurate Beer-Lambert law implementation (`WHITE_LIGHT * exp(-grain_density)`) can significantly alter overall image brightness, as it disconnects the output from the original pixel values.
+*   **Root Cause:** The two-phase process (input determines grain density, white light viewing) creates outputs that don't preserve the original brightness distribution.
+*   **Proposed Solution:** Post-process brightness adjustment after grain rendering to maintain overall image brightness while preserving grain texture and physical accuracy.
+*   **Implementation Approach:** 
+    - Process entire image using floating-point values throughout the pipeline
+    - Calculate brightness ratio between input and output images  
+    - Apply uniform brightness correction to final result
+    - Maintain grain texture relationships while preserving overall exposure
+
+### 8. Practical Considerations
 
 *   **Simplified Processing:** Focus on core grain generation and density mapping rather than complex chemical simulation.
 *   **Efficient Implementation:** Use lookup tables and simplified models to achieve realistic results with reasonable computational cost.

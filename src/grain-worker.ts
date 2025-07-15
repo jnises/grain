@@ -1012,6 +1012,7 @@ export class GrainProcessor {
     // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
     // When "viewing" the film, WHITE printing light passes through the developed grains.
     // Beer-Lambert law: final = white_light * exp(-density)
+    // This is correct physics - the original color should NOT be used here.
     const WHITE_LIGHT = 255;
     
     return [
