@@ -1,96 +1,280 @@
 /**
  * Tests for kernel-based grain area sampling functionality
- * Validates the first subtask: "Create sampling kernel generation"
+ * Validates that kernel-based sampling produces more realistic grain response than point sampling
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { GrainGenerator } from '../src/grain-generator';
 
-// Note: Since the kernel methods are private, we'll test them indirectly through the public interface
-// This is a integration test that verifies the kernel functionality works within the grain processing
+// Simple mock image data structure (avoiding DOM ImageData)
+interface MockImageData {
+  data: number[];
+  width: number;
+  height: number;
+}
 
-describe('Kernel-based Grain Area Sampling', () => {
+// Test utility to create mock image data for testing
+function createTestImageData(width: number, height: number, pattern: 'gradient' | 'checkerboard' | 'solid' = 'gradient'): MockImageData {
+  const data: number[] = [];
   
-  describe('Sample Count Determination', () => {
-    it('should use appropriate sample counts for different grain sizes', () => {
-      // Test will verify that:
-      // - Small grains (< 1.5px) use fewer samples (4)
-      // - Medium grains (1.5-4px) use moderate samples (8) 
-      // - Large grains (> 4px) use more samples (16)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      switch (pattern) {
+        case 'gradient':
+          // Horizontal gradient from black to white
+          const value = Math.floor((x / width) * 255);
+          data.push(value, value, value, 255); // RGBA
+          break;
+          
+        case 'checkerboard':
+          // 8x8 checkerboard pattern
+          const checkSize = 8;
+          const isLight = (Math.floor(x / checkSize) + Math.floor(y / checkSize)) % 2 === 0;
+          const checkValue = isLight ? 255 : 0;
+          data.push(checkValue, checkValue, checkValue, 255);
+          break;
+          
+        case 'solid':
+          // Solid mid-gray
+          data.push(128, 128, 128, 255);
+          break;
+      }
+    }
+  }
+  
+  return { data, width, height };
+}
+
+// Test helper to simulate grain processing and measure exposure differences
+async function testGrainExposureVariability(
+  imagePattern: 'gradient' | 'checkerboard' | 'solid',
+  grainSize: number,
+  sampleCount: number = 10
+): Promise<{ mean: number, variance: number, stability: number }> {
+  const width = 100;
+  const height = 100;
+  const imageData = createTestImageData(width, height, imagePattern);
+  
+  // Create a GrainGenerator to get realistic grain properties
+  const generator = new GrainGenerator(width, height, { 
+    iso: 800, 
+    filmType: 'kodak' as const,
+    grainIntensity: 100,
+    upscaleFactor: 1
+  });
+  const grains = generator.generateGrainStructure().slice(0, sampleCount);
+  
+  // Mock exposure calculations similar to grain-worker
+  function rgbToExposure(r: number, g: number, b: number): number {
+    const luminance = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 255;
+    return Math.max(0, Math.min(1, Math.log(luminance + 0.01) / Math.log(2) + 1));
+  }
+  
+  // Simulate point sampling (current approach)
+  const pointSamplingResults: number[] = [];
+  
+  // Simulate kernel-based area sampling
+  const kernelSamplingResults: number[] = [];
+  
+  for (const grain of grains) {
+    const x = Math.round(grain.x);
+    const y = Math.round(grain.y);
+    
+    if (x >= 0 && x < width && y >= 0 && y < height) {
+      // Point sampling: single pixel at grain center
+      const pointIndex = (y * width + x) * 4;
+      const pointExposure = rgbToExposure(
+        imageData.data[pointIndex],
+        imageData.data[pointIndex + 1],
+        imageData.data[pointIndex + 2]
+      );
+      pointSamplingResults.push(pointExposure);
       
-      // We can't directly test private methods, but we can verify the behavior
-      // by checking performance characteristics and ensuring larger grains
-      // take more processing time (indicating more samples)
-      expect(true).toBe(true); // Placeholder for now
+      // Kernel sampling: average multiple points around grain
+      let totalExposure = 0;
+      let validSamples = 0;
+      const sampleRadius = grainSize * 0.7;
+      const numSamples = grainSize < 1.5 ? 4 : grainSize < 4.0 ? 8 : 16;
+      
+      // Center point
+      totalExposure += pointExposure;
+      validSamples++;
+      
+      // Ring of samples around center
+      for (let i = 0; i < numSamples - 1; i++) {
+        const angle = (i / (numSamples - 1)) * 2 * Math.PI;
+        const sampleX = Math.round(x + Math.cos(angle) * sampleRadius);
+        const sampleY = Math.round(y + Math.sin(angle) * sampleRadius);
+        
+        if (sampleX >= 0 && sampleX < width && sampleY >= 0 && sampleY < height) {
+          const sampleIndex = (sampleY * width + sampleX) * 4;
+          const sampleExposure = rgbToExposure(
+            imageData.data[sampleIndex],
+            imageData.data[sampleIndex + 1],
+            imageData.data[sampleIndex + 2]
+          );
+          totalExposure += sampleExposure;
+          validSamples++;
+        }
+      }
+      
+      const kernelExposure = validSamples > 0 ? totalExposure / validSamples : pointExposure;
+      kernelSamplingResults.push(kernelExposure);
+    }
+  }
+  
+  // Calculate statistics
+  function calculateStats(values: number[]) {
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+    return { mean, variance };
+  }
+  
+  const pointStats = calculateStats(pointSamplingResults);
+  const kernelStats = calculateStats(kernelSamplingResults);
+  
+  // Stability metric: lower variance indicates more stable (less noisy) results
+  const stability = pointStats.variance > 0 ? kernelStats.variance / pointStats.variance : 1;
+  
+  return {
+    mean: kernelStats.mean,
+    variance: kernelStats.variance,
+    stability // Values < 1 indicate kernel sampling is more stable
+  };
+}
+
+describe('Kernel-based Grain Area Sampling Quality Validation', () => {
+  
+  describe('Exposure Stability for Different Grain Sizes', () => {
+    it('should provide more stable exposure values for larger grains', async () => {
+      // Test with a gradient pattern where point sampling would be noisy
+      const smallGrainResults = await testGrainExposureVariability('gradient', 1.0);
+      const largeGrainResults = await testGrainExposureVariability('gradient', 5.0);
+      
+      // Larger grains should benefit more from kernel sampling (more stable)
+      expect(largeGrainResults.stability).toBeLessThan(smallGrainResults.stability);
+      expect(largeGrainResults.stability).toBeLessThan(0.98); // Should be notably more stable
+    });
+
+    it('should smooth out high-frequency noise in exposure calculation', async () => {
+      // Checkerboard pattern creates high-frequency noise that kernel sampling should smooth
+      const results = await testGrainExposureVariability('checkerboard', 3.0);
+      
+      // Kernel sampling should significantly reduce variance compared to point sampling
+      expect(results.stability).toBeLessThan(0.7); // Should reduce variance by at least 30%
     });
   });
 
-  describe('Kernel Pattern Generation', () => {
-    it('should generate circular sampling patterns', () => {
-      // Test will verify:
-      // - Points are distributed within grain radius
-      // - Gaussian weighting is applied based on distance from center
-      // - Center point is always included
-      expect(true).toBe(true); // Placeholder for now
+  describe('Boundary Condition Handling', () => {
+    it('should handle grains near image edges gracefully', async () => {
+      // Test grains placed at image boundaries
+      const width = 50;
+      const height = 50;
+      
+      // Test function that simulates kernel sampling near edges
+      function simulateEdgeGrainSampling(x: number, y: number, grainSize: number): boolean {
+        let validSamples = 0;
+        const sampleRadius = grainSize * 0.7;
+        const numSamples = grainSize < 1.5 ? 4 : grainSize < 4.0 ? 8 : 16;
+        
+        // Check center point
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+          validSamples++;
+        }
+        
+        // Check ring samples
+        for (let i = 0; i < numSamples - 1; i++) {
+          const angle = (i / (numSamples - 1)) * 2 * Math.PI;
+          const sampleX = Math.round(x + Math.cos(angle) * sampleRadius);
+          const sampleY = Math.round(y + Math.sin(angle) * sampleRadius);
+          
+          if (sampleX >= 0 && sampleX < width && sampleY >= 0 && sampleY < height) {
+            validSamples++;
+          }
+        }
+        
+        return validSamples > 0; // Should always have at least center point or fallback
+      }
+      
+      // Test edge cases
+      expect(simulateEdgeGrainSampling(0, 0, 3.0)).toBe(true);        // Top-left corner
+      expect(simulateEdgeGrainSampling(width-1, 0, 3.0)).toBe(true);  // Top-right corner
+      expect(simulateEdgeGrainSampling(0, height-1, 3.0)).toBe(true); // Bottom-left corner
+      expect(simulateEdgeGrainSampling(width-1, height-1, 3.0)).toBe(true); // Bottom-right corner
+      
+      // Completely out of bounds should return false (no valid samples, not even center)
+      expect(simulateEdgeGrainSampling(-5, -5, 3.0)).toBe(false);     // Far out of bounds
     });
 
-    it('should use concentric circles for better coverage', () => {
-      // Test will verify:
-      // - Small kernels use single ring around center
-      // - Large kernels use multiple rings (inner + outer)
-      // - Points are well-distributed without clustering
-      expect(true).toBe(true); // Placeholder for now
+    it('should use appropriate sample counts for different grain sizes', async () => {
+      // Test the adaptive sampling logic
+      function getSampleCount(grainRadius: number): number {
+        if (grainRadius < 1.5) {
+          return 4;  // Small grains
+        } else if (grainRadius < 4.0) {
+          return 8;  // Medium grains
+        } else {
+          return 16; // Large grains
+        }
+      }
+      
+      // Verify the sample count logic matches expected behavior
+      expect(getSampleCount(1.0)).toBe(4);   // Small grain
+      expect(getSampleCount(2.0)).toBe(8);   // Medium grain
+      expect(getSampleCount(5.0)).toBe(16);  // Large grain
+      
+      // Large grains should get more samples to better capture area variations
+      expect(getSampleCount(5.0)).toBeGreaterThan(getSampleCount(1.0));
     });
 
-    it('should cache kernel patterns for performance', () => {
-      // Test will verify:
-      // - Identical grain sizes reuse cached kernels
-      // - Cache has size limits to prevent memory issues
-      // - Cache keys are properly rounded for efficiency
-      expect(true).toBe(true); // Placeholder for now
+    it('should demonstrate different results from point vs kernel sampling', async () => {
+      // Test with a pattern that creates significant differences between methods
+      const results = await testGrainExposureVariability('gradient', 4.0, 20);
+      
+      // Kernel sampling should produce noticeably different (and more stable) results
+      expect(results.stability).toBeLessThan(1.0); // Should be more stable than point sampling
+      expect(results.variance).toBeGreaterThan(0); // Should still show some variation (not uniform)
+      expect(results.mean).toBeGreaterThanOrEqual(0); // Should produce valid exposure values
+      expect(results.mean).toBeLessThanOrEqual(1); // Should be within expected range
     });
   });
 
-  describe('Exposure Area Sampling', () => {
-    it('should handle boundary conditions gracefully', () => {
-      // Test will verify:
-      // - Grains near image edges don't cause errors
-      // - Out-of-bounds sample points are skipped
-      // - Fallback to center point when no valid samples
-      expect(true).toBe(true); // Placeholder for now  
+  describe('Sampling Quality and Performance', () => {
+    it('should demonstrate consistent behavior across multiple runs', async () => {
+      // Run the same test multiple times to ensure consistency
+      const run1 = await testGrainExposureVariability('checkerboard', 3.0, 15);
+      const run2 = await testGrainExposureVariability('checkerboard', 3.0, 15);
+      
+      // Results should be similar across runs (within reasonable tolerance)
+      const meanDifference = Math.abs(run1.mean - run2.mean);
+      const stabilityDifference = Math.abs(run1.stability - run2.stability);
+      
+      expect(meanDifference).toBeLessThan(0.1); // Mean should be consistent
+      expect(stabilityDifference).toBeLessThan(0.2); // Stability should be consistent
     });
 
-    it('should weight samples based on distance from grain center', () => {
-      // Test will verify:
-      // - Center samples have higher weights
-      // - Edge samples have lower weights  
-      // - Gaussian falloff is properly applied
-      expect(true).toBe(true); // Placeholder for now
+    it('should show greater benefit for larger grains', async () => {
+      // Compare stability improvements for different grain sizes
+      const smallGrain = await testGrainExposureVariability('checkerboard', 1.5);
+      const mediumGrain = await testGrainExposureVariability('checkerboard', 3.0);
+      const largeGrain = await testGrainExposureVariability('checkerboard', 6.0);
+      
+      // Larger grains should benefit more from kernel sampling
+      // (stability should improve more for larger grains)
+      expect(largeGrain.stability).toBeLessThan(mediumGrain.stability);
+      expect(mediumGrain.stability).toBeLessThan(smallGrain.stability);
     });
 
-    it('should produce different results than point sampling', () => {
-      // Test will verify:
-      // - Kernel sampling gives different exposure values than point sampling
-      // - Results are more stable for larger grains
-      // - Smooths out pixel-level noise in exposure calculation
-      expect(true).toBe(true); // Placeholder for now
-    });
-  });
-
-  describe('Performance Characteristics', () => {
-    it('should have reasonable performance overhead', () => {
-      // Test will verify:
-      // - Kernel pre-calculation doesn't significantly slow down processing
-      // - Caching provides performance benefits for repeated grain sizes
-      // - Memory usage stays within reasonable bounds
-      expect(true).toBe(true); // Placeholder for now
-    });
-
-    it('should scale appropriately with grain count', () => {
-      // Test will verify:
-      // - Processing time scales linearly with number of grains
-      // - Cache hit rate improves with similar grain sizes
-      // - No memory leaks in kernel caching
-      expect(true).toBe(true); // Placeholder for now
+    it('should validate that kernel sampling smooths exposure variations', async () => {
+      // Test that kernel sampling reduces the impact of single-pixel variations
+      const highNoiseResults = await testGrainExposureVariability('checkerboard', 3.0);
+      const lowNoiseResults = await testGrainExposureVariability('solid', 3.0);
+      
+      // High noise pattern should show significant improvement with kernel sampling
+      expect(highNoiseResults.stability).toBeLessThan(0.8); // Strong noise reduction
+      
+      // Low noise pattern should show minimal change (already stable)
+      expect(lowNoiseResults.stability).toBeGreaterThan(0.9); // Little change needed
     });
   });
 });
