@@ -279,6 +279,12 @@
   cursor: not-allowed;
 }
 
+.preset-select option {
+  background: #2a2a2a;
+  color: white;
+  padding: 0.5rem;
+}
+
 .advanced-controls {
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -344,6 +350,12 @@
   width: 100%;
   max-width: 200px;
   margin-top: 0.5rem;
+}
+
+.control-group select option {
+  background: #2a2a2a;
+  color: white;
+  padding: 0.5rem;
 }
 
 .processing-indicator {
