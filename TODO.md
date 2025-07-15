@@ -5,6 +5,7 @@
 What could be the issue?
   
 - [ ] The grain preset dropdown is completely white, you only see the text for the hovered item
+- [ ] grain-debug.html and grain-visualizer.html no longer show any fallback grains, only poisson grains, and they don't cover the entire area.
 
 ## Partially Implemented Features (Complete these for better photographic accuracy)
 
