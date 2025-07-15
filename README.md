@@ -1,3 +1,22 @@
+## 📋 Requirements
+
+### System Requirements
+- **Node.js**: Version 18.0.0 or higher
+- **npm**: Version 8.0.0 or higher (comes with Node.js)
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/jnises/grain.git
+cd grain
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
 ## 🧪 Testing
 
 This project uses Vitest for testing with separate configurations for unit tests and performance benchmarks.
