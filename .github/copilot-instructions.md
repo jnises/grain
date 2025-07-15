@@ -38,15 +38,6 @@ When creating temporary files, debug utilities, or development tools, please fol
 ### File Naming and Organization
 - Use kebab-case for filenames: `grain-generator.ts`, `test-utils.ts`
 - Use descriptive names that clearly indicate purpose
-- Group related functionality in the same file when appropriate
-- Web Workers: import and delegate to core classes
-- Test utilities: reuse main implementations from `/src/`
-
-### Import Organization
-- Import external dependencies first
-- Import internal modules second
-- Group imports by type (types vs implementations)
-- Use relative imports for local files
 
 ## Development Guidelines
 
