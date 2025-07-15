@@ -1,3 +1,29 @@
+# Grain - Physically Plausible Analog Film Grain Simulation
+
+A TypeScript/React application that simulates realistic analog film grain effects for digital images. This project implements sophisticated algorithms that model the actual structure and behavior of silver halide crystals in photographic emulsion, creating grain that appears authentic even when zoomed in.
+
+## 🎯 Features
+
+- **Physically Accurate Grain**: Models real film grain characteristics based on photographic principles
+- **Variable Grain Size**: Creates realistic grain with natural size variation across the image
+- **ISO-Responsive**: Grain size and density automatically adjust based on film speed settings
+- **Luminance-Dependent Response**: Grain visibility varies realistically across shadows, mid-tones, and highlights
+- **Color Channel Modeling**: Separate grain characteristics for RGB channels, matching real film behavior
+- **High Performance**: Optimized algorithms with Web Worker support for non-blocking processing
+- **Interactive Visualization**: Real-time grain preview and parameter adjustment
+
+## 🧬 Technical Approach
+
+This project goes beyond simple noise generation to create authentic film grain through:
+
+- **Poisson disk sampling** for blue noise grain distribution
+- **Multi-channel color response modeling** with channel-specific grain characteristics
+- **Organic grain shapes** using 2D Perlin noise for irregular boundaries
+- **Exposure-dependent grain density** following real photographic behavior
+- **Blue noise sampling** to avoid artificial regular patterns
+
+The algorithms are designed to be both scientifically accurate and computationally efficient.
+
 ## 📋 Requirements
 
 ### System Requirements
