@@ -808,6 +808,13 @@ export class GrainProcessor {
       }
     }
     
+    // Debug: Draw grain center points if requested
+    if (this.settings.debugGrainCenters) {
+      postMessage({ type: 'progress', progress: 95, stage: 'Drawing debug grain centers...' } as ProgressMessage);
+      console.log('Debug mode: Drawing grain center points');
+      this.drawGrainCenters(result, grainStructure);
+    }
+    
     postMessage({ type: 'progress', progress: 100, stage: 'Complete!' } as ProgressMessage);
     return result;
   }
@@ -932,6 +939,50 @@ export class GrainProcessor {
       green: 1,                             // Green remains centered (reference)
       blue: 1 - aberrationStrength * 0.3   // Blue slightly displaced inward
     };
+  }
+
+  /**
+   * Debug function to draw grain center points on the image
+   * Only available in development mode for debugging grain placement
+   */
+  private drawGrainCenters(imageData: ImageData, grainStructure: GrainPoint[]): void {
+    console.log(`Drawing grain centers for ${grainStructure.length} grains`);
+    
+    for (const grain of grainStructure) {
+      const centerX = Math.round(grain.x);
+      const centerY = Math.round(grain.y);
+      
+      // Draw a small cross at the grain center
+      // Use bright magenta color that's unlikely to be in the original image
+      const crossSize = Math.max(1, Math.floor(grain.size * 0.3)); // Scale cross size with grain size
+      const color = { r: 255, g: 0, b: 255 }; // Bright magenta
+      
+      // Draw horizontal line
+      for (let dx = -crossSize; dx <= crossSize; dx++) {
+        const x = centerX + dx;
+        if (x >= 0 && x < this.width && centerY >= 0 && centerY < this.height) {
+          const pixelIndex = (centerY * this.width + x) * 4;
+          imageData.data[pixelIndex] = color.r;
+          imageData.data[pixelIndex + 1] = color.g;
+          imageData.data[pixelIndex + 2] = color.b;
+          // Keep alpha unchanged
+        }
+      }
+      
+      // Draw vertical line
+      for (let dy = -crossSize; dy <= crossSize; dy++) {
+        const y = centerY + dy;
+        if (centerX >= 0 && centerX < this.width && y >= 0 && y < this.height) {
+          const pixelIndex = (y * this.width + centerX) * 4;
+          imageData.data[pixelIndex] = color.r;
+          imageData.data[pixelIndex + 1] = color.g;
+          imageData.data[pixelIndex + 2] = color.b;
+          // Keep alpha unchanged
+        }
+      }
+    }
+    
+    console.log(`Debug: Drew ${grainStructure.length} grain center markers`);
   }
 }
 

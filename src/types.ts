@@ -10,6 +10,7 @@ export interface GrainSettings {
   filmType: 'kodak' | 'fuji' | 'ilford';
   grainIntensity: number;
   upscaleFactor: number;
+  debugGrainCenters?: boolean; // Optional debug option to draw grain center points
 }
 
 export interface GrainProcessingResult {

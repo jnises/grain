@@ -131,7 +131,7 @@ function App() {
     setCustomSettings(FILM_PRESETS[presetKey])
   }
 
-  const handleCustomSettingChange = (key: keyof GrainSettings, value: string | number) => {
+  const handleCustomSettingChange = (key: keyof GrainSettings, value: string | number | boolean) => {
     setCustomSettings(prev => ({
       ...prev,
       [key]: value
@@ -448,6 +448,19 @@ function App() {
               </select>
             </label>
           </div>
+          {import.meta.env.DEV && (
+            <div className="control-group">
+              <label>
+                <input 
+                  type="checkbox" 
+                  checked={customSettings.debugGrainCenters || false}
+                  onChange={(e) => handleCustomSettingChange('debugGrainCenters', e.target.checked)}
+                  disabled={isProcessing}
+                />
+                🎯 Debug: Show grain center points
+              </label>
+            </div>
+          )}
         </div>
       )}
 
