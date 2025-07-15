@@ -10,7 +10,8 @@ import type {
   GrainDensity,
   ProcessMessage,
   ProgressMessage,
-  ResultMessage
+  ResultMessage,
+  ErrorMessage
 } from './types';
 import { 
   assertPositiveInteger, 
@@ -21,11 +22,11 @@ import {
 } from './utils';
 
 // Helper function to handle postMessage in both browser and Node.js environments
-function safePostMessage(message: any): void {
+function safePostMessage(message: ProgressMessage | ResultMessage | ErrorMessage): void {
   if (typeof postMessage !== 'undefined' && typeof postMessage === 'function') {
     try {
       postMessage(message);
-    } catch (error) {
+    } catch {
       // Silently ignore postMessage errors in test environment
       console.debug('PostMessage skipped in test environment:', message);
     }
