@@ -24,7 +24,7 @@ import {
 function safePostMessage(message: any): void {
   if (typeof postMessage !== 'undefined' && typeof postMessage === 'function') {
     try {
-      safePostMessage(message);
+      postMessage(message);
     } catch (error) {
       // Silently ignore postMessage errors in test environment
       console.debug('PostMessage skipped in test environment:', message);
