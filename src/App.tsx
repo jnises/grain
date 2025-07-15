@@ -214,7 +214,8 @@ function App() {
       canvas.height = imageData.height
       ctx.putImageData(imageData, 0, 0)
       
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      // Use PNG format to avoid compression artifacts (lossless)
+      const dataUrl = canvas.toDataURL('image/png');
       
       // Validate result with custom assertion
       assert(
@@ -279,7 +280,7 @@ function App() {
     if (imageToDownload) {
       const link = document.createElement('a')
       link.href = imageToDownload
-      link.download = processedImage ? 'grain-processed-image.jpg' : 'original-image.jpg'
+      link.download = processedImage ? 'grain-processed-image.png' : 'original-image'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

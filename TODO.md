@@ -1,6 +1,6 @@
 - [x] Change the title of the page to be the name of the project.
 - [x] Replace the vite favicon with a custom one for this project.
-- [ ] When looking a the image with grains added in the gui I can see jpeg artifacts, even though the source image was a png. Why is that?
+- [x] When looking a the image with grains added in the gui I can see jpeg artifacts, even though the source image was a png. Why is that? **Fixed**: The `imageDataToDataUrl()` function was forcing JPEG conversion with `canvas.toDataURL('image/jpeg', 0.9)`, which introduced compression artifacts regardless of the original image format. Changed to use PNG format (`canvas.toDataURL('image/png')`) for lossless output and updated the download filename to use `.png` extension.
 - [ ] When adding grain in the gui I don't see any actual grains in the resulting image even if I set the grain intensity to max and set the iso to a high value. What could be the issue?
 
 ## Partially Implemented Features (Complete these for better photographic accuracy)
