@@ -94,7 +94,7 @@ This section captures user preferences and project-specific patterns that should
 - (Record architectural patterns and decisions made during development)
 
 ## User Workflow Preferences
-- (Track how the user prefers to work, debug, test, etc.)
+(Track how the user prefers to work, debug, test, etc.)
 - Before running `npm run dev` make sure it isn't already running.
 
 ## Project-Specific Patterns
