@@ -321,6 +321,34 @@
                 this.grainGenerator = new GrainGenerator(width, height, settings);
             }
             
+            // Analyze area coverage by checking how well grains cover the image
+            analyzeCoverage(points, minDistance) {
+                const gridSize = minDistance / 2; // Smaller grid for finer analysis
+                const cols = Math.ceil(this.width / gridSize);
+                const rows = Math.ceil(this.height / gridSize);
+                let coveredCells = 0;
+                
+                // Check each grid cell to see if it's covered by a grain
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        const cellX = (col + 0.5) * gridSize;
+                        const cellY = (row + 0.5) * gridSize;
+                        
+                        // Check if any grain covers this cell
+                        for (const point of points) {
+                            const distance = Math.sqrt((cellX - point.x) ** 2 + (cellY - point.y) ** 2);
+                            if (distance <= minDistance) {
+                                coveredCells++;
+                                break; // Found coverage, move to next cell
+                            }
+                        }
+                    }
+                }
+                
+                const totalCells = rows * cols;
+                return coveredCells / totalCells;
+            }
+            
             generateRawGrains() {
                 const params = this.grainGenerator.calculateGrainParameters();
                 
@@ -336,8 +364,12 @@
                 let fallbackPoints = [];
                 let finalPoints = poissonPoints;
                 
-                if (poissonPoints.length < params.grainDensity * 0.5) {
-                    console.log(`Using fallback: ${poissonPoints.length} < ${params.grainDensity * 0.5}`);
+                // Analyze coverage to determine if we need fallback grains
+                const coverage = this.analyzeCoverage(poissonPoints, params.minDistance);
+                const shouldUseFallback = poissonPoints.length < params.grainDensity * 0.85 || coverage < 0.75;
+                
+                if (shouldUseFallback) {
+                    console.log(`Using fallback: points=${poissonPoints.length}/${params.grainDensity} (${(poissonPoints.length/params.grainDensity*100).toFixed(1)}%), coverage=${(coverage*100).toFixed(1)}%`);
                     finalPoints = this.grainGenerator.generateFallbackGrains(poissonPoints, params.grainDensity, params.minDistance);
                     fallbackPoints = finalPoints.slice(poissonPoints.length);
                 }

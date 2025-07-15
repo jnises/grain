@@ -176,12 +176,26 @@ export class GrainGenerator {
       grid[gridCoords.x][gridCoords.y] = point;
     };
     
-    // Start with a single well-positioned initial point
-    const initialPoint = {
-      x: this.width * (0.4 + this.rng.random() * 0.2), // More centered: 0.4 to 0.6 range
-      y: this.height * (0.4 + this.rng.random() * 0.2)
-    };
-    addPoint(initialPoint);
+    // Start with multiple well-distributed initial points for better coverage
+    const initialPoints = [
+      {
+        x: this.width * (0.2 + this.rng.random() * 0.6), // Full width range: 0.2 to 0.8
+        y: this.height * (0.2 + this.rng.random() * 0.6)
+      },
+      {
+        x: this.width * (0.1 + this.rng.random() * 0.3), // Left side
+        y: this.height * (0.1 + this.rng.random() * 0.8)
+      },
+      {
+        x: this.width * (0.6 + this.rng.random() * 0.3), // Right side  
+        y: this.height * (0.1 + this.rng.random() * 0.8)
+      }
+    ];
+    
+    // Add all initial points
+    for (const point of initialPoints) {
+      addPoint(point);
+    }
     
     // Track generation progress for early termination
     let generationRounds = 0;
@@ -428,7 +442,7 @@ export class GrainGenerator {
   // Generate complete grain structure with varying sizes
   public generateGrainStructure(): GrainPoint[] {
     // Grain analysis and variation constants
-    const GRAIN_DENSITY_THRESHOLD = 0.5;
+    const GRAIN_DENSITY_THRESHOLD = 0.85; // Increased from 0.5 to ensure better coverage
     
     const params = this.calculateGrainParameters();
     
