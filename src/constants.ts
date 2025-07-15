@@ -25,6 +25,14 @@ export const FILM_CHARACTERISTICS = {
       red: 0.02,    // Slight warm shift in grain
       green: 0.00,  // Neutral green
       blue: -0.01   // Slight cool reduction
+    },
+    // Film characteristic curve parameters (photographic S-curve)
+    filmCurve: {
+      gamma: 2.2,           // Overall contrast curve
+      toe: 0.05,            // Shadow compression point
+      shoulder: 0.95,       // Highlight compression point
+      toeStrength: 0.7,     // Shadow compression strength
+      shoulderStrength: 0.8 // Highlight compression strength
     }
   },
   fuji: {
@@ -42,6 +50,14 @@ export const FILM_CHARACTERISTICS = {
       red: -0.01,   // Slight cool shift
       green: 0.03,  // Enhanced green luminosity
       blue: 0.01    // Slight blue enhancement
+    },
+    // Film characteristic curve parameters (softer, lower contrast)
+    filmCurve: {
+      gamma: 1.8,           // Lower contrast than Kodak
+      toe: 0.08,            // Slightly higher shadow point
+      shoulder: 0.92,       // Earlier highlight rolloff
+      toeStrength: 0.6,     // Gentler shadow compression
+      shoulderStrength: 0.9 // Stronger highlight protection
     }
   },
   ilford: {
@@ -59,6 +75,14 @@ export const FILM_CHARACTERISTICS = {
       red: 0.00,    // Neutral red
       green: 0.01,  // Slight green enhancement
       blue: 0.02    // Enhanced blue contrast
+    },
+    // Film characteristic curve parameters (high contrast, B&W heritage)
+    filmCurve: {
+      gamma: 2.6,           // Higher contrast than others
+      toe: 0.03,            // Lower shadow point (deeper blacks)
+      shoulder: 0.97,       // Later highlight rolloff
+      toeStrength: 0.8,     // Strong shadow contrast
+      shoulderStrength: 0.7 // Moderate highlight protection
     }
   }
 } as const;

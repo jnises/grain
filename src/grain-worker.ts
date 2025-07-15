@@ -237,14 +237,42 @@ class GrainProcessor {
     return labResult;
   }
 
-  // Film characteristic curve (S-curve)
+  // Enhanced film characteristic curve (photographic S-curve)
+  // Implements proper photographic response with toe and shoulder compression
   private filmCurve(input: number): number {
-    // Film curve constants
-    const FILM_CURVE_CONTRAST = 1.2;
-    const FILM_CURVE_MIDPOINT = 0.5;
+    // Validate input
+    assertInRange(input, 0, 1, 'input');
     
-    // Sigmoid-based film response curve
-    return 1 / (1 + Math.exp(-FILM_CURVE_CONTRAST * (input - FILM_CURVE_MIDPOINT)));
+    // Get film-specific curve parameters
+    const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];
+    const curve = filmCharacteristics.filmCurve;
+    
+    // Apply photographic S-curve with toe and shoulder compression
+    // This replaces the basic sigmoid with realistic film characteristic curve
+    
+    // Ensure input is in valid range
+    const x = Math.max(0, Math.min(1, input));
+    
+    // Apply gamma curve as base
+    let output = Math.pow(x, 1.0 / curve.gamma);
+    
+    // Apply toe compression (shadow detail preservation)
+    if (x < curve.toe) {
+      const toeRatio = x / curve.toe;
+      const compressedToe = Math.pow(toeRatio, curve.toeStrength);
+      output = compressedToe * curve.toe;
+    }
+    
+    // Apply shoulder compression (highlight detail preservation)
+    if (x > curve.shoulder) {
+      const shoulderRange = 1.0 - curve.shoulder;
+      const shoulderRatio = (x - curve.shoulder) / shoulderRange;
+      const compressedShoulder = 1.0 - Math.pow(1.0 - shoulderRatio, curve.shoulderStrength);
+      output = curve.shoulder + compressedShoulder * shoulderRange;
+    }
+    
+    // Ensure output stays in valid range
+    return Math.max(0, Math.min(1, output));
   }
 
   // Convert RGB to photographic exposure using logarithmic scaling
@@ -567,10 +595,14 @@ class GrainProcessor {
     // Convert grain strength to optical density
     const baseDensity = grainStrength * grain.sensitivity * layerMultiplier;
     
-    // Apply film characteristic curve for density response
-    const densityResponse = this.filmCurve(baseDensity);
+    // Normalize density to [0, 1] range for film curve
+    // Maximum reasonable density is around 3.0 (very dense grain)
+    const normalizedDensity = Math.min(baseDensity / 3.0, 1.0);
     
-    // Scale by grain intensity setting
+    // Apply film characteristic curve for density response
+    const densityResponse = this.filmCurve(normalizedDensity);
+    
+    // Scale by grain intensity setting and restore density range
     return densityResponse * this.settings.grainIntensity * 0.8; // Increased multiplier for density model
   }
 
