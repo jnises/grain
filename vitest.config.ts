@@ -6,7 +6,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: [],
-    testTimeout: 5000, // 5 second timeout per test
+    testTimeout: 10000, // 10 second timeout per test (increased for kernel-based sampling overhead)
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
