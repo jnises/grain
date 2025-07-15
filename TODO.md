@@ -1,6 +1,7 @@
 - [x] run linting and fix any issues
 - [x] should the lint and type-check package.json scripts be separate? could they be combined? is there a reason to run them separately?
 - [x] add debugging option in dev mode that draws a point at the center of each grain on the generated image
+- [ ] fix the eslint warning
 - [ ] Explain the GrainProcessor.processImage algorithm
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
