@@ -749,8 +749,8 @@ class GrainProcessor {
           
           let finalColor: [number, number, number];
           
-          // Use density-based compositing (physically accurate)
-          finalColor = this.applySimpleDensityCompositing([r, g, b], totalGrainDensity);
+          // Use Beer-Lambert law compositing for physically accurate results
+          finalColor = this.applyBeerLambertCompositing([r, g, b], totalGrainDensity);
           
           result.data[pixelIndex] = finalColor[0];
           result.data[pixelIndex + 1] = finalColor[1];
@@ -902,15 +902,16 @@ class GrainProcessor {
     return densityResponse * this.settings.grainIntensity * 0.8; // Increased multiplier for density model
   }
 
-  // Apply simplified multiplicative compositing
-  private applySimpleDensityCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
+  // Apply Beer-Lambert law compositing for physically accurate results
+  private applyBeerLambertCompositing(originalColor: [number, number, number], grainDensity: GrainDensity): [number, number, number] {
     const [r, g, b] = originalColor;
     
-    // Simplified model: final = original * (1 - density)
+    // Beer-Lambert law: final = original * exp(-density)
+    // This properly simulates how light passes through film grain
     return [
-      r * (1 - Math.min(0.8, grainDensity.r)), // Clamp density to prevent full black
-      g * (1 - Math.min(0.8, grainDensity.g)),
-      b * (1 - Math.min(0.8, grainDensity.b))
+      r * Math.exp(-grainDensity.r),
+      g * Math.exp(-grainDensity.g),
+      b * Math.exp(-grainDensity.b)
     ];
   }
 
