@@ -105,7 +105,6 @@ export class GrainProcessor {
   private grainGenerator: GrainGenerator;
   private performanceTracker: PerformanceTracker;
   private kernelCache: Map<string, SamplingKernel> = new Map();
-  private grainExposureCache: Map<GrainPoint, number> = new Map();
 
   constructor(width: number, height: number, settings: GrainSettings) {
     // Validate input parameters with custom assertions that provide type narrowing
@@ -385,29 +384,22 @@ export class GrainProcessor {
   }
 
   /**
-   * Pre-calculates average exposure for all grains using kernel-based sampling
+   * Calculates average exposure for all grains using kernel-based sampling
    * This replaces point sampling with area-based exposure calculation
+   * Returns a Map for better functional design and testability
    */
-  private precalculateGrainExposures(grains: GrainPoint[], imageData: Uint8ClampedArray): void {
-    console.log(`Pre-calculating kernel-based exposures for ${grains.length} grains...`);
+  private calculateGrainExposures(grains: GrainPoint[], imageData: Uint8ClampedArray): Map<GrainPoint, number> {
+    console.log(`Calculating kernel-based exposures for ${grains.length} grains...`);
     
-    // Clear any existing cache
-    this.grainExposureCache.clear();
+    const exposureMap = new Map<GrainPoint, number>();
     
     for (const grain of grains) {
       const averageExposure = this.sampleGrainAreaExposure(imageData, grain.x, grain.y, grain.size, grain.shape);
-      this.grainExposureCache.set(grain, averageExposure);
+      exposureMap.set(grain, averageExposure);
     }
     
-    console.log(`Completed kernel-based exposure pre-calculation for ${this.grainExposureCache.size} grains`);
-  }
-
-  /**
-   * Gets the pre-calculated average exposure for a grain, with fallback to point sampling
-   */
-  private getGrainExposure(grain: GrainPoint, fallbackExposure: number): number {
-    const cachedExposure = this.grainExposureCache.get(grain);
-    return cachedExposure !== undefined ? cachedExposure : fallbackExposure;
+    console.log(`Completed kernel-based exposure calculation for ${exposureMap.size} grains`);
+    return exposureMap;
   }
 
   // 2D Perlin noise implementation
@@ -636,10 +628,10 @@ export class GrainProcessor {
     const grainGrid = this.createGrainGrid(grainStructure);
     this.performanceTracker.endBenchmark('Spatial Grid Creation');
     
-    // Step 3: Pre-calculate grain exposures using kernel-based sampling
+    // Step 3: Calculate grain exposures using kernel-based sampling
     postMessage({ type: 'progress', progress: 25, stage: 'Calculating kernel-based grain exposures...' } as ProgressMessage);
     this.performanceTracker.startBenchmark('Kernel Exposure Calculation');
-    this.precalculateGrainExposures(grainStructure, data);
+    const grainExposureMap = this.calculateGrainExposures(grainStructure, data);
     this.performanceTracker.endBenchmark('Kernel Exposure Calculation');
     
     // Determine grid size for spatial lookup
@@ -670,10 +662,6 @@ export class GrainProcessor {
         const g = data[pixelIndex + 1];
         const b = data[pixelIndex + 2];
         const a = data[pixelIndex + 3];
-        
-        // Convert RGB to photographic exposure using logarithmic scaling
-        // This replaces the linear LAB luminance with proper exposure simulation
-        const exposure = this.rgbToExposure(r, g, b);
         
         // Initialize grain density
         let totalGrainDensity: GrainDensity = { r: 0, g: 0, b: 0 };
@@ -708,8 +696,18 @@ export class GrainProcessor {
           if (distance < grain.size * 2) {
             const weight = Math.exp(-distance / grain.size);
             
-            // Use kernel-based grain exposure instead of point sampling
-            const grainExposure = this.getGrainExposure(grain, exposure);
+            // Use kernel-based grain exposure - should always exist after calculation
+            const grainExposure = grainExposureMap.get(grain);
+            assert(
+              grainExposure !== undefined,
+              'Grain exposure not found in calculated map - this indicates a logic error',
+              { 
+                grain: { x: grain.x, y: grain.y, size: grain.size },
+                mapSize: grainExposureMap.size,
+                grainStructureLength: grainStructure.length
+              }
+            );
+            
             const grainStrength = this.calculateGrainStrength(grainExposure, grain, x, y);
             const grainDensity = this.calculateGrainDensity(grainStrength, grain, 1.0); // No layer multiplier
             
