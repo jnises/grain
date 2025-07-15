@@ -33,6 +33,13 @@ export const FILM_CHARACTERISTICS = {
       shoulder: 0.95,       // Highlight compression point
       toeStrength: 0.7,     // Shadow compression strength
       shoulderStrength: 0.8 // Highlight compression strength
+    },
+    // Development threshold characteristics for grain activation
+    developmentThreshold: {
+      baseSensitivity: 0.75,  // Base development threshold for Kodak (more sensitive)
+      sizeModifier: 0.12,     // Moderate grain size effect
+      exposureWeight: 0.35,   // Moderate exposure dependency
+      randomVariation: 0.20   // Lower random variation for consistency
     }
   },
   fuji: {
@@ -58,6 +65,13 @@ export const FILM_CHARACTERISTICS = {
       shoulder: 0.92,       // Earlier highlight rolloff
       toeStrength: 0.6,     // Gentler shadow compression
       shoulderStrength: 0.9 // Stronger highlight protection
+    },
+    // Development threshold characteristics for grain activation
+    developmentThreshold: {
+      baseSensitivity: 0.80,  // Base development threshold for Fuji (medium sensitivity)
+      sizeModifier: 0.10,     // Lower grain size effect (smoother response)
+      exposureWeight: 0.30,   // Lower exposure dependency for gentler response
+      randomVariation: 0.18   // Lower variation for smoother grain
     }
   },
   ilford: {
@@ -83,6 +97,13 @@ export const FILM_CHARACTERISTICS = {
       shoulder: 0.97,       // Later highlight rolloff
       toeStrength: 0.8,     // Strong shadow contrast
       shoulderStrength: 0.7 // Moderate highlight protection
+    },
+    // Development threshold characteristics for grain activation
+    developmentThreshold: {
+      baseSensitivity: 0.85,  // Base development threshold for Ilford
+      sizeModifier: 0.15,     // How much grain size affects threshold (larger = more sensitive)
+      exposureWeight: 0.4,    // How much local exposure affects threshold
+      randomVariation: 0.25   // Random threshold variation range
     }
   }
 } as const;

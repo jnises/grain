@@ -2,7 +2,7 @@
 // This file contains the grain generation algorithms without Web Worker dependencies
 
 import type { GrainSettings, Point2D, GrainPoint, RandomNumberGenerator } from './types';
-import { SEEDED_RANDOM_MULTIPLIER } from './constants';
+import { SEEDED_RANDOM_MULTIPLIER, FILM_CHARACTERISTICS } from './constants';
 import { 
   assertPositiveInteger, 
   assertObject, 
@@ -60,6 +60,7 @@ const GRAIN_SIZE_DISTRIBUTION_BIAS = 0.6; // Bias towards smaller grains (0.5 = 
 // Grain variation seed multipliers (shared across methods)
 const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
 const SHAPE_VARIATION_SEED_MULTIPLIER = 345.678;
+const DEVELOPMENT_THRESHOLD_SEED_MULTIPLIER = 234.567;
 
 export class GrainGenerator {
   private width: number;
@@ -459,13 +460,15 @@ export class GrainGenerator {
         const shapeVariation = this.seededRandom(index * SHAPE_VARIATION_SEED_MULTIPLIER);
         
         const grainSize = this.generateVariableGrainSize(params.baseGrainSize, index);
+        const developmentThreshold = this.calculateDevelopmentThreshold(grainSize, index);
         
         return {
           x: point.x,
           y: point.y,
           size: grainSize,
           sensitivity: 0.8 + sensitivityVariation * 0.4,
-          shape: shapeVariation
+          shape: shapeVariation,
+          developmentThreshold
         };
       });
     }
@@ -619,13 +622,15 @@ export class GrainGenerator {
       if (this.isValidGrainPosition(x, y, minDistance, grains)) {
         const sensitivityVariation = this.seededRandom(attempts * SENSITIVITY_VARIATION_SEED_MULTIPLIER);
         const shapeVariation = this.seededRandom(attempts * SHAPE_VARIATION_SEED_MULTIPLIER);
+        const developmentThreshold = this.calculateDevelopmentThreshold(grainSize, attempts);
         
         grains.push({
           x,
           y,
           size: grainSize,
           sensitivity: 0.8 + sensitivityVariation * 0.4,
-          shape: shapeVariation
+          shape: shapeVariation,
+          developmentThreshold
         });
         
         consecutiveFailures = 0; // Reset failure counter on success
@@ -698,5 +703,33 @@ export class GrainGenerator {
     }
     
     return true;
+  }
+
+  /**
+   * Calculate per-grain development threshold based on grain properties and film characteristics
+   * This implements the proper development threshold system from the algorithm design
+   */
+  private calculateDevelopmentThreshold(grainSize: number, seedIndex: number): number {
+    const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];
+    const thresholdConfig = filmCharacteristics.developmentThreshold;
+    
+    // Base sensitivity from film type characteristics
+    let threshold = thresholdConfig.baseSensitivity;
+    
+    // Grain size effect: larger grains are more sensitive (lower threshold)
+    // Normalize grain size relative to base grain size for this ISO
+    const baseGrainSize = Math.max(MIN_GRAIN_SIZE, this.settings.iso / ISO_TO_GRAIN_SIZE_DIVISOR);
+    const normalizedSize = grainSize / baseGrainSize;
+    const sizeEffect = (normalizedSize - 1.0) * thresholdConfig.sizeModifier;
+    threshold -= sizeEffect; // Larger grains = lower threshold = more sensitive
+    
+    // Random variation per grain using seeded random
+    const randomVariation = this.seededRandom(seedIndex * DEVELOPMENT_THRESHOLD_SEED_MULTIPLIER);
+    const variationRange = thresholdConfig.randomVariation;
+    const randomOffset = (randomVariation - 0.5) * variationRange; // Range: [-variation/2, +variation/2]
+    threshold += randomOffset;
+    
+    // Ensure threshold stays in reasonable bounds [0.1, 1.5]
+    return Math.max(0.1, Math.min(1.5, threshold));
   }
 }

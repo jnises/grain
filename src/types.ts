@@ -70,6 +70,7 @@ export interface GrainPoint {
   size: number;
   sensitivity: number;
   shape: number;
+  developmentThreshold: number; // Per-grain development threshold for activation
 }
 
 export interface GrainDensity {

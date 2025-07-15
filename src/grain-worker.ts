@@ -807,83 +807,63 @@ export class GrainProcessor {
     return result;
   }
 
-  // Calculate grain strength based on exposure and grain properties
+  // Calculate grain strength based on development threshold system
+  // This implements the proper development threshold algorithm from the design
   private calculateGrainStrength(exposure: number, grain: GrainPoint, x: number, y: number): number {
-    // Noise texture generation constants
+    // Implementation of development threshold system as designed
+    // Formula: grain_activation = (local_exposure + random_sensitivity) > development_threshold
+    
+    // Calculate random sensitivity variation for this grain
+    // Use position-based randomness for consistent grain behavior
+    const randomSeed = (grain.x * 12345 + grain.y * 67890) % 1000000;
+    const randomSensitivity = (randomSeed / 1000000) * 0.3 - 0.15; // Range: [-0.15, +0.15]
+    
+    // Calculate activation strength
+    const activationStrength = exposure + randomSensitivity;
+    
+    // Check if grain is activated (above development threshold)
+    if (activationStrength <= grain.developmentThreshold) {
+      return 0; // Grain not developed - no visible effect
+    }
+    
+    // Calculate how much above threshold the grain is
+    const thresholdExcess = activationStrength - grain.developmentThreshold;
+    
+    // Apply sigmoid function for smooth grain density response
+    // sigmoid_function(activation_strength - threshold)
+    const sigmoidSteepness = 8.0; // Controls how sharp the activation transition is
+    const normalizedExcess = thresholdExcess * sigmoidSteepness;
+    const sigmoidResponse = 1.0 / (1.0 + Math.exp(-normalizedExcess));
+    
+    // Base grain density from sigmoid response
+    let grainDensity = sigmoidResponse;
+    
+    // Apply grain sensitivity for individual grain variation
+    grainDensity *= grain.sensitivity;
+    
+    // Add noise for grain texture with multiple octaves (reduced impact)
     const NOISE_SCALE_FINE = 0.15;
     const NOISE_SCALE_MEDIUM = 0.08;
     const NOISE_SCALE_COARSE = 0.03;
-    const NOISE_WEIGHT_FINE = 0.6;
-    const NOISE_WEIGHT_MEDIUM = 0.3;
-    const NOISE_WEIGHT_COARSE = 0.1;
-
-    // Enhanced exposure-dependent grain response based on photographic principles
-    const exposureResponse = this.calculateExposureBasedGrainStrength(exposure);
+    const NOISE_WEIGHT_FINE = 0.3; // Reduced from 0.6
+    const NOISE_WEIGHT_MEDIUM = 0.2; // Reduced from 0.3
+    const NOISE_WEIGHT_COARSE = 0.1; // Same
     
-    // Add noise for grain texture with multiple octaves
     const noiseValue = this.noise(x * NOISE_SCALE_FINE, y * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
                       this.noise(x * NOISE_SCALE_MEDIUM, y * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
                       this.noise(x * NOISE_SCALE_COARSE, y * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
     
-    // Film characteristic curve
-    const filmResponse = this.filmCurve(exposure);
-    
-    // Combine all factors
-    const baseStrength = grain.sensitivity * exposureResponse * filmResponse;
-    const finalStrength = baseStrength * (0.3 + Math.abs(noiseValue) * 0.7);
+    // Apply noise modulation (reduced impact to let development threshold dominate)
+    grainDensity *= (0.7 + Math.abs(noiseValue) * 0.3);
     
     // Apply grain shape variation
-    const shapeModifier = 0.7 + grain.shape * 0.6;
+    const shapeModifier = 0.8 + grain.shape * 0.4;
+    grainDensity *= shapeModifier;
     
-    return finalStrength * shapeModifier * 1.0; // Increased multiplier for better visibility
-  }
-
-  // Enhanced exposure-dependent grain response following photographic principles
-  private calculateExposureBasedGrainStrength(exposure: number): number {
-    // Define key exposure zones for film-like grain response
-    const SHADOW_THRESHOLD = 0.2;    // Below this: deep shadows
-    const MIDTONE_START = 0.25;      // Start of mid-tone emphasis
-    const MIDTONE_PEAK = 0.5;        // Peak grain visibility
-    const MIDTONE_END = 0.75;        // End of strong mid-tone response
-    const HIGHLIGHT_THRESHOLD = 0.85; // Above this: highlight saturation reduction
+    // Apply film characteristic curve for density response
+    const filmResponse = this.filmCurve(grainDensity);
     
-    // Strength multipliers for different zones
-    const SHADOW_STRENGTH = 1.4;     // Strong grain in shadows
-    const MIDTONE_STRENGTH = 1.8;    // Maximum grain in mid-tones
-    const HIGHLIGHT_STRENGTH = 0.4;  // Reduced grain in highlights
-    const BLOWN_HIGHLIGHT_STRENGTH = 0.1; // Minimal grain in blown highlights
-    
-    if (exposure <= SHADOW_THRESHOLD) {
-      // Deep shadows: strong grain with slight variation
-      const shadowFactor = exposure / SHADOW_THRESHOLD;
-      return SHADOW_STRENGTH * (0.8 + shadowFactor * 0.2);
-    } else if (exposure <= MIDTONE_START) {
-      // Shadow to mid-tone transition: increasing grain strength
-      const transitionFactor = (exposure - SHADOW_THRESHOLD) / (MIDTONE_START - SHADOW_THRESHOLD);
-      return SHADOW_STRENGTH + (MIDTONE_STRENGTH - SHADOW_STRENGTH) * transitionFactor;
-    } else if (exposure <= MIDTONE_PEAK) {
-      // Rising mid-tones: approach peak grain visibility
-      const midtoneFactor = (exposure - MIDTONE_START) / (MIDTONE_PEAK - MIDTONE_START);
-      // Use a slight curve to make the peak more pronounced
-      const curvedFactor = Math.sin(midtoneFactor * Math.PI * 0.5);
-      return SHADOW_STRENGTH + (MIDTONE_STRENGTH - SHADOW_STRENGTH) * curvedFactor;
-    } else if (exposure <= MIDTONE_END) {
-      // Peak mid-tones: maximum grain visibility with slight variation
-      const peakVariation = Math.sin((exposure - MIDTONE_PEAK) / (MIDTONE_END - MIDTONE_PEAK) * Math.PI);
-      return MIDTONE_STRENGTH * (0.95 + peakVariation * 0.05);
-    } else if (exposure <= HIGHLIGHT_THRESHOLD) {
-      // Mid-tone to highlight transition: decreasing grain strength
-      const transitionFactor = (exposure - MIDTONE_END) / (HIGHLIGHT_THRESHOLD - MIDTONE_END);
-      // Use exponential decay for more realistic highlight rolloff
-      const decayFactor = (1 - transitionFactor) ** 2;
-      return MIDTONE_STRENGTH * decayFactor + HIGHLIGHT_STRENGTH * (1 - decayFactor);
-    } else {
-      // Highlights: strong saturation reduction (grain becomes less visible)
-      const highlightFactor = (exposure - HIGHLIGHT_THRESHOLD) / (1.0 - HIGHLIGHT_THRESHOLD);
-      // Exponential saturation reduction in highlights
-      const saturationReduction = (1 - highlightFactor) ** 3;
-      return HIGHLIGHT_STRENGTH * saturationReduction + BLOWN_HIGHLIGHT_STRENGTH * (1 - saturationReduction);
-    }
+    return filmResponse * 1.2; // Slight multiplier for visibility
   }
 
   // Calculate grain density for density-based compositing
