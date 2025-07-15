@@ -26,9 +26,11 @@
   
 - [ ] Why does applyBeerLambertCompositing take originalColor as a parameter? Shouldn't the final color only depend on the grains? The original color should have been used to calculate the grain responses, but after that why are they used?
 - [ ] Update the dev mode grain center drawing feature to indicate the size of each grain using the color of the dot drawn.
-- [ ] Go through the code and look for methods that should be static
+- [ ] Go through the code and look for methods that should be static.
+- [ ] Look for static methods that should really be free functions.
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
+- [ ] Try to clean up processImage and related code a bit. It has been refactored a bunch and there seems to be a bunch of unnecessary remnants of old things.
 - [ ] When checking surrounding cells in processImage, are we sure a 3x3 neighborhood is large enough to fit the largest size grains?
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
