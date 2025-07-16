@@ -73,7 +73,8 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
 
   describe('Visual Effects (Position Dependent)', () => {
     it('should process different image areas differently', async () => {
-      // Create image with varying brightness
+      // Create processor and image with matching dimensions
+      const testProcessor = new GrainProcessor(20, 20, grainSettings);
       const imageData = createMockImageData(20, 20, 128);
       
       // Make one quadrant brighter
@@ -86,7 +87,7 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
         }
       }
       
-      const result = await processor.processImage(imageData);
+      const result = await testProcessor.processImage(imageData);
       
       // Verify the result has been processed
       expect(result).toBeDefined();
@@ -178,9 +179,10 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
     });
 
     it('should handle edge cases gracefully', async () => {
-      // Test with very small image
+      // Test with very small image - create a processor matching the image size
+      const tinyProcessor = new GrainProcessor(1, 1, grainSettings);
       const tinyImage = createMockImageData(1, 1, 128);
-      const result = await processor.processImage(tinyImage);
+      const result = await tinyProcessor.processImage(tinyImage);
       
       expect(result.width).toBe(1);
       expect(result.height).toBe(1);

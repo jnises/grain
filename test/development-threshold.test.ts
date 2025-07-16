@@ -99,13 +99,13 @@ describe('Development Threshold System', () => {
       
       // Access the private method via a subclass for testing
       class TestGrainProcessor extends GrainProcessor {
-        public testCalculateGrainStrength(exposure: number, grain: any, x: number, y: number): number {
-          return (this as any).calculateGrainStrength(exposure, grain, x, y);
+        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
+          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
         }
       }
       
       const testProcessor = new TestGrainProcessor(100, 100, settings);
-      const strength = testProcessor.testCalculateGrainStrength(lowExposure, testGrain, 50, 50);
+      const strength = testProcessor.testCalculateIntrinsicGrainDensity(lowExposure, testGrain);
       
       // Should return 0 or very low value since grain is not activated
       expect(strength).toBeLessThan(0.1);
@@ -126,13 +126,13 @@ describe('Development Threshold System', () => {
       const highExposure = 0.8; // Well above threshold
       
       class TestGrainProcessor extends GrainProcessor {
-        public testCalculateGrainStrength(exposure: number, grain: any, x: number, y: number): number {
-          return (this as any).calculateGrainStrength(exposure, grain, x, y);
+        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
+          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
         }
       }
       
       const testProcessor = new TestGrainProcessor(100, 100, settings);
-      const strength = testProcessor.testCalculateGrainStrength(highExposure, testGrain, 50, 50);
+      const strength = testProcessor.testCalculateIntrinsicGrainDensity(highExposure, testGrain);
       
       // Should return significant strength since grain is activated
       expect(strength).toBeGreaterThan(0.1);
@@ -152,8 +152,8 @@ describe('Development Threshold System', () => {
       };
       
       class TestGrainProcessor extends GrainProcessor {
-        public testCalculateGrainStrength(exposure: number, grain: any, x: number, y: number): number {
-          return (this as any).calculateGrainStrength(exposure, grain, x, y);
+        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
+          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
         }
       }
       
@@ -162,7 +162,7 @@ describe('Development Threshold System', () => {
       // Test multiple exposure levels
       const exposures = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
       const strengths = exposures.map(exp => 
-        testProcessor.testCalculateGrainStrength(exp, testGrain, 0, 0)
+        testProcessor.testCalculateIntrinsicGrainDensity(exp, testGrain)
       );
       
       console.log('Exposure vs Strength:', exposures.map((exp, i) => `${exp}: ${strengths[i].toFixed(4)}`));
@@ -198,16 +198,16 @@ describe('Development Threshold System', () => {
       };
       
       class TestGrainProcessor extends GrainProcessor {
-        public testCalculateGrainStrength(exposure: number, grain: any, x: number, y: number): number {
-          return (this as any).calculateGrainStrength(exposure, grain, x, y);
+        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
+          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
         }
       }
       
       const testProcessor = new TestGrainProcessor(100, 100, settings);
       
       const exposure = 0.7;
-      const strength1 = testProcessor.testCalculateGrainStrength(exposure, testGrain, 30, 40);
-      const strength2 = testProcessor.testCalculateGrainStrength(exposure, testGrain, 30, 40);
+      const strength1 = testProcessor.testCalculateIntrinsicGrainDensity(exposure, testGrain);
+      const strength2 = testProcessor.testCalculateIntrinsicGrainDensity(exposure, testGrain);
       
       // Should be exactly the same (deterministic)
       expect(strength1).toBe(strength2);
@@ -233,16 +233,16 @@ describe('Development Threshold System', () => {
       };
       
       class TestGrainProcessor extends GrainProcessor {
-        public testCalculateGrainStrength(exposure: number, grain: any, x: number, y: number): number {
-          return (this as any).calculateGrainStrength(exposure, grain, x, y);
+        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
+          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
         }
       }
       
       const testProcessor = new TestGrainProcessor(100, 100, settings);
       
       const exposure = 0.7;
-      const strength1 = testProcessor.testCalculateGrainStrength(exposure, grain1, 30, 40);
-      const strength2 = testProcessor.testCalculateGrainStrength(exposure, grain2, 70, 80);
+      const strength1 = testProcessor.testCalculateIntrinsicGrainDensity(exposure, grain1);
+      const strength2 = testProcessor.testCalculateIntrinsicGrainDensity(exposure, grain2);
       
       // Should be different due to different grain properties
       expect(strength1).not.toBe(strength2);
@@ -266,8 +266,8 @@ describe('Development Threshold System', () => {
       };
       
       class TestGrainProcessor extends GrainProcessor {
-        public testCalculateGrainStrength(exposure: number, grain: any, x: number, y: number): number {
-          return (this as any).calculateGrainStrength(exposure, grain, x, y);
+        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
+          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
         }
       }
       
@@ -276,8 +276,8 @@ describe('Development Threshold System', () => {
       
       // Use a higher exposure to ensure activation despite random sensitivity
       const exposure = 1.0;
-      const kodakStrength = testKodakProcessor.testCalculateGrainStrength(exposure, kodakGrain, 50, 50);
-      const ilfordStrength = testIlfordProcessor.testCalculateGrainStrength(exposure, ilfordGrain, 50, 50);
+      const kodakStrength = testKodakProcessor.testCalculateIntrinsicGrainDensity(exposure, kodakGrain);
+      const ilfordStrength = testIlfordProcessor.testCalculateIntrinsicGrainDensity(exposure, ilfordGrain);
       
       console.log(`Kodak: threshold=${kodakGrain.developmentThreshold}, strength=${kodakStrength.toFixed(4)}`);
       console.log(`Ilford: threshold=${ilfordGrain.developmentThreshold}, strength=${ilfordStrength.toFixed(4)}`);

@@ -1,4 +1,9 @@
-- [ ] Run tests and fix the issues
+- [x] Run tests and fix the issues
+  **FIXED**: Successfully resolved all test failures. Key issues fixed:
+  1. **Missing `calculateGrainStrength` method**: Tests were calling a method that was refactored into two-phase approach. Updated tests to use `calculateIntrinsicGrainDensity` method instead, which contains the development threshold logic being tested.
+  2. **Image dimension mismatches**: GrainProcessor was designed to work with fixed dimensions set at construction time, but tests were passing different-sized images. Fixed tests to create processors with matching dimensions for their test images.
+  All 199 tests now pass successfully.
+- [ ] Assert that the incoming image in processImage matches the dimensions of the processor
 - [x] Why does applyBeerLambertCompositing take originalColor as a parameter? Shouldn't the final color only depend on the grains? The original color should have been used to calculate the grain responses, but after that why are they used?
   **ANALYSIS REVEALS CONCEPTUAL ERROR**: The current implementation incorrectly uses the input image color as both exposure light AND viewing light. Correct physics: 1) Input image determines grain density during "exposure", 2) When "viewing" the film, WHITE printing light passes through grains: `final = white_light * exp(-density)`. The current approach conflates exposure and viewing steps. We should use white light [255,255,255] for Beer-Lambert compositing to create proper film negative, then optionally invert for positive print.
   **FIXED**: Updated `applyBeerLambertCompositing()` to use white light (255) instead of original color for physically accurate film viewing simulation. The method now properly implements the two-phase process: 1) input image determines grain exposure/density, 2) white viewing light passes through developed grains following Beer-Lambert law. Tests updated to verify correct white light behavior.
