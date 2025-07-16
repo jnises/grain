@@ -19,8 +19,20 @@
     **COMPLETED**: Integrated into the floating-point pipeline. The system calculates brightness ratio between original and processed floating-point data, then applies correction factor during final conversion to preserve overall image brightness.
   - [x] Calculate and apply uniform brightness scaling factor after grain rendering
     **COMPLETED**: Implemented `calculateBrightnessFactor()` method that computes average brightness ratio and applies uniform scaling during the final Uint8 conversion step. The correction maintains the visual balance while preserving grain effects.
-- [ ] Go through the code and look for methods that should be static.
+- [x] Go through the code and look for methods that should be static.
+  **COMPLETED**: Identified and converted several utility methods to static methods for better functional design:
+  - `GrainGenerator.seededRandom()` - Pure function for deterministic random number generation  
+  - `GrainProcessor.calculateSampleWeight()` - Pure function for calculating sample weights
+  - `GrainProcessor.applyBeerLambertCompositingFloat()` - Pure function for Beer-Lambert compositing
+  - `GrainProcessor.applyBeerLambertCompositing()` - Pure function for Beer-Lambert compositing (integer version)
+  - `GrainProcessor.calculateChromaticAberration()` - Pure function for chromatic aberration calculation
+  - `GrainProcessor.convertToFloatingPoint()` - Pure utility function for type conversion
+  - `GrainProcessor.convertToUint8()` - Pure utility function for type conversion
+  - `GrainProcessor.calculateBrightnessFactor()` - Pure function for brightness calculation
+  All static method conversions maintain the same functionality while improving code organization and testability. Updated all call sites and tests to use static access pattern.
 - [ ] Look for static methods that should really be free functions.
+- [ ] Update copilot-instructions.md to indicate that methods should be made static if possible, and free functions if they aren't directly related to the class.
+- [ ] grain-worker.rs is getting quite long. should it be split up into multiple files?
 - [ ] Looks like the brightnessFactor compensation is applied in gamma space. Is that physically plausible? The brightness compensation should be applied as if adjusting the exposure when taking the photo or developing the photo copy.
 - [ ] Is the current color maths done in a gamma correct way?
 - [ ] Go through the code and apply the rules around constants from the instructions

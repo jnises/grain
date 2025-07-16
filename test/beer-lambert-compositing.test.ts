@@ -7,7 +7,7 @@ import type { GrainSettings, GrainDensity } from '../src/types';
 // Create a test class that extends GrainProcessor to access protected methods
 class TestableGrainProcessor extends GrainProcessor {
   public testApplyBeerLambertCompositing(grainDensity: GrainDensity): [number, number, number] {
-    return this.applyBeerLambertCompositing(grainDensity);
+    return GrainProcessor.applyBeerLambertCompositing(grainDensity);
   }
 }
 

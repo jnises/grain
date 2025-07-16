@@ -257,7 +257,7 @@ export class GrainProcessor {
       const distance = Math.sqrt(x * x + y * y);
       
       // Enhanced weighting with shape awareness
-      const weight = this.calculateSampleWeight(distance, grainRadius, grainShape);
+      const weight = GrainProcessor.calculateSampleWeight(distance, grainRadius, grainShape);
       points.push({ x, y, weight });
     }
   }
@@ -317,7 +317,7 @@ export class GrainProcessor {
       const y = Math.sin(angle) * finalRadius;
       const distance = Math.sqrt(x * x + y * y);
       
-      const weight = this.calculateSampleWeight(distance, grainRadius, grainShape);
+      const weight = GrainProcessor.calculateSampleWeight(distance, grainRadius, grainShape);
       points.push({ x, y, weight });
     }
   }
@@ -325,7 +325,7 @@ export class GrainProcessor {
   /**
    * Calculates sample weight using enhanced weighting profiles
    */
-  private calculateSampleWeight(distance: number, grainRadius: number, grainShape: number): number {
+  private static calculateSampleWeight(distance: number, grainRadius: number, grainShape: number): number {
     // Base Gaussian weighting
     const gaussianSigma = grainRadius * 0.7; // Adjust spread based on grain radius
     const gaussianWeight = Math.exp(-(distance * distance) / (2 * gaussianSigma * gaussianSigma));
@@ -457,10 +457,10 @@ export class GrainProcessor {
     x -= Math.floor(x);
     y -= Math.floor(y);
     
-    const a = this.grainGenerator.seededRandom(X + Y * 256);
-    const b = this.grainGenerator.seededRandom(X + 1 + Y * 256);
-    const c = this.grainGenerator.seededRandom(X + (Y + 1) * 256);
-    const d = this.grainGenerator.seededRandom(X + 1 + (Y + 1) * 256);
+    const a = GrainGenerator.seededRandom(X + Y * 256);
+    const b = GrainGenerator.seededRandom(X + 1 + Y * 256);
+    const c = GrainGenerator.seededRandom(X + (Y + 1) * 256);
+    const d = GrainGenerator.seededRandom(X + 1 + (Y + 1) * 256);
     
     const u = x * x * (PERLIN_FADE_COEFFICIENT_A - PERLIN_FADE_COEFFICIENT_B * x);
     const v = y * y * (PERLIN_FADE_COEFFICIENT_A - PERLIN_FADE_COEFFICIENT_B * y);
@@ -697,7 +697,7 @@ export class GrainProcessor {
     );
 
     // Convert input to floating-point for precision preservation
-    const floatData = this.convertToFloatingPoint(imageData.data);
+    const floatData = GrainProcessor.convertToFloatingPoint(imageData.data);
     
     // Create floating-point result buffer
     const resultFloatData = new Float32Array(floatData.length);
@@ -818,7 +818,7 @@ export class GrainProcessor {
             const temperatureShift = this.calculateTemperatureShift(grain, normalizedDistance);
             
             // Calculate chromatic aberration based on distance from grain center
-            const chromaticAberration = this.calculateChromaticAberration(normalizedDistance);
+            const chromaticAberration = GrainProcessor.calculateChromaticAberration(normalizedDistance);
             
             // Apply enhanced color response with temperature and chromatic effects
             const redSensitivity = channelSensitivity.red * (1 + baseColorShift.red + temperatureShift.red);
@@ -850,7 +850,7 @@ export class GrainProcessor {
           let finalColor: [number, number, number];
           
           // Use Beer-Lambert law compositing for physically accurate results (floating-point)
-          finalColor = this.applyBeerLambertCompositingFloat(totalGrainDensity);
+          finalColor = GrainProcessor.applyBeerLambertCompositingFloat(totalGrainDensity);
           
           resultFloatData[pixelIndex] = finalColor[0];
           resultFloatData[pixelIndex + 1] = finalColor[1];
@@ -874,11 +874,11 @@ export class GrainProcessor {
     this.performanceTracker.endBenchmark('Pixel Processing');
     
     // Calculate brightness correction factor to preserve overall image brightness
-    const brightnessFactor = this.calculateBrightnessFactor(floatData, resultFloatData);
+    const brightnessFactor = GrainProcessor.calculateBrightnessFactor(floatData, resultFloatData);
     console.log(`Brightness correction factor: ${brightnessFactor.toFixed(4)}`);
     
     // Convert back to Uint8ClampedArray with brightness correction
-    const finalData = this.convertToUint8(resultFloatData, brightnessFactor);
+    const finalData = GrainProcessor.convertToUint8(resultFloatData, brightnessFactor);
     
     // Create ImageData result - handle both browser and Node.js environments
     const result = typeof ImageData !== 'undefined' 
@@ -930,7 +930,7 @@ export class GrainProcessor {
    * Convert Uint8ClampedArray to floating-point values (0.0-1.0 range)
    * for precision preservation during processing
    */
-  private convertToFloatingPoint(uint8Data: Uint8ClampedArray): Float32Array {
+  private static convertToFloatingPoint(uint8Data: Uint8ClampedArray): Float32Array {
     const floatData = new Float32Array(uint8Data.length);
     for (let i = 0; i < uint8Data.length; i++) {
       floatData[i] = uint8Data[i] / 255.0;
@@ -942,7 +942,7 @@ export class GrainProcessor {
    * Convert floating-point values back to Uint8ClampedArray
    * with optional brightness correction to preserve overall image brightness
    */
-  private convertToUint8(floatData: Float32Array, brightnessFactor: number = 1.0): Uint8ClampedArray {
+  private static convertToUint8(floatData: Float32Array, brightnessFactor: number = 1.0): Uint8ClampedArray {
     const uint8Data = new Uint8ClampedArray(floatData.length);
     for (let i = 0; i < floatData.length; i++) {
       // Apply brightness correction and clamp to valid range
@@ -956,7 +956,7 @@ export class GrainProcessor {
    * Calculate average brightness ratio between original and processed image
    * for brightness preservation
    */
-  private calculateBrightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
+  private static calculateBrightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
     let originalSum = 0;
     let processedSum = 0;
 
@@ -1124,7 +1124,7 @@ export class GrainProcessor {
   }
 
   // Apply Beer-Lambert law compositing for physically accurate results (floating-point version)
-  protected applyBeerLambertCompositingFloat(grainDensity: GrainDensity): [number, number, number] {
+  protected static applyBeerLambertCompositingFloat(grainDensity: GrainDensity): [number, number, number] {
     // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
     // When "viewing" the film, WHITE printing light passes through the developed grains.
     // Beer-Lambert law: final = white_light * exp(-density)
@@ -1139,7 +1139,7 @@ export class GrainProcessor {
   }
 
   // Apply Beer-Lambert law compositing for physically accurate results
-  protected applyBeerLambertCompositing(grainDensity: GrainDensity): [number, number, number] {
+  protected static applyBeerLambertCompositing(grainDensity: GrainDensity): [number, number, number] {
     // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
     // When "viewing" the film, WHITE printing light passes through the developed grains.
     // Beer-Lambert law: final = white_light * exp(-density)
@@ -1176,7 +1176,7 @@ export class GrainProcessor {
    * Calculate chromatic aberration effect
    * Simulates slight color separation based on distance from grain center
    */
-  private calculateChromaticAberration(normalizedDistance: number): { red: number; green: number; blue: number } {
+  private static calculateChromaticAberration(normalizedDistance: number): { red: number; green: number; blue: number } {
     // Chromatic aberration is strongest at edges
     const aberrationStrength = normalizedDistance * 0.02; // Very subtle effect
     
