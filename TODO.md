@@ -30,13 +30,15 @@
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and apply the rules around asserts from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
-- [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. For example the change from multi layer to variable grain size. Also look at git history for what changes have been made. If this is difficult to do we should probably just remove the file. 
+- [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. Also look at git history for what changes have been made. If this is difficult to do we should probably just remove the file.
+  For example we are not using voronoi diagrams.
+  The change from multi layer to variable grain size.
 - [ ] Try to clean up processImage and related code a bit. It has been refactored a bunch and there seems to be a bunch of unnecessary remnants of old things.
 - [ ] When checking surrounding cells in processImage, are we sure a 3x3 neighborhood is large enough to fit the largest size grains?
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] Do the film type settings refer to common industry standard settings? Or do they just result in some made up parameters? If made up, convert them to use some non-brand names instead. Or expose the underlying parameters?
-- [ ] The current algorithm iterates each pixel and checks which grain it is close to. Wouldn't it make more sense to iterate the grains and check its nearby pixels? Will we have move pixels or grains?
+- [ ] The grain shapes, are those only used when generating the final image, or are they also considered when doing grain development?
 - [ ] Use something like a flamegraph to find the hotspots in the code and optimize those
 - [ ] Create a separate assert util for slow checks that is only run when in dev mode.
 - [ ] Update agent instructions on how to use the asserts.
