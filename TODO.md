@@ -32,7 +32,8 @@
   All functions are now properly organized as free functions in the `grain-math.ts` module, improving code organization and making these mathematical utilities more accessible and testable. Updated all call sites and tests to use the new free function imports. Committed in 1af8ca2.
 - [x] run tests and check and fix any issues
   **COMPLETED**: Fixed two issues after the refactoring: 1) Brightness preservation test failing for black pixels (fixed by improving `calculateBrightnessFactor()` to handle very dark images specially), 2) Unused import `applyBeerLambertCompositing` removed from grain-worker.ts. All 199 tests now pass, no linting errors, no TypeScript compilation errors.
-- [ ] Update copilot-instructions.md to indicate that methods should be made static if possible, and free functions if they aren't directly related to the class.
+- [x] Update copilot-instructions.md to indicate that methods should be made static if possible, and free functions if they aren't directly related to the class.
+  **COMPLETED**: Added comprehensive guidelines to the Development Guidelines section of copilot-instructions.md covering when to use instance methods, static methods, and free functions. The guidance emphasizes that mathematical and pure utility functions should be free functions in dedicated modules for better code organization, testability, and reusability.
 - [ ] should rgbToExposureFloat be static? free function? it starts by clamping incoming arguments, should those be asserts instead?
 - [ ] go through grain-worker.rs and look for old functions that are only referenced in tests. check if those functions can be removed.
 - [ ] grain-worker.rs is getting quite long. should it be split up into multiple files?

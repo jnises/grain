@@ -49,6 +49,17 @@ When creating temporary files, debug utilities, or development tools, please fol
   - Function-specific constants: define at the start of the function
   - Single-use constants: define just before the line where used
 
+### Static Methods and Free Functions
+- Prefer static methods for utility functions that don't depend on instance state
+- Convert static methods to free functions when they aren't directly related to the class
+- Place free functions in appropriate utility modules (e.g., `grain-math.ts` for mathematical operations)
+- Guidelines for method organization:
+  - **Instance methods**: Use when the function operates on or modifies instance state
+  - **Static methods**: Use for utility functions that are conceptually related to the class but don't need instance data
+  - **Free functions**: Use for pure utility functions that aren't conceptually tied to a specific class
+- Mathematical and pure utility functions should generally be free functions in dedicated modules
+- This improves code organization, testability, and reusability
+
 ### Error Handling
 - Use assertions to validate assumptions and preconditions in your code
 - Prefer failing fast and loudly over silent error handling
