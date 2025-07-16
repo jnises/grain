@@ -21,12 +21,23 @@
   - `GrainProcessor.convertToUint8()` - Pure utility function for type conversion
   - `GrainProcessor.calculateBrightnessFactor()` - Pure function for brightness calculation
   All static method conversions maintain the same functionality while improving code organization and testability. Updated all call sites and tests to use static access pattern.
-- [ ] Look for static methods that should really be free functions.
+- [x] Look for static methods that should really be free functions.
+  **COMPLETED**: Identified and converted static methods to free functions in a new `grain-math.ts` module for better functional design:
+  - `seededRandom()` - Pure function for deterministic random number generation
+  - `calculateSampleWeight()` - Pure function for calculating sample weights based on distance and grain properties  
+  - `convertToFloatingPoint()` and `convertToUint8()` - Pure utility functions for data type conversion
+  - `calculateBrightnessFactor()` - Pure function for brightness calculations
+  - `applyBeerLambertCompositingFloat()` and `applyBeerLambertCompositing()` - Pure functions implementing Beer-Lambert law physics
+  - `calculateChromaticAberration()` - Pure function for chromatic aberration calculation
+  All functions are now properly organized as free functions in the `grain-math.ts` module, improving code organization and making these mathematical utilities more accessible and testable. Updated all call sites and tests to use the new free function imports.
 - [ ] Update copilot-instructions.md to indicate that methods should be made static if possible, and free functions if they aren't directly related to the class.
+- [ ] should rgbToExposureFloat be static? free function? it starts by clamping incoming arguments, should those be asserts instead?
+- [ ] go through grain-worker.rs and look for old functions that are only referenced in tests. check if those functions can be removed.
 - [ ] grain-worker.rs is getting quite long. should it be split up into multiple files?
 - [ ] Looks like the brightnessFactor compensation is applied in gamma space. Is that physically plausible? The brightness compensation should be applied as if adjusting the exposure when taking the photo or developing the photo copy.
 - [ ] Is the current color maths done in a gamma correct way?
 - [ ] Go through the code and apply the rules around constants from the instructions
+- [ ] Go through the code and apply the rules around asserts from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
 - [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. For example the change from multi layer to variable grain size.
 - [ ] Try to clean up processImage and related code a bit. It has been refactored a bunch and there seems to be a bunch of unnecessary remnants of old things.
