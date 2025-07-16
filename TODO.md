@@ -19,7 +19,8 @@
     **COMPLETED**: Successfully extracted `PerformanceBenchmark` interface and `PerformanceTracker` class to a dedicated module. Updated imports in `grain-worker.ts` and verified all tests pass. The new module provides clean separation of performance tracking concerns.
   - [x] Extract sampling kernel generation to `src/grain-sampling.ts`
     **COMPLETED**: Successfully extracted `SamplePoint` and `SamplingKernel` interfaces, `KernelGenerator` class, and `sampleGrainAreaExposure` function to a dedicated module. The grain worker now uses the external kernel generator, maintaining clean separation of concerns while preserving all functionality. All tests pass.
-  - [ ] Extract color space conversions and utility functions to appropriate modules
+  - [x] Extract color space conversions and utility functions to appropriate modules
+    **COMPLETED**: Successfully extracted `rgbToLab` function to `src/color-space.ts` and `noise` function to `src/noise.ts`. These pure functions are now properly separated from the main `GrainProcessor` class, improving modularity and testability. The grain worker file was reduced from 828 to 705 lines. All tests pass after the refactoring.
   - [ ] Split `GrainProcessor` class into smaller, focused classes (e.g., grain generation, grain effects calculation, image processing pipeline)
   - [ ] Keep only the main orchestration logic and worker message handling in `grain-worker.ts`
   - [ ] Update imports and exports across affected files
@@ -29,7 +30,7 @@
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and apply the rules around asserts from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
-- [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. For example the change from multi layer to variable grain size. Also look at git history for what changes have been made.
+- [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. For example the change from multi layer to variable grain size. Also look at git history for what changes have been made. If this is difficult to do we should probably just remove the file. 
 - [ ] Try to clean up processImage and related code a bit. It has been refactored a bunch and there seems to be a bunch of unnecessary remnants of old things.
 - [ ] When checking surrounding cells in processImage, are we sure a 3x3 neighborhood is large enough to fit the largest size grains?
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.

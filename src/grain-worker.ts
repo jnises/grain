@@ -6,16 +6,15 @@ import { FILM_CHARACTERISTICS } from './constants';
 import { PerformanceTracker } from './performance-tracker';
 import { KernelGenerator, sampleGrainAreaExposure } from './grain-sampling';
 import { 
-  seededRandom, 
   convertToFloatingPoint, 
   convertToUint8, 
   calculateBrightnessFactor,
   applyBeerLambertCompositingFloat,
   calculateChromaticAberration
 } from './grain-math';
+import { noise } from './noise';
 import type {
   GrainSettings,
-  LabColor,
   GrainPoint,
   GrainDensity,
   ProcessMessage,
@@ -42,9 +41,6 @@ function safePostMessage(message: ProgressMessage | ResultMessage | ErrorMessage
     }
   }
 }
-
-// File-level constants shared across methods
-const RGB_MAX_VALUE = 255;
 
 // Utility functions for grain generation
 export class GrainProcessor {
@@ -151,125 +147,6 @@ export class GrainProcessor {
     
     console.log(`Completed intrinsic density calculation for ${intrinsicDensityMap.size} grains`);
     return intrinsicDensityMap;
-  }
-
-  // 2D Perlin noise implementation
-  private noise(x: number, y: number): number {
-    // Noise generation constants
-    const NOISE_GRID_MASK = 255;
-    const PERLIN_FADE_COEFFICIENT_A = 3;
-    const PERLIN_FADE_COEFFICIENT_B = 2;
-    
-    const X = Math.floor(x) & NOISE_GRID_MASK;
-    const Y = Math.floor(y) & NOISE_GRID_MASK;
-    x -= Math.floor(x);
-    y -= Math.floor(y);
-    
-    const a = seededRandom(X + Y * 256);
-    const b = seededRandom(X + 1 + Y * 256);
-    const c = seededRandom(X + (Y + 1) * 256);
-    const d = seededRandom(X + 1 + (Y + 1) * 256);
-    
-    const u = x * x * (PERLIN_FADE_COEFFICIENT_A - PERLIN_FADE_COEFFICIENT_B * x);
-    const v = y * y * (PERLIN_FADE_COEFFICIENT_A - PERLIN_FADE_COEFFICIENT_B * y);
-    
-    return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
-  }
-
-  // Convert RGB to LAB color space
-  // Currently unused but preserved for potential future color processing features
-  // @ts-expect-error - Preserved for future use
-  private rgbToLab(r: number, g: number, b: number): LabColor {
-    // Validate input parameters with custom assertions
-    assertInRange(r, 0, 255, 'r');
-    assertInRange(g, 0, 255, 'g');
-    assertInRange(b, 0, 255, 'b');
-
-    // Color space conversion constants
-    const RGB_GAMMA_THRESHOLD = 0.04045;
-    const RGB_GAMMA_LINEAR_DIVISOR = 12.92;
-    const RGB_GAMMA_POWER = 2.4;
-    const RGB_GAMMA_OFFSET = 0.055;
-    const RGB_GAMMA_MULTIPLIER = 1.055;
-
-    const RGB_TO_XYZ_MATRIX = {
-      x: { r: 0.4124564, g: 0.3575761, b: 0.1804375 },
-      y: { r: 0.2126729, g: 0.7151522, b: 0.0721750 },
-      z: { r: 0.0193339, g: 0.1191920, b: 0.9503041 }
-    } as const;
-
-    const D65_ILLUMINANT = {
-      x: 0.95047,
-      y: 1.00000,
-      z: 1.08883
-    } as const;
-
-    const LAB_EPSILON = 0.008856;
-    const LAB_KAPPA = 7.787;
-    const LAB_DELTA = 16 / 116;
-    const LAB_L_MULTIPLIER = 116;
-    const LAB_L_OFFSET = 16;
-    const LAB_A_MULTIPLIER = 500;
-    const LAB_B_MULTIPLIER = 200;
-
-    // Normalize RGB values
-    r /= RGB_MAX_VALUE;
-    g /= RGB_MAX_VALUE;
-    b /= RGB_MAX_VALUE;
-
-    // Apply gamma correction
-    r = r > RGB_GAMMA_THRESHOLD ? ((r + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER) ** RGB_GAMMA_POWER : r / RGB_GAMMA_LINEAR_DIVISOR;
-    g = g > RGB_GAMMA_THRESHOLD ? ((g + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER) ** RGB_GAMMA_POWER : g / RGB_GAMMA_LINEAR_DIVISOR;
-    b = b > RGB_GAMMA_THRESHOLD ? ((b + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER) ** RGB_GAMMA_POWER : b / RGB_GAMMA_LINEAR_DIVISOR;
-
-    // Convert to XYZ
-    let x = r * RGB_TO_XYZ_MATRIX.x.r + g * RGB_TO_XYZ_MATRIX.x.g + b * RGB_TO_XYZ_MATRIX.x.b;
-    let y = r * RGB_TO_XYZ_MATRIX.y.r + g * RGB_TO_XYZ_MATRIX.y.g + b * RGB_TO_XYZ_MATRIX.y.b;
-    let z = r * RGB_TO_XYZ_MATRIX.z.r + g * RGB_TO_XYZ_MATRIX.z.g + b * RGB_TO_XYZ_MATRIX.z.b;
-
-    // Normalize for D65 illuminant
-    x /= D65_ILLUMINANT.x;
-    y /= D65_ILLUMINANT.y;
-    z /= D65_ILLUMINANT.z;
-
-    // Validate XYZ values with custom assertion
-    assert(
-      Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z),
-      'Color space conversion produced invalid XYZ values',
-      { 
-        xyz: { x, y, z }, 
-        originalRGB: { r: r * 255, g: g * 255, b: b * 255 },
-        finite: { x: Number.isFinite(x), y: Number.isFinite(y), z: Number.isFinite(z) }
-      }
-    );
-
-    // Convert to LAB
-    x = x > LAB_EPSILON ? x ** (1/3) : (LAB_KAPPA * x + LAB_DELTA);
-    y = y > LAB_EPSILON ? y ** (1/3) : (LAB_KAPPA * y + LAB_DELTA);
-    z = z > LAB_EPSILON ? z ** (1/3) : (LAB_KAPPA * z + LAB_DELTA);
-
-    const labResult = {
-      l: LAB_L_MULTIPLIER * y - LAB_L_OFFSET,
-      a: LAB_A_MULTIPLIER * (x - y),
-      b: LAB_B_MULTIPLIER * (y - z)
-    };
-
-    // Validate LAB result with custom assertion
-    assert(
-      Number.isFinite(labResult.l) && Number.isFinite(labResult.a) && Number.isFinite(labResult.b),
-      'Color space conversion produced invalid LAB values',
-      { 
-        lab: labResult, 
-        originalRGB: { r: r * 255, g: g * 255, b: b * 255 },
-        finite: { 
-          l: Number.isFinite(labResult.l), 
-          a: Number.isFinite(labResult.a), 
-          b: Number.isFinite(labResult.b) 
-        }
-      }
-    );
-
-    return labResult;
   }
 
   // Enhanced film characteristic curve (photographic S-curve)
@@ -661,9 +538,9 @@ export class GrainProcessor {
     const NOISE_WEIGHT_MEDIUM = 0.2;
     const NOISE_WEIGHT_COARSE = 0.1;
     
-    const noiseValue = this.noise(pixelX * NOISE_SCALE_FINE, pixelY * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
-                      this.noise(pixelX * NOISE_SCALE_MEDIUM, pixelY * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
-                      this.noise(pixelX * NOISE_SCALE_COARSE, pixelY * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
+    const noiseValue = noise(pixelX * NOISE_SCALE_FINE, pixelY * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
+                      noise(pixelX * NOISE_SCALE_MEDIUM, pixelY * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
+                      noise(pixelX * NOISE_SCALE_COARSE, pixelY * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
     
     // Combine all effects: intrinsic density × distance falloff × shape distortion × noise modulation
     const noiseModulation = 0.7 + Math.abs(noiseValue) * 0.3;
