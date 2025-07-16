@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from 'vitest';
 import {
   assert,
@@ -13,6 +12,7 @@ import {
   assertValidGridCoordinates,
   assertFiniteNumber
 } from '../src/utils';
+import { createMockImageData, createMockImageDataWithCustomLength } from './test-utils';
 
 describe('Utils - Assertion Functions', () => {
   describe('assert', () => {
@@ -221,12 +221,6 @@ describe('Utils - Assertion Functions', () => {
   });
 
   describe('assertImageData', () => {
-    const createMockImageData = (width: number, height: number, dataLength?: number): any => ({
-      width,
-      height,
-      data: new Uint8ClampedArray(dataLength ?? width * height * 4)
-    });
-
     it('should pass for valid ImageData objects', () => {
       expect(() => assertImageData(createMockImageData(100, 50), 'test')).not.toThrow();
       expect(() => assertImageData(createMockImageData(1, 1), 'test')).not.toThrow();
@@ -240,8 +234,8 @@ describe('Utils - Assertion Functions', () => {
     });
 
     it('should throw for non-positive dimensions', () => {
-      expect(() => assertImageData(createMockImageData(0, 50), 'test')).toThrow('test.width must be a positive integer');
-      expect(() => assertImageData(createMockImageData(100, 0), 'test')).toThrow('test.height must be a positive integer');
+      expect(() => assertImageData(createMockImageDataWithCustomLength(0, 50), 'test')).toThrow('test.width must be a positive integer');
+      expect(() => assertImageData(createMockImageDataWithCustomLength(100, 0), 'test')).toThrow('test.height must be a positive integer');
       
       // For negative dimensions, create the object manually to avoid Uint8ClampedArray constructor error
       const negativeWidthImageData = {
@@ -253,7 +247,7 @@ describe('Utils - Assertion Functions', () => {
     });
 
     it('should throw for empty data array', () => {
-      expect(() => assertImageData(createMockImageData(100, 50, 0), 'test')).toThrow('test.data must not be empty');
+      expect(() => assertImageData(createMockImageDataWithCustomLength(100, 50, 0), 'test')).toThrow('test.data must not be empty');
     });
 
     it('should throw for non-objects', () => {

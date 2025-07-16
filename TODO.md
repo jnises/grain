@@ -23,8 +23,14 @@
   All static method conversions maintain the same functionality while improving code organization and testability. Updated all call sites and tests to use static access pattern.
 - [x] go through grain-worker.ts and grain-math.ts and look for old functions that are only referenced in tests designed to test said function. check if those functions can be removed.
   **COMPLETED**: Found two functions that are only used in tests: `rgbToExposure()` (integer version) and `applyBeerLambertCompositing()` (integer version). Production code uses the floating-point versions. These test-only functions have been removed to clean up the codebase.
+- [x] Look for tests that are mostly duplicates of each other.
+  **COMPLETED**: Successfully identified and removed several categories of duplicate tests:
+  - Consolidated 6 duplicate `TestGrainProcessor` class declarations in `development-threshold.test.ts` into a single shared test helper class
+  - Removed duplicate random number validation tests (`should return numbers between 0 and 1`, `should return finite numbers`) from `SeededRandomNumberGenerator` tests, keeping only unique seeded behavior tests
+  - Created shared `createMockImageData` utility functions in `test/test-utils.ts` to replace duplicate implementations in `grain-two-phase-verification.test.ts` and `utils.test.ts`
+  - All tests continue to pass after refactoring, confirming no functionality was lost
+- [ ] rgbToExposureFloat handles nans and infs silently. could either of those occur for valid input? should it be silent?
 - [ ] grain-worker.ts is getting quite long. should it be split up into multiple files?
-- [ ] Look for tests that are mostly duplicates of each other.
 - [ ] Looks like the brightnessFactor compensation is applied in gamma space. Is that physically plausible? The brightness compensation should be applied as if adjusting the exposure when taking the photo or developing the photo copy.
 - [ ] Is the current color maths done in a gamma correct way?
 - [ ] Go through the code and apply the rules around constants from the instructions

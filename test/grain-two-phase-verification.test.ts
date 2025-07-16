@@ -2,23 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
 import { GrainProcessor } from '../src/grain-worker';
 import type { GrainSettings } from '../src/types';
-
-// Helper function to create mock ImageData for testing
-function createMockImageData(width: number, height: number, fillValue = 128): ImageData {
-  const data = new Uint8ClampedArray(width * height * 4);
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = fillValue;     // R
-    data[i + 1] = fillValue; // G
-    data[i + 2] = fillValue; // B
-    data[i + 3] = 255;       // A (alpha)
-  }
-  // Mock ImageData object for Node.js environment
-  return {
-    data,
-    width,
-    height
-  } as ImageData;
-}
+import { createMockImageData } from './test-utils';
 
 describe('Phase 4: Two-Phase Grain Processing Verification', () => {
   let grainSettings: GrainSettings;

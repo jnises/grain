@@ -4,6 +4,13 @@ import { GrainGenerator } from '../src/grain-generator';
 import { GrainProcessor } from '../src/grain-worker';
 import { FILM_CHARACTERISTICS } from '../src/constants';
 
+// Test helper class to access private methods
+class TestGrainProcessor extends GrainProcessor {
+  public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
+    return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
+  }
+}
+
 describe('Development Threshold System', () => {
   const settings = {
     iso: 400,
@@ -97,13 +104,7 @@ describe('Development Threshold System', () => {
       // Test with low exposure (below threshold)
       const lowExposure = 0.6; // Much below threshold
       
-      // Access the private method via a subclass for testing
-      class TestGrainProcessor extends GrainProcessor {
-        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
-          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
-        }
-      }
-      
+      // Access the private method via the shared test helper class
       const testProcessor = new TestGrainProcessor(100, 100, settings);
       const strength = testProcessor.testCalculateIntrinsicGrainDensity(lowExposure, testGrain);
       
@@ -125,12 +126,6 @@ describe('Development Threshold System', () => {
       // Test with exposure above threshold
       const highExposure = 0.8; // Well above threshold
       
-      class TestGrainProcessor extends GrainProcessor {
-        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
-          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
-        }
-      }
-      
       const testProcessor = new TestGrainProcessor(100, 100, settings);
       const strength = testProcessor.testCalculateIntrinsicGrainDensity(highExposure, testGrain);
       
@@ -150,12 +145,6 @@ describe('Development Threshold System', () => {
         shape: 0.5,
         developmentThreshold: 0.3 // Lower threshold to account for negative random sensitivity
       };
-      
-      class TestGrainProcessor extends GrainProcessor {
-        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
-          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
-        }
-      }
       
       const testProcessor = new TestGrainProcessor(100, 100, settings);
       
@@ -197,12 +186,6 @@ describe('Development Threshold System', () => {
         developmentThreshold: 0.6
       };
       
-      class TestGrainProcessor extends GrainProcessor {
-        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
-          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
-        }
-      }
-      
       const testProcessor = new TestGrainProcessor(100, 100, settings);
       
       const exposure = 0.7;
@@ -232,12 +215,6 @@ describe('Development Threshold System', () => {
         developmentThreshold: 0.4
       };
       
-      class TestGrainProcessor extends GrainProcessor {
-        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
-          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
-        }
-      }
-      
       const testProcessor = new TestGrainProcessor(100, 100, settings);
       
       const exposure = 0.7;
@@ -264,12 +241,6 @@ describe('Development Threshold System', () => {
         x: 50, y: 50, size: 2, sensitivity: 1.0, shape: 0.5,
         developmentThreshold: FILM_CHARACTERISTICS.ilford.developmentThreshold.baseSensitivity
       };
-      
-      class TestGrainProcessor extends GrainProcessor {
-        public testCalculateIntrinsicGrainDensity(exposure: number, grain: any): number {
-          return (this as any).calculateIntrinsicGrainDensity(exposure, grain);
-        }
-      }
       
       const testKodakProcessor = new TestGrainProcessor(100, 100, kodakSettings);
       const testIlfordProcessor = new TestGrainProcessor(100, 100, ilfordSettings);
