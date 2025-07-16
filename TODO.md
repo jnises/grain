@@ -29,7 +29,8 @@
   - `calculateBrightnessFactor()` - Pure function for brightness calculations
   - `applyBeerLambertCompositingFloat()` and `applyBeerLambertCompositing()` - Pure functions implementing Beer-Lambert law physics
   - `calculateChromaticAberration()` - Pure function for chromatic aberration calculation
-  All functions are now properly organized as free functions in the `grain-math.ts` module, improving code organization and making these mathematical utilities more accessible and testable. Updated all call sites and tests to use the new free function imports.
+  All functions are now properly organized as free functions in the `grain-math.ts` module, improving code organization and making these mathematical utilities more accessible and testable. Updated all call sites and tests to use the new free function imports. Committed in 1af8ca2.
+- [ ] run tests and check and fix any issues
 - [ ] Update copilot-instructions.md to indicate that methods should be made static if possible, and free functions if they aren't directly related to the class.
 - [ ] should rgbToExposureFloat be static? free function? it starts by clamping incoming arguments, should those be asserts instead?
 - [ ] go through grain-worker.rs and look for old functions that are only referenced in tests. check if those functions can be removed.
