@@ -21,8 +21,10 @@
   - `GrainProcessor.convertToUint8()` - Pure utility function for type conversion
   - `GrainProcessor.calculateBrightnessFactor()` - Pure function for brightness calculation
   All static method conversions maintain the same functionality while improving code organization and testability. Updated all call sites and tests to use static access pattern.
-- [ ] go through grain-worker.rs and grain-math.rs and look for old functions that are only referenced in tests designed to test said function. check if those functions can be removed.
-- [ ] grain-worker.rs is getting quite long. should it be split up into multiple files?
+- [x] go through grain-worker.ts and grain-math.ts and look for old functions that are only referenced in tests designed to test said function. check if those functions can be removed.
+  **COMPLETED**: Found two functions that are only used in tests: `rgbToExposure()` (integer version) and `applyBeerLambertCompositing()` (integer version). Production code uses the floating-point versions. These test-only functions have been removed to clean up the codebase.
+- [ ] grain-worker.ts is getting quite long. should it be split up into multiple files?
+- [ ] Look for tests that are mostly duplicates of each other.
 - [ ] Looks like the brightnessFactor compensation is applied in gamma space. Is that physically plausible? The brightness compensation should be applied as if adjusting the exposure when taking the photo or developing the photo copy.
 - [ ] Is the current color maths done in a gamma correct way?
 - [ ] Go through the code and apply the rules around constants from the instructions

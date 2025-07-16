@@ -1,30 +1,29 @@
 import { describe, it, expect } from 'vitest';
-import { rgbToExposure } from '../src/grain-math';
+import { rgbToExposureFloat } from '../src/grain-math';
 
 describe('Exposure Conversion', () => {
   it('should convert RGB to logarithmic exposure following photographic principles', () => {
     // Test key photographic reference points:
     
     // 1. Pure black (0,0,0) should give zero exposure due to clamping
-    const blackExposure = rgbToExposure(0, 0, 0);
+    const blackExposure = rgbToExposureFloat(0, 0, 0);
     expect(blackExposure).toBe(0); // Clamped to 0 due to extreme log value
     
-    // 2. 18% middle gray (~46 RGB) should give mid-range exposure around 0.5
-    // Calculate RGB value for 18% gray: 0.18 * 255 ≈ 46
-    const middleGrayRgb = Math.round(0.18 * 255);
-    const middleGrayExposure = rgbToExposure(middleGrayRgb, middleGrayRgb, middleGrayRgb);
+    // 2. 18% middle gray should give mid-range exposure around 0.5
+    const middleGrayFloat = 0.18; // 18% gray in floating-point
+    const middleGrayExposure = rgbToExposureFloat(middleGrayFloat, middleGrayFloat, middleGrayFloat);
     expect(middleGrayExposure).toBeGreaterThan(0.49);
     expect(middleGrayExposure).toBeLessThan(0.51);
     
-    // 3. Pure white (255,255,255) should give high exposure near (but not at) 1.0
-    const whiteExposure = rgbToExposure(255, 255, 255);
+    // 3. Pure white (1.0,1.0,1.0) should give high exposure near (but not at) 1.0
+    const whiteExposure = rgbToExposureFloat(1.0, 1.0, 1.0);
     expect(whiteExposure).toBeGreaterThan(0.65);
     expect(whiteExposure).toBeLessThan(0.7);
     
     // 4. Exposure should increase monotonically with brightness
     // Use values in order: black < mid-gray < slightly-brighter-gray < light-gray < white
-    const slightlyBrighterGrayExposure = rgbToExposure(64, 64, 64);
-    const lightGrayExposure = rgbToExposure(192, 192, 192);
+    const slightlyBrighterGrayExposure = rgbToExposureFloat(0.25, 0.25, 0.25); // 64/255 ≈ 0.25
+    const lightGrayExposure = rgbToExposureFloat(0.75, 0.75, 0.75); // 192/255 ≈ 0.75
     
     expect(blackExposure).toBeLessThan(middleGrayExposure);
     expect(middleGrayExposure).toBeLessThan(slightlyBrighterGrayExposure);
@@ -36,22 +35,22 @@ describe('Exposure Conversion', () => {
     // Test edge cases without crashing:
     
     // Pure black should not crash due to log(0)
-    expect(() => rgbToExposure(0, 0, 0)).not.toThrow();
+    expect(() => rgbToExposureFloat(0, 0, 0)).not.toThrow();
     
     // Pure white should not exceed bounds
-    const whiteExposure = rgbToExposure(255, 255, 255);
+    const whiteExposure = rgbToExposureFloat(1.0, 1.0, 1.0);
     expect(whiteExposure).toBeLessThanOrEqual(1.0);
     expect(whiteExposure).toBeGreaterThanOrEqual(0.0);
     
     // Single channel extremes should work
-    expect(() => rgbToExposure(255, 0, 0)).not.toThrow();
-    expect(() => rgbToExposure(0, 255, 0)).not.toThrow();
-    expect(() => rgbToExposure(0, 0, 255)).not.toThrow();
+    expect(() => rgbToExposureFloat(1.0, 0, 0)).not.toThrow();
+    expect(() => rgbToExposureFloat(0, 1.0, 0)).not.toThrow();
+    expect(() => rgbToExposureFloat(0, 0, 1.0)).not.toThrow();
     
     // All results should be in [0, 1] range
-    const redExposure = rgbToExposure(255, 0, 0);
-    const greenExposure = rgbToExposure(0, 255, 0);
-    const blueExposure = rgbToExposure(0, 0, 255);
+    const redExposure = rgbToExposureFloat(1.0, 0, 0);
+    const greenExposure = rgbToExposureFloat(0, 1.0, 0);
+    const blueExposure = rgbToExposureFloat(0, 0, 1.0);
     
     [redExposure, greenExposure, blueExposure].forEach(exposure => {
       expect(exposure).toBeGreaterThanOrEqual(0);
@@ -64,9 +63,9 @@ describe('Exposure Conversion', () => {
     // Red: 0.2126, Green: 0.7152, Blue: 0.0722
     // This means pure green should have highest exposure, then red, then blue
     
-    const redExposure = rgbToExposure(255, 0, 0);
-    const greenExposure = rgbToExposure(0, 255, 0);
-    const blueExposure = rgbToExposure(0, 0, 255);
+    const redExposure = rgbToExposureFloat(1.0, 0, 0);
+    const greenExposure = rgbToExposureFloat(0, 1.0, 0);
+    const blueExposure = rgbToExposureFloat(0, 0, 1.0);
     
     // Green should have highest exposure due to highest weight (0.7152)
     expect(greenExposure).toBeGreaterThan(redExposure);
@@ -76,9 +75,9 @@ describe('Exposure Conversion', () => {
     expect(redExposure).toBeGreaterThan(blueExposure);
     
     // Verify the weights work correctly for smaller values too
-    const smallRed = rgbToExposure(50, 0, 0);
-    const smallGreen = rgbToExposure(0, 50, 0);
-    const smallBlue = rgbToExposure(0, 0, 50);
+    const smallRed = rgbToExposureFloat(0.2, 0, 0); // 50/255 ≈ 0.2
+    const smallGreen = rgbToExposureFloat(0, 0.2, 0);
+    const smallBlue = rgbToExposureFloat(0, 0, 0.2);
     
     // Same ordering should hold for smaller values
     expect(smallGreen).toBeGreaterThan(smallRed);
@@ -91,17 +90,17 @@ describe('Exposure Conversion', () => {
 
   it('should produce consistent logarithmic scaling', () => {
     // Test that doubling brightness doesn't double exposure (due to log scale)
-    const lowExposure = rgbToExposure(32, 32, 32);
-    const highExposure = rgbToExposure(64, 64, 64);
+    const lowExposure = rgbToExposureFloat(0.125, 0.125, 0.125); // 32/255 ≈ 0.125
+    const highExposure = rgbToExposureFloat(0.25, 0.25, 0.25); // 64/255 ≈ 0.25
     
     // Doubling RGB shouldn't double exposure in log scale
     expect(highExposure).toBeLessThan(lowExposure * 2);
     expect(highExposure).toBeGreaterThan(lowExposure);
     
     // Test stops progression (photographic concept)
-    const stop1 = rgbToExposure(46, 46, 46); // ~18% gray
-    const stop2 = rgbToExposure(92, 92, 92); // ~36% gray (1 stop higher)
-    const stop3 = rgbToExposure(184, 184, 184); // ~72% gray (2 stops higher)
+    const stop1 = rgbToExposureFloat(0.18, 0.18, 0.18); // 18% gray
+    const stop2 = rgbToExposureFloat(0.36, 0.36, 0.36); // 36% gray (1 stop higher)
+    const stop3 = rgbToExposureFloat(0.72, 0.72, 0.72); // 72% gray (2 stops higher)
     
     // Each stop should increase exposure, but not linearly
     expect(stop2).toBeGreaterThan(stop1);

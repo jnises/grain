@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
-import { rgbToExposure } from '../src/grain-math';
+import { rgbToExposureFloat } from '../src/grain-math';
 
 // Simple mock image data structure (avoiding DOM ImageData)
 interface MockImageData {
@@ -78,10 +78,10 @@ async function testGrainExposureVariability(
     if (x >= 0 && x < width && y >= 0 && y < height) {
       // Point sampling: single pixel at grain center
       const pointIndex = (y * width + x) * 4;
-      const pointExposure = rgbToExposure(
-        imageData.data[pointIndex],
-        imageData.data[pointIndex + 1],
-        imageData.data[pointIndex + 2]
+      const pointExposure = rgbToExposureFloat(
+        imageData.data[pointIndex] / 255,
+        imageData.data[pointIndex + 1] / 255,
+        imageData.data[pointIndex + 2] / 255
       );
       pointSamplingResults.push(pointExposure);
       
@@ -103,10 +103,10 @@ async function testGrainExposureVariability(
         
         if (sampleX >= 0 && sampleX < width && sampleY >= 0 && sampleY < height) {
           const sampleIndex = (sampleY * width + sampleX) * 4;
-          const sampleExposure = rgbToExposure(
-            imageData.data[sampleIndex],
-            imageData.data[sampleIndex + 1],
-            imageData.data[sampleIndex + 2]
+          const sampleExposure = rgbToExposureFloat(
+            imageData.data[sampleIndex] / 255,
+            imageData.data[sampleIndex + 1] / 255,
+            imageData.data[sampleIndex + 2] / 255
           );
           totalExposure += sampleExposure;
           validSamples++;
