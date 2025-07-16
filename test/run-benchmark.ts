@@ -11,5 +11,5 @@ runPerformanceBenchmarks()
   })
   .catch((error: Error) => {
     console.error('\n❌ Error running performance benchmarks:', error);
-    process.exit(1);
+    throw error;
   });
