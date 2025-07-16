@@ -22,7 +22,6 @@ function createMockImageData(width: number, height: number, fillValue = 128): Im
 
 describe('Phase 4: Two-Phase Grain Processing Verification', () => {
   let grainSettings: GrainSettings;
-  let processor: GrainProcessor;
   
   beforeEach(() => {
     grainSettings = {
@@ -31,7 +30,6 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
       grainIntensity: 1.0,
       upscaleFactor: 1.0
     };
-    processor = new GrainProcessor(100, 100, grainSettings);
   });
 
   describe('Grain Intrinsic Properties (Position Independence)', () => {
@@ -97,6 +95,9 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
     });
 
     it('should apply grain effects based on local pixel values', async () => {
+      // Create a processor with matching dimensions for the test image
+      const testProcessor = new GrainProcessor(10, 10, grainSettings);
+      
       // Create simple gradient image
       const imageData = createMockImageData(10, 10, 0);
       
@@ -112,7 +113,7 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
         }
       }
       
-      const result = await processor.processImage(imageData);
+      const result = await testProcessor.processImage(imageData);
       
       // The result should be different from input
       let pixelsChanged = 0;
@@ -131,10 +132,12 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
 
   describe('Performance Characteristics', () => {
     it('should process images within reasonable time', async () => {
+      // Create a processor with matching dimensions for the test image
+      const testProcessor = new GrainProcessor(50, 50, grainSettings);
       const imageData = createMockImageData(50, 50, 128);
       
       const startTime = performance.now();
-      const result = await processor.processImage(imageData);
+      const result = await testProcessor.processImage(imageData);
       const endTime = performance.now();
       
       const processingTime = endTime - startTime;
@@ -145,17 +148,20 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
     });
 
     it('should scale reasonably with image size', async () => {
+      const smallProcessor = new GrainProcessor(25, 25, grainSettings);
+      const largeProcessor = new GrainProcessor(50, 50, grainSettings);
+      
       const smallImage = createMockImageData(25, 25, 128);
       const largeImage = createMockImageData(50, 50, 128);
       
       // Process small image
       const startSmall = performance.now();
-      await processor.processImage(smallImage);
+      await smallProcessor.processImage(smallImage);
       const smallTime = performance.now() - startSmall;
       
       // Process larger image
       const startLarge = performance.now();
-      await processor.processImage(largeImage);
+      await largeProcessor.processImage(largeImage);
       const largeTime = performance.now() - startLarge;
       
       // Larger image should take more time, but not excessively more

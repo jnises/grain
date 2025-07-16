@@ -684,6 +684,18 @@ export class GrainProcessor {
 
   // Apply grain to image
   public async processImage(imageData: ImageData): Promise<ImageData> {
+    // Assert that the incoming image dimensions match the processor dimensions
+    assert(
+      imageData.width === this.width && imageData.height === this.height,
+      'Image dimensions must match processor dimensions',
+      {
+        expectedWidth: this.width,
+        expectedHeight: this.height,
+        actualWidth: imageData.width,
+        actualHeight: imageData.height
+      }
+    );
+
     // Convert input to floating-point for precision preservation
     const floatData = this.convertToFloatingPoint(imageData.data);
     
