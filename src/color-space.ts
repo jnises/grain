@@ -4,6 +4,26 @@
 import type { LabColor } from './types';
 import { assertInRange, assert } from './utils';
 
+/**
+ * Convert sRGB gamma-encoded value to linear RGB
+ * Pure function for gamma correction
+ */
+export function srgbToLinear(value: number): number {
+  return value <= RGB_GAMMA_THRESHOLD 
+    ? value / RGB_GAMMA_LINEAR_DIVISOR
+    : Math.pow((value + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER, RGB_GAMMA_POWER);
+}
+
+/**
+ * Convert linear RGB value to sRGB gamma-encoded
+ * Pure function for gamma encoding
+ */
+export function linearToSrgb(value: number): number {
+  return value <= 0.0031308 
+    ? value * RGB_GAMMA_LINEAR_DIVISOR
+    : RGB_GAMMA_MULTIPLIER * Math.pow(value, 1.0 / RGB_GAMMA_POWER) - RGB_GAMMA_OFFSET;
+}
+
 // Color space conversion constants
 const RGB_MAX_VALUE = 255;
 const RGB_GAMMA_THRESHOLD = 0.04045;

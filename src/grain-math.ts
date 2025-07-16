@@ -3,6 +3,7 @@
 
 import type { GrainDensity } from './types';
 import { SEEDED_RANDOM_MULTIPLIER, EXPOSURE_CONVERSION } from './constants';
+import { srgbToLinear, linearToSrgb } from './color-space';
 import { assertInRange, assert } from './utils';
 
 /**
@@ -34,32 +35,62 @@ export function calculateSampleWeight(distance: number, grainRadius: number, gra
 }
 
 /**
- * Convert Uint8ClampedArray to floating-point values (0.0-1.0 range)
- * for precision preservation during processing
+ * Convert Uint8ClampedArray from sRGB to linear floating-point values (0.0-1.0 range)
+ * Applies gamma correction to convert from sRGB to linear space for physically correct processing
  */
-export function convertToFloatingPoint(uint8Data: Uint8ClampedArray): Float32Array {
+export function convertSrgbToLinearFloat(uint8Data: Uint8ClampedArray): Float32Array {
   const floatData = new Float32Array(uint8Data.length);
   for (let i = 0; i < uint8Data.length; i++) {
-    floatData[i] = uint8Data[i] / 255.0;
+    if (i % 4 === 3) {
+      // Alpha channel doesn't need gamma correction
+      floatData[i] = uint8Data[i] / 255.0;
+    } else {
+      // RGB channels: convert to linear space
+      const srgbValue = uint8Data[i] / 255.0;
+      floatData[i] = srgbToLinear(srgbValue);
+    }
   }
   return floatData;
 }
 
 /**
- * Convert floating-point values back to Uint8ClampedArray
- * with optional brightness correction to preserve overall image brightness
+ * Apply brightness scaling to linear RGB values
+ * Scales RGB channels while preserving alpha channel
  */
-export function convertToUint8(floatData: Float32Array, brightnessFactor: number = 1.0): Uint8ClampedArray {
+export function applyBrightnessScaling(floatData: Float32Array, brightnessFactor: number): Float32Array {
+  const scaledData = new Float32Array(floatData.length);
+  for (let i = 0; i < floatData.length; i++) {
+    if (i % 4 === 3) {
+      // Alpha channel - no scaling
+      scaledData[i] = floatData[i];
+    } else {
+      // RGB channels - apply brightness scaling
+      scaledData[i] = floatData[i] * brightnessFactor;
+    }
+  }
+  return scaledData;
+}
+
+/**
+ * Convert linear floating-point values back to sRGB Uint8ClampedArray
+ * Applies gamma encoding to convert from linear space back to sRGB
+ */
+export function convertLinearFloatToSrgb(floatData: Float32Array): Uint8ClampedArray {
   const uint8Data = new Uint8ClampedArray(floatData.length);
   for (let i = 0; i < floatData.length; i++) {
-    // Apply brightness correction to RGB channels only (skip alpha)
-    let value = floatData[i];
-    if (i % 4 !== 3) {
-      value = value * brightnessFactor;
-    }
+    const value = floatData[i];
     
-    // Clamp to valid range and convert to 8-bit
-    uint8Data[i] = Math.round(Math.max(0, Math.min(255, value * 255)));
+    if (i % 4 === 3) {
+      // Alpha channel doesn't need gamma correction
+      uint8Data[i] = Math.round(Math.max(0, Math.min(255, value * 255)));
+    } else {
+      // RGB channels: clamp to valid linear range, then gamma encode
+      const clampedValue = Math.max(0, Math.min(1, value));
+      
+      // Convert from linear to sRGB and then to 8-bit
+      const srgbValue = linearToSrgb(clampedValue);
+      uint8Data[i] = Math.round(Math.max(0, Math.min(255, srgbValue * 255)));
+    }
   }
   return uint8Data;
 }
@@ -67,13 +98,14 @@ export function convertToUint8(floatData: Float32Array, brightnessFactor: number
 /**
  * Calculate average brightness ratio between original and processed image
  * for brightness preservation using perceptually accurate luminance calculation
+ * Operates on linear RGB values for physically correct brightness calculation
  */
 export function calculateBrightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
   let originalSum = 0;
   let processedSum = 0;
 
   // Calculate average brightness for RGB channels only (skip alpha)
-  // Using ITU-R BT.709 luminance weights which are perceptually accurate for sRGB
+  // Using ITU-R BT.709 luminance weights applied to linear RGB values
   for (let i = 0; i < originalData.length; i += 4) {
     const originalLuminance = originalData[i] * 0.2126 + originalData[i + 1] * 0.7152 + originalData[i + 2] * 0.0722;
     const processedLuminance = processedData[i] * 0.2126 + processedData[i + 1] * 0.7152 + processedData[i + 2] * 0.0722;
@@ -100,7 +132,8 @@ export function calculateBrightnessFactor(originalData: Float32Array, processedD
   const brightnessFactor = avgOriginalBrightness / avgProcessedBrightness;
   
   // Clamp to reasonable range to avoid extreme corrections
-  return Math.max(0.1, Math.min(10.0, brightnessFactor));
+  // In linear space, corrections can be more extreme than in gamma space
+  return Math.max(0.01, Math.min(100.0, brightnessFactor));
 }
 
 /**
@@ -137,10 +170,10 @@ export function calculateChromaticAberration(normalizedDistance: number): { red:
 }
 
 /**
- * Convert floating-point RGB to photographic exposure
- * Same logic as rgbToExposure but operates on floating-point values (0.0-1.0)
+ * Convert linear RGB to photographic exposure
+ * Operates on linear RGB values (0.0-1.0) for physically correct exposure calculation
  * 
- * NOTE: With valid inputs [0,1], the mathematical operations cannot produce NaN or Infinity:
+ * NOTE: With valid linear inputs [0,1], the mathematical operations cannot produce NaN or Infinity:
  * - Luminance calculation is a simple weighted sum
  * - safeLuminance includes offset to prevent log(0)
  * - All subsequent operations are safe linear/logarithmic transformations
@@ -153,6 +186,7 @@ export function rgbToExposureFloat(r: number, g: number, b: number): number {
   assertInRange(b, 0, 1, 'b');
   
   // Calculate weighted luminance using photographic weights
+  // Note: Input values are already in linear space, so this is physically correct
   const luminance = 
     r * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
     g * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +

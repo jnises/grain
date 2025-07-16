@@ -7,8 +7,9 @@ import { PerformanceTracker } from './performance-tracker';
 import { KernelGenerator, sampleGrainAreaExposure } from './grain-sampling';
 import { GrainDensityCalculator } from './grain-density';
 import { 
-  convertToFloatingPoint, 
-  convertToUint8, 
+  convertSrgbToLinearFloat, 
+  convertLinearFloatToSrgb,
+  applyBrightnessScaling,
   calculateBrightnessFactor,
   applyBeerLambertCompositingFloat,
   calculateChromaticAberration
@@ -144,8 +145,8 @@ export class GrainProcessor {
       }
     );
 
-    // Convert input to floating-point for precision preservation
-    const floatData = convertToFloatingPoint(imageData.data);
+    // Convert input to linear floating-point for precision preservation and gamma correctness
+    const floatData = convertSrgbToLinearFloat(imageData.data);
     
     // Create floating-point result buffer
     const resultFloatData = new Float32Array(floatData.length);
@@ -322,11 +323,15 @@ export class GrainProcessor {
     this.performanceTracker.endBenchmark('Pixel Processing');
     
     // Calculate brightness correction factor to preserve overall image brightness
+    // Now operates on linear RGB values for physically correct brightness calculation
     const brightnessFactor = calculateBrightnessFactor(floatData, resultFloatData);
     console.log(`Brightness correction factor: ${brightnessFactor.toFixed(4)}`);
     
-    // Convert back to Uint8ClampedArray with brightness correction
-    const finalData = convertToUint8(resultFloatData, brightnessFactor);
+    // Apply brightness scaling in linear space
+    const brightnessAdjustedData = applyBrightnessScaling(resultFloatData, brightnessFactor);
+    
+    // Convert back to Uint8ClampedArray with gamma encoding
+    const finalData = convertLinearFloatToSrgb(brightnessAdjustedData);
     
     // Create ImageData result - handle both browser and Node.js environments
     const result = typeof ImageData !== 'undefined' 
