@@ -5,6 +5,17 @@
 - [x] Make sure we work with colors in linear space as much as possible. Convert from/to gamma on input/output.
   **COMPLETED**: All color processing, grain compositing, and exposure calculations are performed in linear RGB space. Input is converted from sRGB to linear at the start, and output is converted back to sRGB at the end. All relevant tests pass, confirming correct implementation.
 - [ ] Go through the code and apply the rules around constants from the instructions
+    - [ ] src/color-space.ts: Apply rules around constants
+    - [ ] src/grain-density.ts: Apply rules around constants
+    - [ ] src/constants.ts: Apply rules around constants
+    - [ ] src/grain-generator.ts: Apply rules around constants
+    - [ ] src/utils.ts: Apply rules around constants
+    - [ ] src/noise.ts: Apply rules around constants
+    - [ ] src/grain-worker.ts: Apply rules around constants
+    - [ ] src/grain-math.ts: Apply rules around constants
+    - [ ] src/grain-sampling.ts: Apply rules around constants
+    - [ ] src/performance-tracker.ts: Apply rules around constants
+    - [ ] src/grain-worker-manager.ts: Apply rules around constants
 - [ ] Go through the code and apply the rules around asserts from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
 - [ ] Use "lightness" rather than "brightness" in the processing pipeline

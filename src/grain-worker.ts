@@ -189,7 +189,10 @@ export class GrainProcessor {
       const grains = grainStructure as GrainPoint[];
       maxGrainSize = Math.max(...grains.map(g => g.size));
     }
-    const gridSize = Math.max(8, Math.floor(maxGrainSize * 2));
+    // Constants for grid size calculation
+    const MIN_GRID_SIZE = 8;
+    const GRID_SIZE_FACTOR = 2;
+    const gridSize = Math.max(MIN_GRID_SIZE, Math.floor(maxGrainSize * GRID_SIZE_FACTOR));
     
     // Step 4: Process each pixel
     safePostMessage({ type: 'progress', progress: 30, stage: 'Processing pixels...' } as ProgressMessage);
@@ -237,8 +240,10 @@ export class GrainProcessor {
         // Process nearby grains directly (already filtered by spatial grid)
         for (const grain of nearbyGrains) {
           const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
-          
-          if (distance < grain.size * 2) {
+
+          // Constant for grain influence radius
+          const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
+          if (distance < grain.size * GRAIN_INFLUENCE_RADIUS_FACTOR) {
             const weight = Math.exp(-distance / grain.size);
             
             // Use pre-calculated intrinsic grain density
@@ -401,16 +406,22 @@ export class GrainProcessor {
    */
   private calculateTemperatureShift(grain: GrainPoint, normalizedDistance: number): { red: number; green: number; blue: number } {
     // Use grain's shape and sensitivity properties to create per-grain color variation
-    const grainVariation = grain.shape * grain.sensitivity * 0.01; // Small variation factor
-    
+    // Constants for temperature shift
+    const VARIATION_FACTOR = 0.01;
+    const RED_TEMP_SHIFT = 0.02;
+    const GREEN_TEMP_SHIFT = 0.005;
+    const BLUE_TEMP_SHIFT = 0.015;
+
+    const grainVariation = grain.shape * grain.sensitivity * VARIATION_FACTOR; // Small variation factor
+
     // Simulate warmer center, cooler edges (typical of film grain)
     const distanceFactor = 1 - normalizedDistance;
     const temperatureIntensity = grainVariation * distanceFactor;
-    
+
     return {
-      red: temperatureIntensity * 0.02,    // Warmer tones toward grain center
-      green: temperatureIntensity * 0.005, // Slight green adjustment
-      blue: -temperatureIntensity * 0.015  // Cooler at edges
+      red: temperatureIntensity * RED_TEMP_SHIFT,    // Warmer tones toward grain center
+      green: temperatureIntensity * GREEN_TEMP_SHIFT, // Slight green adjustment
+      blue: -temperatureIntensity * BLUE_TEMP_SHIFT  // Cooler at edges
     };
   }
 

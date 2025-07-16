@@ -20,18 +20,23 @@ export function seededRandom(seed: number): number {
  * Pure function for calculating sample weights based on distance and grain properties
  */
 export function calculateSampleWeight(distance: number, grainRadius: number, grainShape: number): number {
+  // Constants for sample weight calculation
+  const GAUSSIAN_SIGMA_FACTOR = 0.7; // Controls spread of Gaussian based on grain radius
+  const SHAPE_INFLUENCE_BASE = 0.5;  // Minimum shape influence
+  const SHAPE_INFLUENCE_RANGE = 0.5; // Range for shape influence (0.5 to 1.0)
+  const MIN_SAMPLE_WEIGHT = 0.05;     // Minimum weight for edge samples
+
   // Base Gaussian weighting
-  const gaussianSigma = grainRadius * 0.7; // Adjust spread based on grain radius
+  const gaussianSigma = grainRadius * GAUSSIAN_SIGMA_FACTOR;
   const gaussianWeight = Math.exp(-(distance * distance) / (2 * gaussianSigma * gaussianSigma));
-  
+
   // Shape-aware weight modification
   // More angular grains (higher shape values) have sharper falloff
-  const shapeInfluence = 0.5 + grainShape * 0.5; // Range: 0.5 to 1.0
+  const shapeInfluence = SHAPE_INFLUENCE_BASE + grainShape * SHAPE_INFLUENCE_RANGE; // Range: 0.5 to 1.0
   const shapedWeight = Math.pow(gaussianWeight, shapeInfluence);
-  
+
   // Ensure minimum weight for edge samples
-  const minWeight = 0.05;
-  return Math.max(shapedWeight, minWeight);
+  return Math.max(shapedWeight, MIN_SAMPLE_WEIGHT);
 }
 
 /**
@@ -107,8 +112,12 @@ export function calculateBrightnessFactor(originalData: Float32Array, processedD
   // Calculate average brightness for RGB channels only (skip alpha)
   // Using ITU-R BT.709 luminance weights applied to linear RGB values
   for (let i = 0; i < originalData.length; i += 4) {
-    const originalLuminance = originalData[i] * 0.2126 + originalData[i + 1] * 0.7152 + originalData[i + 2] * 0.0722;
-    const processedLuminance = processedData[i] * 0.2126 + processedData[i + 1] * 0.7152 + processedData[i + 2] * 0.0722;
+    // ITU-R BT.709 luminance weights
+    const LUMA_R = 0.2126;
+    const LUMA_G = 0.7152;
+    const LUMA_B = 0.0722;
+    const originalLuminance = originalData[i] * LUMA_R + originalData[i + 1] * LUMA_G + originalData[i + 2] * LUMA_B;
+    const processedLuminance = processedData[i] * LUMA_R + processedData[i + 1] * LUMA_G + processedData[i + 2] * LUMA_B;
     
     originalSum += originalLuminance;
     processedSum += processedLuminance;
@@ -120,20 +129,25 @@ export function calculateBrightnessFactor(originalData: Float32Array, processedD
 
   // Special case: if original image is very dark (near black), don't amplify
   // grain effects - they should remain minimal
-  if (avgOriginalBrightness < 0.01) {
-    return Math.min(1.0, avgOriginalBrightness / Math.max(avgProcessedBrightness, 0.001));
+  const DARK_THRESHOLD = 0.01;
+  const PROCESSED_MIN = 0.001;
+  const BRIGHTNESS_FACTOR_MIN = 0.01;
+  const BRIGHTNESS_FACTOR_MAX = 100.0;
+
+  if (avgOriginalBrightness < DARK_THRESHOLD) {
+    return Math.min(1.0, avgOriginalBrightness / Math.max(avgProcessedBrightness, PROCESSED_MIN));
   }
 
   // Avoid division by zero and ensure reasonable bounds
-  if (avgProcessedBrightness < 0.001) {
+  if (avgProcessedBrightness < PROCESSED_MIN) {
     return 1.0; // Keep original brightness if processed is nearly black
   }
 
   const brightnessFactor = avgOriginalBrightness / avgProcessedBrightness;
-  
+
   // Clamp to reasonable range to avoid extreme corrections
   // In linear space, corrections can be more extreme than in gamma space
-  return Math.max(0.01, Math.min(100.0, brightnessFactor));
+  return Math.max(BRIGHTNESS_FACTOR_MIN, Math.min(BRIGHTNESS_FACTOR_MAX, brightnessFactor));
 }
 
 /**
@@ -159,13 +173,18 @@ export function applyBeerLambertCompositingFloat(grainDensity: GrainDensity): [n
  * Simulates slight color separation based on distance from grain center
  */
 export function calculateChromaticAberration(normalizedDistance: number): { red: number; green: number; blue: number } {
+  // Constants for chromatic aberration
+  const ABERRATION_STRENGTH_FACTOR = 0.02; // Controls overall strength
+  const RED_SHIFT_FACTOR = 0.5;
+  const BLUE_SHIFT_FACTOR = 0.3;
+
   // Chromatic aberration is strongest at edges
-  const aberrationStrength = normalizedDistance * 0.02; // Very subtle effect
-  
+  const aberrationStrength = normalizedDistance * ABERRATION_STRENGTH_FACTOR;
+
   return {
-    red: 1 + aberrationStrength * 0.5,   // Red slightly displaced outward
-    green: 1,                             // Green remains centered (reference)
-    blue: 1 - aberrationStrength * 0.3   // Blue slightly displaced inward
+    red: 1 + aberrationStrength * RED_SHIFT_FACTOR,   // Red slightly displaced outward
+    green: 1,                                         // Green remains centered (reference)
+    blue: 1 - aberrationStrength * BLUE_SHIFT_FACTOR   // Blue slightly displaced inward
   };
 }
 
