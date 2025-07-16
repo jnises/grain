@@ -3,37 +3,7 @@
 
 
 // --- Grain Density Calculation Constants ---
-// Random seed factors for grain sensitivity variation
-const GRAIN_RANDOM_SEED_X = 12345;
-const GRAIN_RANDOM_SEED_Y = 67890;
-const GRAIN_RANDOM_SEED_MOD = 1000000;
-// Range for random sensitivity: [-0.15, +0.15]
-const GRAIN_RANDOM_SENSITIVITY_RANGE = 0.3;
-const GRAIN_RANDOM_SENSITIVITY_OFFSET = 0.15;
-// Sigmoid steepness for grain activation
-const GRAIN_SIGMOID_STEEPNESS = 8.0;
-// Shape modifier range
-const GRAIN_SHAPE_MODIFIER_BASE = 0.8;
-const GRAIN_SHAPE_MODIFIER_SCALE = 0.4;
-// Film response multiplier for visibility
-const FILM_RESPONSE_VISIBILITY_MULTIPLIER = 1.2;
-// Grain influence radius multiplier
-const GRAIN_FALLOFF_RADIUS_MULTIPLIER = 2;
-// Noise scales and weights
-const NOISE_SCALE_FINE = 0.15;
-const NOISE_SCALE_MEDIUM = 0.08;
-const NOISE_SCALE_COARSE = 0.03;
-const NOISE_WEIGHT_FINE = 0.3;
-const NOISE_WEIGHT_MEDIUM = 0.2;
-const NOISE_WEIGHT_COARSE = 0.1;
-// Noise modulation
-const NOISE_MODULATION_BASE = 0.7;
-const NOISE_MODULATION_SCALE = 0.3;
-// Elliptical ratio base and scale
-const ELLIPTICAL_RATIO_BASE = 0.7;
-const ELLIPTICAL_RATIO_SCALE = 0.3;
-// Orientation angle scale
-const ORIENTATION_ANGLE_SCALE = 0.1;
+// Only truly shared constants should remain here. Function-specific and single-use constants are moved into their respective functions.
 
 import { FILM_CHARACTERISTICS } from './constants';
 import { noise } from './noise';
@@ -125,6 +95,16 @@ export class GrainDensityCalculator {
    * This method computes grain-specific properties that don't depend on pixel position
    */
   private calculateIntrinsicGrainDensity(exposure: number, grain: GrainPoint): number {
+    // Function-specific constants
+    const GRAIN_RANDOM_SEED_X = 12345;
+    const GRAIN_RANDOM_SEED_Y = 67890;
+    const GRAIN_RANDOM_SEED_MOD = 1000000;
+    const GRAIN_RANDOM_SENSITIVITY_RANGE = 0.3;
+    const GRAIN_RANDOM_SENSITIVITY_OFFSET = 0.15;
+    const GRAIN_SIGMOID_STEEPNESS = 8.0;
+    const GRAIN_SHAPE_MODIFIER_BASE = 0.8;
+    const GRAIN_SHAPE_MODIFIER_SCALE = 0.4;
+    const FILM_RESPONSE_VISIBILITY_MULTIPLIER = 1.2;
     // Validate exposure input
     if (!Number.isFinite(exposure)) {
       console.warn(`Invalid exposure value: ${exposure}, defaulting to 0`);
@@ -184,6 +164,16 @@ export class GrainDensityCalculator {
    * This method computes position-dependent visual effects that vary by pixel location
    */
   calculatePixelGrainEffect(intrinsicDensity: number, grain: GrainPoint, pixelX: number, pixelY: number): number {
+    // Function-specific constants
+    const GRAIN_FALLOFF_RADIUS_MULTIPLIER = 2;
+    const NOISE_SCALE_FINE = 0.15;
+    const NOISE_SCALE_MEDIUM = 0.08;
+    const NOISE_SCALE_COARSE = 0.03;
+    const NOISE_WEIGHT_FINE = 0.3;
+    const NOISE_WEIGHT_MEDIUM = 0.2;
+    const NOISE_WEIGHT_COARSE = 0.1;
+    const NOISE_MODULATION_BASE = 0.7;
+    const NOISE_MODULATION_SCALE = 0.3;
     // If grain not activated, return 0
     if (intrinsicDensity === 0) {
       return 0;
@@ -223,6 +213,10 @@ export class GrainDensityCalculator {
    * Calculate elliptical distortion for grain shape effects
    */
   private calculateEllipticalDistortion(grain: GrainPoint, angle: number): number {
+    // Function-specific constants
+    const ELLIPTICAL_RATIO_BASE = 0.7;
+    const ELLIPTICAL_RATIO_SCALE = 0.3;
+    const ORIENTATION_ANGLE_SCALE = 0.1;
     // Elliptical grain shape with angle-dependent distortion
     const ellipticalRatio = ELLIPTICAL_RATIO_BASE + grain.shape * ELLIPTICAL_RATIO_SCALE; // Varies from 0.7 to 1.0 based on grain shape
     const orientationAngle = (grain.x + grain.y) * ORIENTATION_ANGLE_SCALE; // Grain orientation based on position
