@@ -13,12 +13,23 @@
 - [x] rgbToExposureFloat handles nans and infs silently. could either of those occur for valid input? should it be silent?
   **ANALYSIS COMPLETED**: Investigated the mathematical operations in `rgbToExposureFloat` and determined that with valid inputs (0-1 range), NaN and Infinity cannot occur from the mathematical operations. The function properly validates inputs using assertions that catch NaN/Infinity and throw errors (not silent). Changed the silent `Number.isFinite(result) ? result : 0` fallback to an explicit assertion with detailed context for debugging. The function now fails fast and loudly if somehow a non-finite result is produced, following the error handling guidelines.
 - [ ] grain-worker.ts is getting quite long. should it be split up into multiple files?
+  **ANALYSIS**: The file is 1113 lines long and contains several distinct responsibilities that could be separated for better maintainability and testability.
+  **SUBTASKS**:
+  - [x] Extract performance tracking utilities to `src/performance-tracker.ts`
+    **COMPLETED**: Successfully extracted `PerformanceBenchmark` interface and `PerformanceTracker` class to a dedicated module. Updated imports in `grain-worker.ts` and verified all tests pass. The new module provides clean separation of performance tracking concerns.
+  - [x] Extract sampling kernel generation to `src/grain-sampling.ts`
+    **COMPLETED**: Successfully extracted `SamplePoint` and `SamplingKernel` interfaces, `KernelGenerator` class, and `sampleGrainAreaExposure` function to a dedicated module. The grain worker now uses the external kernel generator, maintaining clean separation of concerns while preserving all functionality. All tests pass.
+  - [ ] Extract color space conversions and utility functions to appropriate modules
+  - [ ] Split `GrainProcessor` class into smaller, focused classes (e.g., grain generation, grain effects calculation, image processing pipeline)
+  - [ ] Keep only the main orchestration logic and worker message handling in `grain-worker.ts`
+  - [ ] Update imports and exports across affected files
+  - [ ] Ensure all tests still pass after refactoring
 - [ ] Looks like the brightnessFactor compensation is applied in gamma space. Is that physically plausible? The brightness compensation should be applied as if adjusting the exposure when taking the photo or developing the photo copy.
 - [ ] Is the current color maths done in a gamma correct way?
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and apply the rules around asserts from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
-- [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. For example the change from multi layer to variable grain size.
+- [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. For example the change from multi layer to variable grain size. Also look at git history for what changes have been made.
 - [ ] Try to clean up processImage and related code a bit. It has been refactored a bunch and there seems to be a bunch of unnecessary remnants of old things.
 - [ ] When checking surrounding cells in processImage, are we sure a 3x3 neighborhood is large enough to fit the largest size grains?
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.

@@ -3,15 +3,15 @@
 
 import { GrainGenerator } from './grain-generator';
 import { FILM_CHARACTERISTICS } from './constants';
+import { PerformanceTracker } from './performance-tracker';
+import { KernelGenerator, sampleGrainAreaExposure } from './grain-sampling';
 import { 
   seededRandom, 
-  calculateSampleWeight, 
   convertToFloatingPoint, 
   convertToUint8, 
   calculateBrightnessFactor,
   applyBeerLambertCompositingFloat,
-  calculateChromaticAberration,
-  rgbToExposureFloat
+  calculateChromaticAberration
 } from './grain-math';
 import type {
   GrainSettings,
@@ -46,80 +46,6 @@ function safePostMessage(message: ProgressMessage | ResultMessage | ErrorMessage
 // File-level constants shared across methods
 const RGB_MAX_VALUE = 255;
 
-// Sampling kernel constants
-const KERNEL_SAMPLE_COUNT_SMALL = 4;   // For grains < 1.5px radius
-const KERNEL_SAMPLE_COUNT_MEDIUM = 8;  // For grains 1.5-4px radius  
-const KERNEL_SAMPLE_COUNT_LARGE = 16;  // For grains > 4px radius
-const KERNEL_CACHE_SIZE_LIMIT = 100;   // Maximum cached kernel patterns
-
-// Sampling kernel interfaces
-interface SamplePoint {
-  x: number;
-  y: number;
-  weight: number;
-}
-
-interface SamplingKernel {
-  points: SamplePoint[];
-  radius: number;
-  sampleCount: number;
-}
-
-// Performance benchmarking interface
-interface PerformanceBenchmark {
-  operation: string;
-  startTime: number;
-  endTime?: number;
-  duration?: number;
-  pixelsProcessed?: number;
-  pixelsPerSecond?: number;
-}
-
-// Performance tracking utility
-class PerformanceTracker {
-  private benchmarks: Map<string, PerformanceBenchmark> = new Map();
-  
-  startBenchmark(operation: string, pixelsProcessed?: number): void {
-    this.benchmarks.set(operation, {
-      operation,
-      startTime: performance.now(),
-      pixelsProcessed
-    });
-  }
-  
-  endBenchmark(operation: string): PerformanceBenchmark | null {
-    const benchmark = this.benchmarks.get(operation);
-    if (!benchmark) return null;
-    
-    benchmark.endTime = performance.now();
-    benchmark.duration = benchmark.endTime - benchmark.startTime;
-    
-    if (benchmark.pixelsProcessed) {
-      benchmark.pixelsPerSecond = benchmark.pixelsProcessed / (benchmark.duration / 1000);
-    }
-    
-    return benchmark;
-  }
-  
-  getBenchmark(operation: string): PerformanceBenchmark | null {
-    return this.benchmarks.get(operation) || null;
-  }
-  
-  getAllBenchmarks(): PerformanceBenchmark[] {
-    return Array.from(this.benchmarks.values()).filter(b => b.duration !== undefined);
-  }
-  
-  logSummary(): void {
-    console.log('\n=== Performance Benchmarks ===');
-    for (const benchmark of this.getAllBenchmarks()) {
-      console.log(`${benchmark.operation}: ${benchmark.duration?.toFixed(2)}ms`);
-      if (benchmark.pixelsPerSecond) {
-        console.log(`  - ${(benchmark.pixelsPerSecond / 1000000).toFixed(2)}M pixels/sec`);
-      }
-    }
-  }
-}
-
 // Utility functions for grain generation
 export class GrainProcessor {
   private width: number;
@@ -127,7 +53,7 @@ export class GrainProcessor {
   private settings: GrainSettings;
   private grainGenerator: GrainGenerator;
   private performanceTracker: PerformanceTracker;
-  private kernelCache: Map<string, SamplingKernel> = new Map();
+  private kernelGenerator: KernelGenerator;
 
   constructor(width: number, height: number, settings: GrainSettings) {
     // Validate input parameters with custom assertions that provide type narrowing
@@ -149,6 +75,7 @@ export class GrainProcessor {
     this.settings = settings;
     this.grainGenerator = new GrainGenerator(width, height, settings);
     this.performanceTracker = new PerformanceTracker();
+    this.kernelGenerator = new KernelGenerator();
   }
 
   // Type guard for GrainSettings
@@ -169,226 +96,6 @@ export class GrainProcessor {
   // Kernel-based grain area sampling methods
   
   /**
-   * Determines the appropriate sample count based on grain size
-   * Uses adaptive sampling: fewer points for small grains, more for large grains
-   */
-  private determineSampleCount(grainRadius: number): number {
-    if (grainRadius < 1.5) {
-      return KERNEL_SAMPLE_COUNT_SMALL;  // 4 samples for small grains
-    } else if (grainRadius < 4.0) {
-      return KERNEL_SAMPLE_COUNT_MEDIUM; // 8 samples for medium grains
-    } else {
-      return KERNEL_SAMPLE_COUNT_LARGE;  // 16 samples for large grains
-    }
-  }
-
-  /**
-   * Generates a sampling kernel for grain area sampling
-   * Uses adaptive sampling count, enhanced distribution patterns, and shape awareness
-   */
-  private generateSamplingKernel(grainRadius: number, grainShape: number = 0.5): SamplingKernel {
-    const sampleCount = this.determineSampleCount(grainRadius);
-    
-    // Create cache key based on radius and shape (rounded to 0.1 precision for caching efficiency)
-    const roundedRadius = Math.round(grainRadius * 10) / 10;
-    const roundedShape = Math.round(grainShape * 10) / 10;
-    const cacheKey = `${roundedRadius}_${roundedShape}_${sampleCount}`;
-    
-    // Check cache first
-    if (this.kernelCache.has(cacheKey)) {
-      return this.kernelCache.get(cacheKey)!;
-    }
-    
-    const points: SamplePoint[] = [];
-    
-    if (sampleCount === 1) {
-      // Single point at center for very small grains
-      points.push({ x: 0, y: 0, weight: 1.0 });
-    } else {
-      // Distribute points using enhanced shape-aware patterns
-      // Center point always included
-      points.push({ x: 0, y: 0, weight: 1.0 });
-      
-      const remainingSamples = sampleCount - 1;
-      
-      if (remainingSamples <= 6) {
-        // Single ring for small sample counts with shape-aware jittering
-        this.generateSingleRingSamples(points, remainingSamples, grainRadius, grainShape);
-      } else {
-        // Multi-ring distribution for larger sample counts
-        this.generateMultiRingSamples(points, remainingSamples, grainRadius, grainShape);
-      }
-    }
-    
-    const kernel: SamplingKernel = {
-      points,
-      radius: grainRadius,
-      sampleCount
-    };
-    
-    // Cache the kernel (with size limit)
-    if (this.kernelCache.size < KERNEL_CACHE_SIZE_LIMIT) {
-      this.kernelCache.set(cacheKey, kernel);
-    }
-    
-    return kernel;
-  }
-
-  /**
-   * Generates sample points in a single ring with shape-aware distribution
-   */
-  private generateSingleRingSamples(
-    points: SamplePoint[], 
-    sampleCount: number, 
-    grainRadius: number, 
-    grainShape: number
-  ): void {
-    const baseRadius = grainRadius * 0.7; // 70% of grain radius for good coverage
-    const angleStep = (2 * Math.PI) / sampleCount;
-    
-    for (let i = 0; i < sampleCount; i++) {
-      const baseAngle = i * angleStep;
-      
-      // Add small jitter for more organic sampling
-      const jitterMagnitude = angleStep * 0.1; // 10% of angle step
-      const jitterAngle = (Math.random() - 0.5) * jitterMagnitude;
-      const angle = baseAngle + jitterAngle;
-      
-      // Shape-aware radius modulation (elliptical distortion)
-      const shapeModulation = 1.0 + (grainShape - 0.5) * 0.3 * Math.cos(2 * angle);
-      const radius = baseRadius * shapeModulation;
-      
-      // Small radial jitter for organic variation
-      const radiusJitter = 1.0 + (Math.random() - 0.5) * 0.1; // ±5% radius variation
-      const finalRadius = radius * radiusJitter;
-      
-      const x = Math.cos(angle) * finalRadius;
-      const y = Math.sin(angle) * finalRadius;
-      const distance = Math.sqrt(x * x + y * y);
-      
-      // Enhanced weighting with shape awareness
-      const weight = calculateSampleWeight(distance, grainRadius, grainShape);
-      points.push({ x, y, weight });
-    }
-  }
-
-  /**
-   * Generates sample points in multiple rings for larger sample counts
-   */
-  private generateMultiRingSamples(
-    points: SamplePoint[], 
-    totalSamples: number, 
-    grainRadius: number, 
-    grainShape: number
-  ): void {
-    const innerSamples = Math.floor(totalSamples * 0.4);
-    const outerSamples = totalSamples - innerSamples;
-    
-    // Inner ring at 40% radius
-    const innerRadius = grainRadius * 0.4;
-    this.generateRingSamples(points, innerSamples, innerRadius, grainRadius, grainShape, 0);
-    
-    // Outer ring at 80% radius with offset
-    const outerRadius = grainRadius * 0.8;
-    const angleOffset = Math.PI / outerSamples; // Offset for better distribution
-    this.generateRingSamples(points, outerSamples, outerRadius, grainRadius, grainShape, angleOffset);
-  }
-
-  /**
-   * Generates sample points for a specific ring
-   */
-  private generateRingSamples(
-    points: SamplePoint[], 
-    sampleCount: number, 
-    baseRadius: number, 
-    grainRadius: number, 
-    grainShape: number,
-    angleOffset: number
-  ): void {
-    const angleStep = (2 * Math.PI) / sampleCount;
-    
-    for (let i = 0; i < sampleCount; i++) {
-      const baseAngle = i * angleStep + angleOffset;
-      
-      // Add jitter for organic sampling
-      const jitterMagnitude = angleStep * 0.08; // 8% of angle step for rings
-      const jitterAngle = (Math.random() - 0.5) * jitterMagnitude;
-      const angle = baseAngle + jitterAngle;
-      
-      // Shape-aware radius modulation
-      const shapeModulation = 1.0 + (grainShape - 0.5) * 0.2 * Math.cos(2 * angle);
-      const radius = baseRadius * shapeModulation;
-      
-      // Radial jitter
-      const radiusJitter = 1.0 + (Math.random() - 0.5) * 0.08; // ±4% for rings
-      const finalRadius = radius * radiusJitter;
-      
-      const x = Math.cos(angle) * finalRadius;
-      const y = Math.sin(angle) * finalRadius;
-      const distance = Math.sqrt(x * x + y * y);
-      
-      const weight = calculateSampleWeight(distance, grainRadius, grainShape);
-      points.push({ x, y, weight });
-    }
-  }
-
-  /**
-   * Samples exposure values using kernel-based area sampling instead of point sampling
-   * Averages exposure across multiple points within the grain area with shape awareness
-   */
-  private sampleGrainAreaExposure(
-    imageData: Float32Array, 
-    grainX: number, 
-    grainY: number, 
-    grainRadius: number,
-    grainShape: number = 0.5
-  ): number {
-    const kernel = this.generateSamplingKernel(grainRadius, grainShape);
-    
-    let totalExposure = 0;
-    let totalWeight = 0;
-    let validSamples = 0;
-    
-    for (const samplePoint of kernel.points) {
-      // Calculate sample position in image coordinates
-      const sampleX = Math.round(grainX + samplePoint.x);
-      const sampleY = Math.round(grainY + samplePoint.y);
-      
-      // Check bounds
-      if (sampleX >= 0 && sampleX < this.width && sampleY >= 0 && sampleY < this.height) {
-        const pixelIndex = (sampleY * this.width + sampleX) * 4;
-        const r = imageData[pixelIndex];
-        const g = imageData[pixelIndex + 1];
-        const b = imageData[pixelIndex + 2];
-        
-        const exposure = rgbToExposureFloat(r, g, b);
-        
-        totalExposure += exposure * samplePoint.weight;
-        totalWeight += samplePoint.weight;
-        validSamples++;
-      }
-    }
-    
-    // Fallback to center point if no valid samples (edge case)
-    if (validSamples === 0) {
-      const centerX = Math.round(grainX);
-      const centerY = Math.round(grainY);
-      
-      if (centerX >= 0 && centerX < this.width && centerY >= 0 && centerY < this.height) {
-        const pixelIndex = (centerY * this.width + centerX) * 4;
-        const r = imageData[pixelIndex];
-        const g = imageData[pixelIndex + 1];
-        const b = imageData[pixelIndex + 2];
-        return rgbToExposureFloat(r, g, b);
-      }
-      
-      return 0; // Default exposure for completely out-of-bounds grains
-    }
-    
-    return totalWeight > 0 ? totalExposure / totalWeight : 0;
-  }
-
-  /**
    * Calculates average exposure for all grains using kernel-based sampling
    * This replaces point sampling with area-based exposure calculation
    * Returns a Map for better functional design and testability
@@ -399,7 +106,16 @@ export class GrainProcessor {
     const exposureMap = new Map<GrainPoint, number>();
     
     for (const grain of grains) {
-      const averageExposure = this.sampleGrainAreaExposure(imageData, grain.x, grain.y, grain.size, grain.shape);
+      const averageExposure = sampleGrainAreaExposure(
+        imageData, 
+        grain.x, 
+        grain.y, 
+        grain.size, 
+        grain.shape,
+        this.width,
+        this.height,
+        this.kernelGenerator
+      );
       exposureMap.set(grain, averageExposure);
     }
     
