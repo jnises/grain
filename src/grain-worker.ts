@@ -345,7 +345,7 @@ export class GrainProcessor {
    * Averages exposure across multiple points within the grain area with shape awareness
    */
   private sampleGrainAreaExposure(
-    imageData: Uint8ClampedArray, 
+    imageData: Float32Array, 
     grainX: number, 
     grainY: number, 
     grainRadius: number,
@@ -369,7 +369,7 @@ export class GrainProcessor {
         const g = imageData[pixelIndex + 1];
         const b = imageData[pixelIndex + 2];
         
-        const exposure = this.rgbToExposure(r, g, b);
+        const exposure = this.rgbToExposureFloat(r, g, b);
         
         totalExposure += exposure * samplePoint.weight;
         totalWeight += samplePoint.weight;
@@ -387,7 +387,7 @@ export class GrainProcessor {
         const r = imageData[pixelIndex];
         const g = imageData[pixelIndex + 1];
         const b = imageData[pixelIndex + 2];
-        return this.rgbToExposure(r, g, b);
+        return this.rgbToExposureFloat(r, g, b);
       }
       
       return 0; // Default exposure for completely out-of-bounds grains
@@ -401,7 +401,7 @@ export class GrainProcessor {
    * This replaces point sampling with area-based exposure calculation
    * Returns a Map for better functional design and testability
    */
-  private calculateGrainExposures(grains: GrainPoint[], imageData: Uint8ClampedArray): Map<GrainPoint, number> {
+  private calculateGrainExposures(grains: GrainPoint[], imageData: Float32Array): Map<GrainPoint, number> {
     console.log(`Calculating kernel-based exposures for ${grains.length} grains...`);
     
     const exposureMap = new Map<GrainPoint, number>();
@@ -640,6 +640,38 @@ export class GrainProcessor {
     return Math.max(0, Math.min(1, normalizedExposure));
   }
 
+  /**
+   * Convert floating-point RGB to photographic exposure
+   * Same logic as rgbToExposure but operates on floating-point values (0.0-1.0)
+   */
+  protected rgbToExposureFloat(r: number, g: number, b: number): number {
+    // Validate inputs and clamp to valid range
+    r = Math.max(0, Math.min(1, r || 0));
+    g = Math.max(0, Math.min(1, g || 0));
+    b = Math.max(0, Math.min(1, b || 0));
+    
+    // Calculate weighted luminance using photographic weights
+    const luminance = 
+      r * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
+      g * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +
+      b * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.blue;
+
+    // Add small offset to prevent log(0) in pure black areas
+    const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;
+
+    // Convert to logarithmic exposure scale
+    const logExposure = Math.log(safeLuminance / EXPOSURE_CONVERSION.MIDDLE_GRAY_LUMINANCE) / 
+                       Math.log(EXPOSURE_CONVERSION.LOG_BASE);
+    
+    // Scale and normalize exposure to [0, 1] range
+    const normalizedExposure = (logExposure + EXPOSURE_CONVERSION.EXPOSURE_SCALE) / 
+                              (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
+
+    // Clamp to [0, 1] range and validate result
+    const result = Math.max(0, Math.min(1, normalizedExposure));
+    return Number.isFinite(result) ? result : 0;
+  }
+
   // Generate grain structure (single layer with varying sizes)
   private generateGrainStructure(): GrainPoint[] {
     return this.grainGenerator.generateGrainStructure();
@@ -652,12 +684,13 @@ export class GrainProcessor {
 
   // Apply grain to image
   public async processImage(imageData: ImageData): Promise<ImageData> {
-    const data = new Uint8ClampedArray(imageData.data);
+    // Convert input to floating-point for precision preservation
+    const floatData = this.convertToFloatingPoint(imageData.data);
     
-    // Create ImageData result - handle both browser and Node.js environments
-    const result = typeof ImageData !== 'undefined' 
-      ? new ImageData(data, this.width, this.height)
-      : { width: this.width, height: this.height, data } as ImageData;
+    // Create floating-point result buffer
+    const resultFloatData = new Float32Array(floatData.length);
+    // Copy original data as starting point
+    resultFloatData.set(floatData);
     
     const totalImagePixels = this.width * this.height;
     
@@ -679,7 +712,7 @@ export class GrainProcessor {
     // Step 3: Calculate grain exposures using kernel-based sampling
     safePostMessage({ type: 'progress', progress: 25, stage: 'Calculating kernel-based grain exposures...' } as ProgressMessage);
     this.performanceTracker.startBenchmark('Kernel Exposure Calculation');
-    const grainExposureMap = this.calculateGrainExposures(grainStructure, data);
+    const grainExposureMap = this.calculateGrainExposures(grainStructure, floatData);
     this.performanceTracker.endBenchmark('Kernel Exposure Calculation');
     
     // Step 3.5: Pre-calculate intrinsic grain densities (Phase 1)
@@ -712,7 +745,7 @@ export class GrainProcessor {
         const pixelIndex = (y * this.width + x) * 4;
         processedPixels++;
         
-        const a = data[pixelIndex + 3];
+        const a = resultFloatData[pixelIndex + 3];
         
         // Initialize grain density
         let totalGrainDensity: GrainDensity = { r: 0, g: 0, b: 0 };
@@ -804,13 +837,13 @@ export class GrainProcessor {
           
           let finalColor: [number, number, number];
           
-          // Use Beer-Lambert law compositing for physically accurate results
-          finalColor = this.applyBeerLambertCompositing(totalGrainDensity);
+          // Use Beer-Lambert law compositing for physically accurate results (floating-point)
+          finalColor = this.applyBeerLambertCompositingFloat(totalGrainDensity);
           
-          result.data[pixelIndex] = finalColor[0];
-          result.data[pixelIndex + 1] = finalColor[1];
-          result.data[pixelIndex + 2] = finalColor[2];
-          result.data[pixelIndex + 3] = a;
+          resultFloatData[pixelIndex] = finalColor[0];
+          resultFloatData[pixelIndex + 1] = finalColor[1];
+          resultFloatData[pixelIndex + 2] = finalColor[2];
+          resultFloatData[pixelIndex + 3] = a;
         }
       }
       
@@ -827,6 +860,18 @@ export class GrainProcessor {
     
     // End pixel processing benchmark
     this.performanceTracker.endBenchmark('Pixel Processing');
+    
+    // Calculate brightness correction factor to preserve overall image brightness
+    const brightnessFactor = this.calculateBrightnessFactor(floatData, resultFloatData);
+    console.log(`Brightness correction factor: ${brightnessFactor.toFixed(4)}`);
+    
+    // Convert back to Uint8ClampedArray with brightness correction
+    const finalData = this.convertToUint8(resultFloatData, brightnessFactor);
+    
+    // Create ImageData result - handle both browser and Node.js environments
+    const result = typeof ImageData !== 'undefined' 
+      ? new ImageData(finalData, this.width, this.height)
+      : { width: this.width, height: this.height, data: finalData } as ImageData;
     
     // End overall benchmark
     this.performanceTracker.endBenchmark('Total Processing');
@@ -869,9 +914,62 @@ export class GrainProcessor {
     return result;
   }
 
+  /**
+   * Convert Uint8ClampedArray to floating-point values (0.0-1.0 range)
+   * for precision preservation during processing
+   */
+  private convertToFloatingPoint(uint8Data: Uint8ClampedArray): Float32Array {
+    const floatData = new Float32Array(uint8Data.length);
+    for (let i = 0; i < uint8Data.length; i++) {
+      floatData[i] = uint8Data[i] / 255.0;
+    }
+    return floatData;
+  }
+
+  /**
+   * Convert floating-point values back to Uint8ClampedArray
+   * with optional brightness correction to preserve overall image brightness
+   */
+  private convertToUint8(floatData: Float32Array, brightnessFactor: number = 1.0): Uint8ClampedArray {
+    const uint8Data = new Uint8ClampedArray(floatData.length);
+    for (let i = 0; i < floatData.length; i++) {
+      // Apply brightness correction and clamp to valid range
+      const correctedValue = floatData[i] * brightnessFactor;
+      uint8Data[i] = Math.round(Math.max(0, Math.min(255, correctedValue * 255)));
+    }
+    return uint8Data;
+  }
+
+  /**
+   * Calculate average brightness ratio between original and processed image
+   * for brightness preservation
+   */
+  private calculateBrightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
+    let originalSum = 0;
+    let processedSum = 0;
+
+    // Calculate average brightness for RGB channels only (skip alpha)
+    for (let i = 0; i < originalData.length; i += 4) {
+      const originalBrightness = (originalData[i] + originalData[i + 1] + originalData[i + 2]) / 3;
+      const processedBrightness = (processedData[i] + processedData[i + 1] + processedData[i + 2]) / 3;
+      
+      originalSum += originalBrightness;
+      processedSum += processedBrightness;
+    }
+
+    if (processedSum === 0) return 1.0;
+    return originalSum / processedSum;
+  }
+
   // Calculate intrinsic grain density based on exposure and grain properties (Phase 1)
   // This method computes grain-specific properties that don't depend on pixel position
   private calculateIntrinsicGrainDensity(exposure: number, grain: GrainPoint): number {
+    // Validate exposure input
+    if (!Number.isFinite(exposure)) {
+      console.warn(`Invalid exposure value: ${exposure}, defaulting to 0`);
+      exposure = 0;
+    }
+    
     // Implementation of development threshold system as designed
     // Formula: grain_activation = (local_exposure + random_sensitivity) > development_threshold
     
@@ -909,6 +1007,12 @@ export class GrainProcessor {
     
     // Ensure grainDensity is within [0,1] range before applying film curve
     grainDensity = Math.max(0, Math.min(1, grainDensity));
+    
+    // Additional validation to prevent NaN
+    if (!Number.isFinite(grainDensity)) {
+      console.warn(`Invalid grainDensity: ${grainDensity}, defaulting to 0`);
+      grainDensity = 0;
+    }
     
     // Apply film characteristic curve for density response
     const filmResponse = this.filmCurve(grainDensity);
@@ -1005,6 +1109,21 @@ export class GrainProcessor {
     
     // Scale by grain intensity setting and restore density range
     return densityResponse * this.settings.grainIntensity * 0.8; // Increased multiplier for density model
+  }
+
+  // Apply Beer-Lambert law compositing for physically accurate results (floating-point version)
+  protected applyBeerLambertCompositingFloat(grainDensity: GrainDensity): [number, number, number] {
+    // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
+    // When "viewing" the film, WHITE printing light passes through the developed grains.
+    // Beer-Lambert law: final = white_light * exp(-density)
+    // This is correct physics - the original color should NOT be used here.
+    const WHITE_LIGHT = 1.0; // Floating-point white light (normalized)
+    
+    return [
+      WHITE_LIGHT * Math.exp(-grainDensity.r),
+      WHITE_LIGHT * Math.exp(-grainDensity.g),
+      WHITE_LIGHT * Math.exp(-grainDensity.b)
+    ];
   }
 
   // Apply Beer-Lambert law compositing for physically accurate results

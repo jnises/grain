@@ -1,3 +1,4 @@
+- [ ] run `npm run check` and fix the issues
 - [x] Why does applyBeerLambertCompositing take originalColor as a parameter? Shouldn't the final color only depend on the grains? The original color should have been used to calculate the grain responses, but after that why are they used?
   **ANALYSIS REVEALS CONCEPTUAL ERROR**: The current implementation incorrectly uses the input image color as both exposure light AND viewing light. Correct physics: 1) Input image determines grain density during "exposure", 2) When "viewing" the film, WHITE printing light passes through grains: `final = white_light * exp(-density)`. The current approach conflates exposure and viewing steps. We should use white light [255,255,255] for Beer-Lambert compositing to create proper film negative, then optionally invert for positive print.
   **FIXED**: Updated `applyBeerLambertCompositing()` to use white light (255) instead of original color for physically accurate film viewing simulation. The method now properly implements the two-phase process: 1) input image determines grain exposure/density, 2) white viewing light passes through developed grains following Beer-Lambert law. Tests updated to verify correct white light behavior.
@@ -6,14 +7,19 @@
 - [x] Adjust the exposure to make sure the algorithm doesn't change the overall brightness of the image.
   **ANALYSIS**: The Beer-Lambert law implementation correctly uses white light (not original color) as established in commit a80668d920dc641f13399e335cfe8ada37d3cc42. The brightness change is expected due to the physical two-phase process: 1) input determines grain density, 2) white light viewing. Solution documented in ALGORITHM_DESIGN.md.
   **SUBTASKS**:
-  - [ ] Implement floating-point processing pipeline to avoid precision loss
-  - [ ] Add post-processing brightness correction to preserve overall image brightness
-  - [ ] Calculate and apply uniform brightness scaling factor after grain rendering
-- [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. For example the change from multi layer to variable grain size.
+  - [x] Implement floating-point processing pipeline to avoid precision loss
+    **COMPLETED**: Implemented comprehensive floating-point processing pipeline that preserves precision throughout grain rendering. The system now: 1) Converts input Uint8ClampedArray to Float32Array (0.0-1.0 range), 2) Processes all grain calculations in floating-point, 3) Applies Beer-Lambert compositing with floating-point precision, 4) Calculates brightness correction factor to preserve overall image brightness, 5) Converts back to Uint8ClampedArray only at the final output stage. This eliminates precision loss from integer clamping during intermediate calculations and includes automatic brightness preservation.
+  - [x] Add post-processing brightness correction to preserve overall image brightness
+    **COMPLETED**: Integrated into the floating-point pipeline. The system calculates brightness ratio between original and processed floating-point data, then applies correction factor during final conversion to preserve overall image brightness.
+  - [x] Calculate and apply uniform brightness scaling factor after grain rendering
+    **COMPLETED**: Implemented `calculateBrightnessFactor()` method that computes average brightness ratio and applies uniform scaling during the final Uint8 conversion step. The correction maintains the visual balance while preserving grain effects.
+- [ ] Looks like the brightnessFactor compensation is applied in gamma space. Is that physically plausible? The brightness compensation should be applied as if adjusting the exposure when taking the photo or developing the photo copy.
+- [ ] Is the current color maths done in a gamma correct way?
 - [ ] Go through the code and look for methods that should be static.
 - [ ] Look for static methods that should really be free functions.
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
+- [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. For example the change from multi layer to variable grain size.
 - [ ] Try to clean up processImage and related code a bit. It has been refactored a bunch and there seems to be a bunch of unnecessary remnants of old things.
 - [ ] When checking surrounding cells in processImage, are we sure a 3x3 neighborhood is large enough to fit the largest size grains?
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
