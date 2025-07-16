@@ -99,12 +99,18 @@ export class GrainGenerator {
     assertPositiveNumber(minDistance, 'minDistance');
     assertPositiveInteger(maxSamples, 'maxSamples');
 
+    // Poisson disk sampling constants
+    const POISSON_CANDIDATES_PER_POINT = 30; // Standard value from literature
+    const POISSON_INITIAL_POINT_ATTEMPTS = 3; // Number of initial points to distribute across the image
+    const POISSON_INITIAL_POINT_RANGE_MIN = 0.1;
+    const POISSON_INITIAL_POINT_RANGE_MAX = 0.8;
+    const POISSON_MAX_GENERATION_ROUNDS = 100;
+    const POISSON_EARLY_TERMINATION_ROUNDS = 10;
+    const POISSON_SAFETY_BREAK_ROUNDS = 100;
+
     // Log parameters for debugging
     console.log(`Generating Poisson disk sampling: minDistance=${minDistance}, maxSamples=${maxSamples}, imageSize=${this.width}x${this.height}`);
 
-    // Poisson disk sampling constants
-    const POISSON_CANDIDATES_PER_POINT = 30; // Standard value from literature
-    
     const points: Point2D[] = [];
     // Use proper cell size calculation - each cell should be able to hold at most one point
     const cellSize = minDistance / Math.sqrt(2);
@@ -173,20 +179,13 @@ export class GrainGenerator {
     };
     
     // Start with multiple well-distributed initial points for better coverage
-    const initialPoints = [
-      {
-        x: this.width * (0.2 + this.rng.random() * 0.6), // Full width range: 0.2 to 0.8
-        y: this.height * (0.2 + this.rng.random() * 0.6)
-      },
-      {
-        x: this.width * (0.1 + this.rng.random() * 0.3), // Left side
-        y: this.height * (0.1 + this.rng.random() * 0.8)
-      },
-      {
-        x: this.width * (0.6 + this.rng.random() * 0.3), // Right side  
-        y: this.height * (0.1 + this.rng.random() * 0.8)
-      }
-    ];
+    const initialPoints = [];
+    for (let i = 0; i < POISSON_INITIAL_POINT_ATTEMPTS; i++) {
+      initialPoints.push({
+        x: this.width * (POISSON_INITIAL_POINT_RANGE_MIN + this.rng.random() * (POISSON_INITIAL_POINT_RANGE_MAX - POISSON_INITIAL_POINT_RANGE_MIN)),
+        y: this.height * (POISSON_INITIAL_POINT_RANGE_MIN + this.rng.random() * (POISSON_INITIAL_POINT_RANGE_MAX - POISSON_INITIAL_POINT_RANGE_MIN))
+      });
+    }
     
     // Add all initial points
     for (const point of initialPoints) {
@@ -196,10 +195,9 @@ export class GrainGenerator {
     // Track generation progress for early termination
     let generationRounds = 0;
     let pointsAddedInLastRound = 0;
-    const maxGenerationRounds = 100; // Prevent infinite loops - reduced from 1000
     
     // Process active points until no more can be added
-    while (activeList.length > 0 && points.length < maxSamples && generationRounds < maxGenerationRounds) {
+    while (activeList.length > 0 && points.length < maxSamples && generationRounds < POISSON_MAX_GENERATION_ROUNDS) {
       generationRounds++;
       const pointsAtRoundStart = points.length;
       
@@ -243,7 +241,7 @@ export class GrainGenerator {
         processedInThisRound++;
         
         // Safety check to prevent infinite loops within a round
-        if (processedInThisRound > 100) {
+        if (processedInThisRound > POISSON_SAFETY_BREAK_ROUNDS) {
           console.log(`Safety break in round ${generationRounds}: processed ${processedInThisRound} points`);
           break;
         }
@@ -252,7 +250,7 @@ export class GrainGenerator {
       pointsAddedInLastRound = points.length - pointsAtRoundStart;
       
       // More aggressive early termination if we're not making progress
-      if (pointsAddedInLastRound === 0 && generationRounds > 10) { // Increased from 5 to 10
+      if (pointsAddedInLastRound === 0 && generationRounds > POISSON_EARLY_TERMINATION_ROUNDS) { // Increased from 5 to 10
         console.log(`Early termination: no points added in round ${generationRounds}`);
         break;
       }
@@ -292,6 +290,7 @@ export class GrainGenerator {
     const FALLBACK_GRID_CENTER_OFFSET = 0.5;
     const FALLBACK_GRID_RANDOMNESS = 0.6;
     const FALLBACK_DISTANCE_RELAXATION = 0.7; // Allow grains at 70% of minimum distance for fallback
+    const SPATIAL_GRID_SIZE_FALLBACK = 10;
     
     const fallbackGrains: Point2D[] = [...existingGrains];
     const remainingCount = targetCount - existingGrains.length;
@@ -323,7 +322,7 @@ export class GrainGenerator {
     console.log(`Fallback grid: ${cols}x${rows} cells, gridSize=${gridSize.toFixed(2)}`);
     
     // Create spatial hash for existing grains for efficient distance checking
-    const spatialGridSize = minDistance ? minDistance * FALLBACK_DISTANCE_RELAXATION * 2 : 10;
+    const spatialGridSize = minDistance ? minDistance * FALLBACK_DISTANCE_RELAXATION * 2 : SPATIAL_GRID_SIZE_FALLBACK;
     const spatialGrid = new Map<string, Point2D[]>();
     
     // Populate spatial grid with existing grains

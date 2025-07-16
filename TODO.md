@@ -9,6 +9,16 @@ Go through the code and apply the rules around constants from the instructions
     - [x] src/grain-density.ts: Refactor to use constants for non-obvious values, place and name constants appropriately (now follows guidelines)
     - [x] src/constants.ts: Review and organize constants, ensure naming and placement follow guidelines
     - [ ] src/grain-generator.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
+        - [x] `generatePoissonDiskSampling`
+        - [x] `generateFallbackGrains`
+        - [ ] `calculateGrainParameters`
+        - [ ] `generateGrainStructure`
+        - [ ] `analyzeDistribution`
+        - [ ] `createGrainGrid`
+        - [ ] `generateVariableSizeGrains`
+        - [ ] `generateVariableGrainSize`
+        - [ ] `calculateMinDistanceForGrain`
+        - [ ] `calculateDevelopmentThreshold`
     - [ ] src/utils.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
     - [ ] src/noise.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
     - [ ] src/grain-worker.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
