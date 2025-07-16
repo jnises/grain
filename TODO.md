@@ -1,6 +1,3 @@
-- [x] Why does applyBeerLambertCompositing take originalColor as a parameter? Shouldn't the final color only depend on the grains? The original color should have been used to calculate the grain responses, but after that why are they used?
-  **ANALYSIS REVEALS CONCEPTUAL ERROR**: The current implementation incorrectly uses the input image color as both exposure light AND viewing light. Correct physics: 1) Input image determines grain density during "exposure", 2) When "viewing" the film, WHITE printing light passes through grains: `final = white_light * exp(-density)`. The current approach conflates exposure and viewing steps. We should use white light [255,255,255] for Beer-Lambert compositing to create proper film negative, then optionally invert for positive print.
-  **FIXED**: Updated `applyBeerLambertCompositing()` to use white light (255) instead of original color for physically accurate film viewing simulation. The method now properly implements the two-phase process: 1) input image determines grain exposure/density, 2) white viewing light passes through developed grains following Beer-Lambert law. Tests updated to verify correct white light behavior.
 - [x] Adjust the exposure to make sure the algorithm doesn't change the overall brightness of the image.
   **ANALYSIS**: The Beer-Lambert law implementation correctly uses white light (not original color) as established in commit a80668d920dc641f13399e335cfe8ada37d3cc42. The brightness change is expected due to the physical two-phase process: 1) input determines grain density, 2) white light viewing. Solution documented in ALGORITHM_DESIGN.md.
   **SUBTASKS**:
@@ -24,8 +21,6 @@
   - [x] Split `GrainProcessor` class into smaller, focused classes (e.g., grain generation, grain effects calculation, image processing pipeline)
     - [x] Extract `GrainDensityCalculator` class (methods: `calculateIntrinsicGrainDensities`, `calculateIntrinsicGrainDensity`, `filmCurve`, `calculatePixelGrainEffect`) to `src/grain-density.ts` - contains substantial grain physics algorithms
       **COMPLETED**: Successfully extracted `GrainDensityCalculator` class with methods `calculateIntrinsicGrainDensities`, `calculateIntrinsicGrainDensity`, `filmCurve`, and `calculatePixelGrainEffect` to `src/grain-density.ts`. The grain worker now uses the external density calculator for all grain physics algorithms, maintaining clean separation of concerns while preserving all functionality. Updated the test suite to work with the new structure. All tests pass after the refactoring. The grain worker file was reduced from 639 to 480 lines.
-    - [ ] Extract pixel processing loop from `processImage` method into separate method(s) - the main method is ~240 lines with complex nested loops
-    - [ ] Keep grain exposure calculation as a simple method in `GrainProcessor` - it's only ~20 lines and mostly delegates to existing functions
   - [ ] Keep only the main orchestration logic and worker message handling in `grain-worker.ts`
   - [ ] Update imports and exports across affected files
   - [ ] Ensure all tests still pass after refactoring
