@@ -1,5 +1,4 @@
-- [x] run `npm run check` and fix the issues
-  **FIXED**: Resolved TypeScript error in `test/run-benchmark.ts` where `process.exit(1)` was not recognized. Replaced with `throw error` which achieves the same termination behavior without requiring Node.js-specific types. The check command now passes successfully.
+- [ ] Run tests and fix the issues
 - [x] Why does applyBeerLambertCompositing take originalColor as a parameter? Shouldn't the final color only depend on the grains? The original color should have been used to calculate the grain responses, but after that why are they used?
   **ANALYSIS REVEALS CONCEPTUAL ERROR**: The current implementation incorrectly uses the input image color as both exposure light AND viewing light. Correct physics: 1) Input image determines grain density during "exposure", 2) When "viewing" the film, WHITE printing light passes through grains: `final = white_light * exp(-density)`. The current approach conflates exposure and viewing steps. We should use white light [255,255,255] for Beer-Lambert compositing to create proper film negative, then optionally invert for positive print.
   **FIXED**: Updated `applyBeerLambertCompositing()` to use white light (255) instead of original color for physically accurate film viewing simulation. The method now properly implements the two-phase process: 1) input image determines grain exposure/density, 2) white viewing light passes through developed grains following Beer-Lambert law. Tests updated to verify correct white light behavior.
@@ -14,10 +13,10 @@
     **COMPLETED**: Integrated into the floating-point pipeline. The system calculates brightness ratio between original and processed floating-point data, then applies correction factor during final conversion to preserve overall image brightness.
   - [x] Calculate and apply uniform brightness scaling factor after grain rendering
     **COMPLETED**: Implemented `calculateBrightnessFactor()` method that computes average brightness ratio and applies uniform scaling during the final Uint8 conversion step. The correction maintains the visual balance while preserving grain effects.
-- [ ] Looks like the brightnessFactor compensation is applied in gamma space. Is that physically plausible? The brightness compensation should be applied as if adjusting the exposure when taking the photo or developing the photo copy.
-- [ ] Is the current color maths done in a gamma correct way?
 - [ ] Go through the code and look for methods that should be static.
 - [ ] Look for static methods that should really be free functions.
+- [ ] Looks like the brightnessFactor compensation is applied in gamma space. Is that physically plausible? The brightness compensation should be applied as if adjusting the exposure when taking the photo or developing the photo copy.
+- [ ] Is the current color maths done in a gamma correct way?
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
 - [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. For example the change from multi layer to variable grain size.
