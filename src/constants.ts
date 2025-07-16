@@ -108,10 +108,6 @@ export const FILM_CHARACTERISTICS = {
   }
 } as const;
 
-// Common image processing constants that could be shared
-export const ALPHA_CHANNEL_INDEX = 3;
-export const RGBA_CHANNELS = 4;
-
 // Exposure simulation constants for photographic modeling
 export const EXPOSURE_CONVERSION = {
   // Logarithmic scaling factors for RGB to exposure conversion

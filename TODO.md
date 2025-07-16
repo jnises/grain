@@ -7,7 +7,7 @@
 Go through the code and apply the rules around constants from the instructions
     - [x] src/color-space.ts: Refactor to use constants for non-obvious values, place and name constants appropriately (already follows guidelines)
     - [x] src/grain-density.ts: Refactor to use constants for non-obvious values, place and name constants appropriately (now follows guidelines)
-    - [ ] src/constants.ts: Review and organize constants, ensure naming and placement follow guidelines
+    - [x] src/constants.ts: Review and organize constants, ensure naming and placement follow guidelines
     - [ ] src/grain-generator.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
     - [ ] src/utils.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
     - [ ] src/noise.ts: Refactor to use constants for non-obvious values, place and name constants appropriately

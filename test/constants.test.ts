@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { 
   SEEDED_RANDOM_MULTIPLIER,
   FILM_CHARACTERISTICS,
-  ALPHA_CHANNEL_INDEX,
-  RGBA_CHANNELS,
   EXPOSURE_CONVERSION
 } from '../src/constants';
 
@@ -18,18 +16,6 @@ describe('Constants Validation', () => {
     it('should be large enough for random number generation', () => {
       // Should be at least 1000 to provide sufficient range for seeded RNG
       expect(SEEDED_RANDOM_MULTIPLIER).toBeGreaterThanOrEqual(1000);
-    });
-  });
-
-  describe('RGBA channel constants', () => {
-    it('should have correct ALPHA_CHANNEL_INDEX', () => {
-      expect(ALPHA_CHANNEL_INDEX).toBe(3);
-      expect(typeof ALPHA_CHANNEL_INDEX).toBe('number');
-    });
-
-    it('should have correct RGBA_CHANNELS count', () => {
-      expect(RGBA_CHANNELS).toBe(4);
-      expect(typeof RGBA_CHANNELS).toBe('number');
     });
   });
 
