@@ -15,10 +15,11 @@ describe('Exposure Brightness Preservation', () => {
     const pixelCount = imageData.width * imageData.height;
     
     for (let i = 0; i < imageData.data.length; i += 4) {
-      const r = imageData.data[i];
-      const g = imageData.data[i + 1];
-      const b = imageData.data[i + 2];
-      // Calculate luminance using ITU-R BT.709 weights
+      const r = imageData.data[i] / 255.0;
+      const g = imageData.data[i + 1] / 255.0;
+      const b = imageData.data[i + 2] / 255.0;
+      
+      // Calculate luminance using ITU-R BT.709 weights (same as the grain algorithm)
       const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
       totalBrightness += brightness;
     }

@@ -52,28 +52,34 @@ export function convertToFloatingPoint(uint8Data: Uint8ClampedArray): Float32Arr
 export function convertToUint8(floatData: Float32Array, brightnessFactor: number = 1.0): Uint8ClampedArray {
   const uint8Data = new Uint8ClampedArray(floatData.length);
   for (let i = 0; i < floatData.length; i++) {
-    // Apply brightness correction and clamp to valid range
-    const correctedValue = floatData[i] * brightnessFactor;
-    uint8Data[i] = Math.round(Math.max(0, Math.min(255, correctedValue * 255)));
+    // Apply brightness correction to RGB channels only (skip alpha)
+    let value = floatData[i];
+    if (i % 4 !== 3) {
+      value = value * brightnessFactor;
+    }
+    
+    // Clamp to valid range and convert to 8-bit
+    uint8Data[i] = Math.round(Math.max(0, Math.min(255, value * 255)));
   }
   return uint8Data;
 }
 
 /**
  * Calculate average brightness ratio between original and processed image
- * for brightness preservation
+ * for brightness preservation using perceptually accurate luminance calculation
  */
 export function calculateBrightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
   let originalSum = 0;
   let processedSum = 0;
 
   // Calculate average brightness for RGB channels only (skip alpha)
+  // Using ITU-R BT.709 luminance weights which are perceptually accurate for sRGB
   for (let i = 0; i < originalData.length; i += 4) {
-    const originalBrightness = (originalData[i] + originalData[i + 1] + originalData[i + 2]) / 3;
-    const processedBrightness = (processedData[i] + processedData[i + 1] + processedData[i + 2]) / 3;
+    const originalLuminance = originalData[i] * 0.2126 + originalData[i + 1] * 0.7152 + originalData[i + 2] * 0.0722;
+    const processedLuminance = processedData[i] * 0.2126 + processedData[i + 1] * 0.7152 + processedData[i + 2] * 0.0722;
     
-    originalSum += originalBrightness;
-    processedSum += processedBrightness;
+    originalSum += originalLuminance;
+    processedSum += processedLuminance;
   }
 
   const pixelCount = originalData.length / 4;
