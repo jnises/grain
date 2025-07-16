@@ -4,18 +4,18 @@
   **COMPLETED**: Implemented comprehensive gamma correction throughout the grain processing pipeline. The system now: 1) Converts input sRGB values to linear space using proper gamma correction functions (`srgbToLinear`), 2) Performs all grain calculations (Beer-Lambert law, brightness calculations, etc.) in linear RGB space for physically correct light blending, 3) Converts back to sRGB space using gamma encoding (`linearToSrgb`) before output. This ensures that light transmission calculations are physically accurate and brightness preservation works correctly in the perceptually correct color space. All tests pass with the updated linear color space processing.
 - [x] Make sure we work with colors in linear space as much as possible. Convert from/to gamma on input/output.
   **COMPLETED**: All color processing, grain compositing, and exposure calculations are performed in linear RGB space. Input is converted from sRGB to linear at the start, and output is converted back to sRGB at the end. All relevant tests pass, confirming correct implementation.
-- [ ] Go through the code and apply the rules around constants from the instructions
-    - [ ] src/color-space.ts: Apply rules around constants
-    - [ ] src/grain-density.ts: Apply rules around constants
-    - [ ] src/constants.ts: Apply rules around constants
-    - [ ] src/grain-generator.ts: Apply rules around constants
-    - [ ] src/utils.ts: Apply rules around constants
-    - [ ] src/noise.ts: Apply rules around constants
-    - [ ] src/grain-worker.ts: Apply rules around constants
-    - [ ] src/grain-math.ts: Apply rules around constants
-    - [ ] src/grain-sampling.ts: Apply rules around constants
-    - [ ] src/performance-tracker.ts: Apply rules around constants
-    - [ ] src/grain-worker-manager.ts: Apply rules around constants
+Go through the code and apply the rules around constants from the instructions
+    - [x] src/color-space.ts: Refactor to use constants for non-obvious values, place and name constants appropriately (already follows guidelines)
+    - [x] src/grain-density.ts: Refactor to use constants for non-obvious values, place and name constants appropriately (now follows guidelines)
+    - [ ] src/constants.ts: Review and organize constants, ensure naming and placement follow guidelines
+    - [ ] src/grain-generator.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
+    - [ ] src/utils.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
+    - [ ] src/noise.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
+    - [ ] src/grain-worker.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
+    - [ ] src/grain-math.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
+    - [ ] src/grain-sampling.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
+    - [ ] src/performance-tracker.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
+    - [ ] src/grain-worker-manager.ts: Refactor to use constants for non-obvious values, place and name constants appropriately
 - [ ] Go through the code and apply the rules around asserts from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
 - [ ] Use "lightness" rather than "brightness" in the processing pipeline

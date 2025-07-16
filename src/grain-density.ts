@@ -1,6 +1,40 @@
 // Grain Density Calculation Module
 // Contains substantial grain physics algorithms for film simulation
 
+
+// --- Grain Density Calculation Constants ---
+// Random seed factors for grain sensitivity variation
+const GRAIN_RANDOM_SEED_X = 12345;
+const GRAIN_RANDOM_SEED_Y = 67890;
+const GRAIN_RANDOM_SEED_MOD = 1000000;
+// Range for random sensitivity: [-0.15, +0.15]
+const GRAIN_RANDOM_SENSITIVITY_RANGE = 0.3;
+const GRAIN_RANDOM_SENSITIVITY_OFFSET = 0.15;
+// Sigmoid steepness for grain activation
+const GRAIN_SIGMOID_STEEPNESS = 8.0;
+// Shape modifier range
+const GRAIN_SHAPE_MODIFIER_BASE = 0.8;
+const GRAIN_SHAPE_MODIFIER_SCALE = 0.4;
+// Film response multiplier for visibility
+const FILM_RESPONSE_VISIBILITY_MULTIPLIER = 1.2;
+// Grain influence radius multiplier
+const GRAIN_FALLOFF_RADIUS_MULTIPLIER = 2;
+// Noise scales and weights
+const NOISE_SCALE_FINE = 0.15;
+const NOISE_SCALE_MEDIUM = 0.08;
+const NOISE_SCALE_COARSE = 0.03;
+const NOISE_WEIGHT_FINE = 0.3;
+const NOISE_WEIGHT_MEDIUM = 0.2;
+const NOISE_WEIGHT_COARSE = 0.1;
+// Noise modulation
+const NOISE_MODULATION_BASE = 0.7;
+const NOISE_MODULATION_SCALE = 0.3;
+// Elliptical ratio base and scale
+const ELLIPTICAL_RATIO_BASE = 0.7;
+const ELLIPTICAL_RATIO_SCALE = 0.3;
+// Orientation angle scale
+const ORIENTATION_ANGLE_SCALE = 0.1;
+
 import { FILM_CHARACTERISTICS } from './constants';
 import { noise } from './noise';
 import type { GrainSettings, GrainPoint } from './types';
@@ -102,8 +136,8 @@ export class GrainDensityCalculator {
     
     // Calculate random sensitivity variation for this grain
     // Use grain-based randomness for consistent grain behavior (position-independent)
-    const randomSeed = (grain.x * 12345 + grain.y * 67890) % 1000000;
-    const randomSensitivity = (randomSeed / 1000000) * 0.3 - 0.15; // Range: [-0.15, +0.15]
+    const randomSeed = (grain.x * GRAIN_RANDOM_SEED_X + grain.y * GRAIN_RANDOM_SEED_Y) % GRAIN_RANDOM_SEED_MOD;
+    const randomSensitivity = (randomSeed / GRAIN_RANDOM_SEED_MOD) * GRAIN_RANDOM_SENSITIVITY_RANGE - GRAIN_RANDOM_SENSITIVITY_OFFSET;
     
     // Calculate activation strength
     const activationStrength = exposure + randomSensitivity;
@@ -118,8 +152,7 @@ export class GrainDensityCalculator {
     
     // Apply sigmoid function for smooth grain density response
     // sigmoid_function(activation_strength - threshold)
-    const sigmoidSteepness = 8.0; // Controls how sharp the activation transition is
-    const normalizedExcess = thresholdExcess * sigmoidSteepness;
+    const normalizedExcess = thresholdExcess * GRAIN_SIGMOID_STEEPNESS;
     const sigmoidResponse = 1.0 / (1.0 + Math.exp(-normalizedExcess));
     
     // Base grain density from sigmoid response
@@ -129,7 +162,7 @@ export class GrainDensityCalculator {
     grainDensity *= grain.sensitivity;
     
     // Apply grain shape variation (intrinsic property)
-    const shapeModifier = 0.8 + grain.shape * 0.4;
+    const shapeModifier = GRAIN_SHAPE_MODIFIER_BASE + grain.shape * GRAIN_SHAPE_MODIFIER_SCALE;
     grainDensity *= shapeModifier;
     
     // Ensure grainDensity is within [0,1] range before applying film curve
@@ -143,8 +176,7 @@ export class GrainDensityCalculator {
     
     // Apply film characteristic curve for density response
     const filmResponse = this.filmCurve(grainDensity);
-    
-    return filmResponse * 1.2; // Slight multiplier for visibility
+    return filmResponse * FILM_RESPONSE_VISIBILITY_MULTIPLIER;
   }
 
   /**
@@ -165,7 +197,7 @@ export class GrainDensityCalculator {
     const distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
     
     // Add distance falloff calculation based on grain position and radius
-    const falloffRadius = grain.size * 2; // Grain influence extends to 2x grain size
+    const falloffRadius = grain.size * GRAIN_FALLOFF_RADIUS_MULTIPLIER; // Grain influence extends to 2x grain size
     if (distance >= falloffRadius) {
       return 0; // No effect beyond falloff radius
     }
@@ -178,21 +210,12 @@ export class GrainDensityCalculator {
     const ellipticalDistortion = this.calculateEllipticalDistortion(grain, angle);
     
     // Add pixel-level noise texture using x,y coordinates
-    const NOISE_SCALE_FINE = 0.15;
-    const NOISE_SCALE_MEDIUM = 0.08;
-    const NOISE_SCALE_COARSE = 0.03;
-    const NOISE_WEIGHT_FINE = 0.3;
-    const NOISE_WEIGHT_MEDIUM = 0.2;
-    const NOISE_WEIGHT_COARSE = 0.1;
-    
     const noiseValue = noise(pixelX * NOISE_SCALE_FINE, pixelY * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
                       noise(pixelX * NOISE_SCALE_MEDIUM, pixelY * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
                       noise(pixelX * NOISE_SCALE_COARSE, pixelY * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
-    
     // Combine all effects: intrinsic density × distance falloff × shape distortion × noise modulation
-    const noiseModulation = 0.7 + Math.abs(noiseValue) * 0.3;
+    const noiseModulation = NOISE_MODULATION_BASE + Math.abs(noiseValue) * NOISE_MODULATION_SCALE;
     const pixelEffect = intrinsicDensity * falloffFactor * ellipticalDistortion * noiseModulation;
-    
     return pixelEffect;
   }
 
@@ -201,8 +224,8 @@ export class GrainDensityCalculator {
    */
   private calculateEllipticalDistortion(grain: GrainPoint, angle: number): number {
     // Elliptical grain shape with angle-dependent distortion
-    const ellipticalRatio = 0.7 + grain.shape * 0.3; // Varies from 0.7 to 1.0 based on grain shape
-    const orientationAngle = (grain.x + grain.y) * 0.1; // Grain orientation based on position
+    const ellipticalRatio = ELLIPTICAL_RATIO_BASE + grain.shape * ELLIPTICAL_RATIO_SCALE; // Varies from 0.7 to 1.0 based on grain shape
+    const orientationAngle = (grain.x + grain.y) * ORIENTATION_ANGLE_SCALE; // Grain orientation based on position
     
     // Calculate elliptical distance modifier
     const relativeAngle = angle - orientationAngle;
