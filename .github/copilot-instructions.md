@@ -42,6 +42,17 @@ When creating temporary files, debug utilities, or development tools, please fol
 
 ## Development Guidelines
 
+### Avoiding Pointless Abstractions
+- **NEVER create wrapper classes that only delegate to other classes** - this adds complexity without benefit
+- Before extracting a class, ensure it provides meaningful abstraction with:
+  - Substantial logic or processing
+  - Clear separation of concerns
+  - Simplified interface compared to what it wraps
+  - Testability improvements
+- Thin delegation methods are acceptable within the same class, but avoid creating entire classes for delegation
+- When refactoring large classes, focus on extracting classes with real functionality, not just organizational wrappers
+- If a proposed class would only have methods that call other classes' methods 1:1, don't create it
+
 ### Constants and Configuration
 - Avoid magic numbers for non-obvious values. Use constants to improve maintainability:
   - Global constants: define in `src/constants.ts`

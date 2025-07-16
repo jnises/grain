@@ -22,6 +22,9 @@
   - [x] Extract color space conversions and utility functions to appropriate modules
     **COMPLETED**: Successfully extracted `rgbToLab` function to `src/color-space.ts` and `noise` function to `src/noise.ts`. These pure functions are now properly separated from the main `GrainProcessor` class, improving modularity and testability. The grain worker file was reduced from 828 to 705 lines. All tests pass after the refactoring.
   - [ ] Split `GrainProcessor` class into smaller, focused classes (e.g., grain generation, grain effects calculation, image processing pipeline)
+    - [ ] Extract `GrainDensityCalculator` class (methods: `calculateIntrinsicGrainDensities`, `calculateIntrinsicGrainDensity`, `filmCurve`, `calculatePixelGrainEffect`) to `src/grain-density.ts` - contains substantial grain physics algorithms
+    - [ ] Extract pixel processing loop from `processImage` method into separate method(s) - the main method is ~240 lines with complex nested loops
+    - [ ] Keep grain exposure calculation as a simple method in `GrainProcessor` - it's only ~20 lines and mostly delegates to existing functions
   - [ ] Keep only the main orchestration logic and worker message handling in `grain-worker.ts`
   - [ ] Update imports and exports across affected files
   - [ ] Ensure all tests still pass after refactoring
