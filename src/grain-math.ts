@@ -2,7 +2,8 @@
 // These are pure functions that don't depend on class state
 
 import type { GrainDensity } from './types';
-import { SEEDED_RANDOM_MULTIPLIER } from './constants';
+import { SEEDED_RANDOM_MULTIPLIER, EXPOSURE_CONVERSION } from './constants';
+import { assertInRange } from './utils';
 
 /**
  * Generate pseudorandom number with seed
@@ -145,4 +146,76 @@ export function calculateChromaticAberration(normalizedDistance: number): { red:
     green: 1,                             // Green remains centered (reference)
     blue: 1 - aberrationStrength * 0.3   // Blue slightly displaced inward
   };
+}
+
+/**
+ * Convert RGB to photographic exposure using logarithmic scaling
+ * Pure function that replaces linear LAB luminance conversion with proper exposure simulation
+ */
+export function rgbToExposure(r: number, g: number, b: number): number {
+  // Validate input parameters with assertions instead of clamping
+  assertInRange(r, 0, 255, 'r');
+  assertInRange(g, 0, 255, 'g');
+  assertInRange(b, 0, 255, 'b');
+
+  // Normalize RGB values to [0, 1] range
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+
+  // Calculate weighted luminance using photographic weights
+  // These weights account for human eye sensitivity (ITU-R BT.709)
+  const luminance = 
+    rNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
+    gNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +
+    bNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.blue;
+
+  // Add small offset to prevent log(0) in pure black areas
+  const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;
+
+  // Convert to logarithmic exposure scale
+  // This follows photographic principles where exposure is measured in stops (log scale)
+  // Formula: exposure = log(luminance / middle_gray) * scale_factor
+  const logExposure = Math.log(safeLuminance / EXPOSURE_CONVERSION.MIDDLE_GRAY_LUMINANCE) / 
+                     Math.log(EXPOSURE_CONVERSION.LOG_BASE);
+  
+  // Scale and normalize exposure to [0, 1] range for grain calculations
+  // This maps the exposure range to usable values for grain strength calculations
+  const normalizedExposure = (logExposure + EXPOSURE_CONVERSION.EXPOSURE_SCALE) / 
+                            (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
+
+  // Clamp to [0, 1] range to handle extreme values
+  return Math.max(0, Math.min(1, normalizedExposure));
+}
+
+/**
+ * Convert floating-point RGB to photographic exposure
+ * Same logic as rgbToExposure but operates on floating-point values (0.0-1.0)
+ */
+export function rgbToExposureFloat(r: number, g: number, b: number): number {
+  // Validate inputs with assertions instead of clamping
+  assertInRange(r, 0, 1, 'r');
+  assertInRange(g, 0, 1, 'g');
+  assertInRange(b, 0, 1, 'b');
+  
+  // Calculate weighted luminance using photographic weights
+  const luminance = 
+    r * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
+    g * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +
+    b * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.blue;
+
+  // Add small offset to prevent log(0) in pure black areas
+  const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;
+
+  // Convert to logarithmic exposure scale
+  const logExposure = Math.log(safeLuminance / EXPOSURE_CONVERSION.MIDDLE_GRAY_LUMINANCE) / 
+                     Math.log(EXPOSURE_CONVERSION.LOG_BASE);
+  
+  // Scale and normalize exposure to [0, 1] range
+  const normalizedExposure = (logExposure + EXPOSURE_CONVERSION.EXPOSURE_SCALE) / 
+                            (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
+
+  // Clamp to [0, 1] range and validate result
+  const result = Math.max(0, Math.min(1, normalizedExposure));
+  return Number.isFinite(result) ? result : 0;
 }

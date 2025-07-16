@@ -2,7 +2,7 @@
 // Implements physically plausible analog film grain algorithm
 
 import { GrainGenerator } from './grain-generator';
-import { FILM_CHARACTERISTICS, EXPOSURE_CONVERSION } from './constants';
+import { FILM_CHARACTERISTICS } from './constants';
 import { 
   seededRandom, 
   calculateSampleWeight, 
@@ -10,7 +10,8 @@ import {
   convertToUint8, 
   calculateBrightnessFactor,
   applyBeerLambertCompositingFloat,
-  calculateChromaticAberration
+  calculateChromaticAberration,
+  rgbToExposureFloat
 } from './grain-math';
 import type {
   GrainSettings,
@@ -360,7 +361,7 @@ export class GrainProcessor {
         const g = imageData[pixelIndex + 1];
         const b = imageData[pixelIndex + 2];
         
-        const exposure = this.rgbToExposureFloat(r, g, b);
+        const exposure = rgbToExposureFloat(r, g, b);
         
         totalExposure += exposure * samplePoint.weight;
         totalWeight += samplePoint.weight;
@@ -378,7 +379,7 @@ export class GrainProcessor {
         const r = imageData[pixelIndex];
         const g = imageData[pixelIndex + 1];
         const b = imageData[pixelIndex + 2];
-        return this.rgbToExposureFloat(r, g, b);
+        return rgbToExposureFloat(r, g, b);
       }
       
       return 0; // Default exposure for completely out-of-bounds grains
@@ -593,75 +594,7 @@ export class GrainProcessor {
     return Math.max(0, Math.min(1, output));
   }
 
-  // Convert RGB to photographic exposure using logarithmic scaling
-  // This replaces the linear LAB luminance conversion with proper exposure simulation
-  protected rgbToExposure(r: number, g: number, b: number): number {
-    // Validate input parameters
-    assertInRange(r, 0, 255, 'r');
-    assertInRange(g, 0, 255, 'g');
-    assertInRange(b, 0, 255, 'b');
 
-    // Normalize RGB values to [0, 1] range
-    const rNorm = r / 255;
-    const gNorm = g / 255;
-    const bNorm = b / 255;
-
-    // Calculate weighted luminance using photographic weights
-    // These weights account for human eye sensitivity (ITU-R BT.709)
-    const luminance = 
-      rNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
-      gNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +
-      bNorm * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.blue;
-
-    // Add small offset to prevent log(0) in pure black areas
-    const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;
-
-    // Convert to logarithmic exposure scale
-    // This follows photographic principles where exposure is measured in stops (log scale)
-    // Formula: exposure = log(luminance / middle_gray) * scale_factor
-    const logExposure = Math.log(safeLuminance / EXPOSURE_CONVERSION.MIDDLE_GRAY_LUMINANCE) / 
-                       Math.log(EXPOSURE_CONVERSION.LOG_BASE);
-    
-    // Scale and normalize exposure to [0, 1] range for grain calculations
-    // This maps the exposure range to usable values for grain strength calculations
-    const normalizedExposure = (logExposure + EXPOSURE_CONVERSION.EXPOSURE_SCALE) / 
-                              (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
-
-    // Clamp to [0, 1] range to handle extreme values
-    return Math.max(0, Math.min(1, normalizedExposure));
-  }
-
-  /**
-   * Convert floating-point RGB to photographic exposure
-   * Same logic as rgbToExposure but operates on floating-point values (0.0-1.0)
-   */
-  protected rgbToExposureFloat(r: number, g: number, b: number): number {
-    // Validate inputs and clamp to valid range
-    r = Math.max(0, Math.min(1, r || 0));
-    g = Math.max(0, Math.min(1, g || 0));
-    b = Math.max(0, Math.min(1, b || 0));
-    
-    // Calculate weighted luminance using photographic weights
-    const luminance = 
-      r * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
-      g * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +
-      b * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.blue;
-
-    // Add small offset to prevent log(0) in pure black areas
-    const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;
-
-    // Convert to logarithmic exposure scale
-    const logExposure = Math.log(safeLuminance / EXPOSURE_CONVERSION.MIDDLE_GRAY_LUMINANCE) / 
-                       Math.log(EXPOSURE_CONVERSION.LOG_BASE);
-    
-    // Scale and normalize exposure to [0, 1] range
-    const normalizedExposure = (logExposure + EXPOSURE_CONVERSION.EXPOSURE_SCALE) / 
-                              (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
-
-    // Clamp to [0, 1] range and validate result
-    const result = Math.max(0, Math.min(1, normalizedExposure));
-    return Number.isFinite(result) ? result : 0;
-  }
 
   // Generate grain structure (single layer with varying sizes)
   private generateGrainStructure(): GrainPoint[] {
