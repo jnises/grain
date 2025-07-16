@@ -79,6 +79,12 @@ export function calculateBrightnessFactor(originalData: Float32Array, processedD
   const avgOriginalBrightness = originalSum / pixelCount;
   const avgProcessedBrightness = processedSum / pixelCount;
 
+  // Special case: if original image is very dark (near black), don't amplify
+  // grain effects - they should remain minimal
+  if (avgOriginalBrightness < 0.01) {
+    return Math.min(1.0, avgOriginalBrightness / Math.max(avgProcessedBrightness, 0.001));
+  }
+
   // Avoid division by zero and ensure reasonable bounds
   if (avgProcessedBrightness < 0.001) {
     return 1.0; // Keep original brightness if processed is nearly black

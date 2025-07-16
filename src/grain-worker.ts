@@ -10,7 +10,6 @@ import {
   convertToUint8, 
   calculateBrightnessFactor,
   applyBeerLambertCompositingFloat,
-  applyBeerLambertCompositing,
   calculateChromaticAberration
 } from './grain-math';
 import type {
