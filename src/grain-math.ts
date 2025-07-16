@@ -3,7 +3,7 @@
 
 import type { GrainDensity } from './types';
 import { SEEDED_RANDOM_MULTIPLIER, EXPOSURE_CONVERSION } from './constants';
-import { assertInRange } from './utils';
+import { assertInRange, assert } from './utils';
 
 /**
  * Generate pseudorandom number with seed
@@ -133,9 +133,15 @@ export function calculateChromaticAberration(normalizedDistance: number): { red:
 /**
  * Convert floating-point RGB to photographic exposure
  * Same logic as rgbToExposure but operates on floating-point values (0.0-1.0)
+ * 
+ * NOTE: With valid inputs [0,1], the mathematical operations cannot produce NaN or Infinity:
+ * - Luminance calculation is a simple weighted sum
+ * - safeLuminance includes offset to prevent log(0)
+ * - All subsequent operations are safe linear/logarithmic transformations
+ * The Number.isFinite check at the end is defensive programming but mathematically unnecessary.
  */
 export function rgbToExposureFloat(r: number, g: number, b: number): number {
-  // Validate inputs with assertions instead of clamping
+  // Validate inputs - NaN/Infinity will be caught here
   assertInRange(r, 0, 1, 'r');
   assertInRange(g, 0, 1, 'g');
   assertInRange(b, 0, 1, 'b');
@@ -158,6 +164,13 @@ export function rgbToExposureFloat(r: number, g: number, b: number): number {
                             (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
 
   // Clamp to [0, 1] range and validate result
+  // Note: The Number.isFinite check is defensive programming - with valid inputs,
+  // the mathematical operations above cannot produce NaN or Infinity
   const result = Math.max(0, Math.min(1, normalizedExposure));
-  return Number.isFinite(result) ? result : 0;
+  
+  assert(Number.isFinite(result), 'rgbToExposureFloat produced non-finite result', {
+    r, g, b, luminance, safeLuminance, logExposure, normalizedExposure, result
+  });
+  
+  return result;
 }

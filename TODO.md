@@ -10,7 +10,8 @@
     **COMPLETED**: Integrated into the floating-point pipeline. The system calculates brightness ratio between original and processed floating-point data, then applies correction factor during final conversion to preserve overall image brightness.
   - [x] Calculate and apply uniform brightness scaling factor after grain rendering
     **COMPLETED**: Implemented `calculateBrightnessFactor()` method that computes average brightness ratio and applies uniform scaling during the final Uint8 conversion step. The correction maintains the visual balance while preserving grain effects.
-- [ ] rgbToExposureFloat handles nans and infs silently. could either of those occur for valid input? should it be silent?
+- [x] rgbToExposureFloat handles nans and infs silently. could either of those occur for valid input? should it be silent?
+  **ANALYSIS COMPLETED**: Investigated the mathematical operations in `rgbToExposureFloat` and determined that with valid inputs (0-1 range), NaN and Infinity cannot occur from the mathematical operations. The function properly validates inputs using assertions that catch NaN/Infinity and throw errors (not silent). Changed the silent `Number.isFinite(result) ? result : 0` fallback to an explicit assertion with detailed context for debugging. The function now fails fast and loudly if somehow a non-finite result is produced, following the error handling guidelines.
 - [ ] grain-worker.ts is getting quite long. should it be split up into multiple files?
 - [ ] Looks like the brightnessFactor compensation is applied in gamma space. Is that physically plausible? The brightness compensation should be applied as if adjusting the exposure when taking the photo or developing the photo copy.
 - [ ] Is the current color maths done in a gamma correct way?
