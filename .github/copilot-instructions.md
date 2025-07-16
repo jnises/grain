@@ -42,6 +42,13 @@ When creating temporary files, debug utilities, or development tools, please fol
 
 ## Development Guidelines
 
+### Object Design and Lifecycle
+- Design objects so all fields remain valid throughout the object's lifetime
+- Avoid objects with "phases" where certain fields or methods are only valid after specific initialization steps
+- If a class requires multi-step initialization or has functionality that's only valid in certain states, consider splitting it into multiple classes with clear responsibilities
+- Prefer immutable objects or objects that are fully initialized at construction time
+- Example: Instead of a class that requires `init()` before `process()` works, create separate classes or use a factory pattern that returns fully-initialized objects
+
 ### Avoiding Pointless Abstractions
 - **NEVER create wrapper classes that only delegate to other classes** - this adds complexity without benefit
 - Before extracting a class, ensure it provides meaningful abstraction with:
