@@ -9,8 +9,8 @@ import { GrainDensityCalculator } from './grain-density';
 import { 
   convertSrgbToLinearFloat, 
   convertLinearFloatToSrgb,
-  applyBrightnessScaling,
-  calculateBrightnessFactor,
+  applyLightnessScaling,
+  calculateLightnessFactor,
   applyBeerLambertCompositingFloat,
   calculateChromaticAberration
 } from './grain-math';
@@ -327,16 +327,16 @@ export class GrainProcessor {
     // End pixel processing benchmark
     this.performanceTracker.endBenchmark('Pixel Processing');
     
-    // Calculate brightness correction factor to preserve overall image brightness
-    // Now operates on linear RGB values for physically correct brightness calculation
-    const brightnessFactor = calculateBrightnessFactor(floatData, resultFloatData);
-    console.log(`Brightness correction factor: ${brightnessFactor.toFixed(4)}`);
+    // Calculate lightness correction factor to preserve overall image lightness
+    // Now operates on linear RGB values for physically correct lightness calculation
+    const lightnessFactor = calculateLightnessFactor(floatData, resultFloatData);
+    console.log(`Lightness correction factor: ${lightnessFactor.toFixed(4)}`);
     
-    // Apply brightness scaling in linear space
-    const brightnessAdjustedData = applyBrightnessScaling(resultFloatData, brightnessFactor);
+    // Apply lightness scaling in linear space
+    const lightnessAdjustedData = applyLightnessScaling(resultFloatData, lightnessFactor);
     
     // Convert back to Uint8ClampedArray with gamma encoding
-    const finalData = convertLinearFloatToSrgb(brightnessAdjustedData);
+    const finalData = convertLinearFloatToSrgb(lightnessAdjustedData);
     
     // Create ImageData result - handle both browser and Node.js environments
     const result = typeof ImageData !== 'undefined' 

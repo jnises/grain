@@ -89,7 +89,7 @@ describe('Exposure Conversion', () => {
   });
 
   it('should produce consistent logarithmic scaling', () => {
-    // Test that doubling brightness doesn't double exposure (due to log scale)
+    // Test that doubling lightness doesn't double exposure (due to log scale)
     const lowExposure = rgbToExposureFloat(0.125, 0.125, 0.125); // 32/255 ≈ 0.125
     const highExposure = rgbToExposureFloat(0.25, 0.25, 0.25); // 64/255 ≈ 0.25
     

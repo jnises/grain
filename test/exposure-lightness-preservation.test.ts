@@ -3,7 +3,7 @@ import { GrainProcessor } from '../src/grain-worker';
 import { srgbToLinear } from '../src/color-space';
 import type { GrainSettings } from '../src/types';
 
-describe('Exposure Brightness Preservation', () => {
+describe('Exposure Lightness Preservation', () => {
   const DEFAULT_SETTINGS: GrainSettings = {
     iso: 400,
     filmType: 'kodak',
@@ -11,8 +11,8 @@ describe('Exposure Brightness Preservation', () => {
     upscaleFactor: 1.0
   };
 
-  function calculateAverageBrightness(imageData: { data: Uint8ClampedArray; width: number; height: number }): number {
-    let totalBrightness = 0;
+  function calculateAverageLightness(imageData: { data: Uint8ClampedArray; width: number; height: number }): number {
+    let totalLightness = 0;
     const pixelCount = imageData.width * imageData.height;
     
     for (let i = 0; i < imageData.data.length; i += 4) {
@@ -20,17 +20,17 @@ describe('Exposure Brightness Preservation', () => {
       const g = imageData.data[i + 1] / 255.0;
       const b = imageData.data[i + 2] / 255.0;
       
-      // Convert from sRGB to linear space for consistent brightness calculation
+      // Convert from sRGB to linear space for consistent lightness calculation
       const linearR = srgbToLinear(r);
       const linearG = srgbToLinear(g);
       const linearB = srgbToLinear(b);
       
       // Calculate luminance using ITU-R BT.709 weights in linear space
-      const brightness = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-      totalBrightness += brightness;
+      const lightness = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
+      totalLightness += lightness;
     }
     
-    return totalBrightness / pixelCount;
+    return totalLightness / pixelCount;
   }
 
   function createTestImage(width: number, height: number, grayValue: number): { data: Uint8ClampedArray; width: number; height: number } {
@@ -44,7 +44,7 @@ describe('Exposure Brightness Preservation', () => {
     return { data, width, height };
   }
 
-  it('should preserve overall brightness for middle gray (18% gray)', async () => {
+  it('should preserve overall lightness for middle gray (18% gray)', async () => {
     const width = 100;
     const height = 100;
     const grayValue = Math.round(255 * 0.18); // 18% middle gray
@@ -54,21 +54,21 @@ describe('Exposure Brightness Preservation', () => {
     
     const result = await grainProcessor.processImage(inputImage as ImageData);
     
-    const inputBrightness = calculateAverageBrightness(inputImage);
-    const outputBrightness = calculateAverageBrightness(result);
+    const inputLightness = calculateAverageLightness(inputImage);
+    const outputLightness = calculateAverageLightness(result);
     
-    console.log(`Input brightness: ${inputBrightness.toFixed(2)}`);
-    console.log(`Output brightness: ${outputBrightness.toFixed(2)}`);
-    console.log(`Brightness change: ${((outputBrightness - inputBrightness) / inputBrightness * 100).toFixed(2)}%`);
+    console.log(`Input lightness: ${inputLightness.toFixed(2)}`);
+    console.log(`Output lightness: ${outputLightness.toFixed(2)}`);
+    console.log(`Lightness change: ${((outputLightness - inputLightness) / inputLightness * 100).toFixed(2)}%`);
     
-    // Allow larger tolerance in linear space due to non-linear relationship with perceived brightness
+    // Allow larger tolerance in linear space due to non-linear relationship with perceived lightness
     const tolerance = 0.20; // 20% tolerance in linear space
-    const brightnessDifference = Math.abs(outputBrightness - inputBrightness) / inputBrightness;
+    const lightnessDifference = Math.abs(outputLightness - inputLightness) / inputLightness;
     
-    expect(brightnessDifference).toBeLessThan(tolerance);
+    expect(lightnessDifference).toBeLessThan(tolerance);
   });
 
-  it('should preserve overall brightness for various gray levels', async () => {
+  it('should preserve overall lightness for various gray levels', async () => {
     const width = 50;
     const height = 50;
     const testGrayValues = [64, 128, 192]; // 25%, 50%, 75% gray
@@ -79,20 +79,20 @@ describe('Exposure Brightness Preservation', () => {
       
       const result = await grainProcessor.processImage(inputImage as ImageData);
       
-      const inputBrightness = calculateAverageBrightness(inputImage);
-      const outputBrightness = calculateAverageBrightness(result);
+      const inputLightness = calculateAverageLightness(inputImage);
+      const outputLightness = calculateAverageLightness(result);
       
-      console.log(`Gray ${grayValue}: Input ${inputBrightness.toFixed(2)} -> Output ${outputBrightness.toFixed(2)} (${((outputBrightness - inputBrightness) / inputBrightness * 100).toFixed(2)}% change)`);
+      console.log(`Gray ${grayValue}: Input ${inputLightness.toFixed(2)} -> Output ${outputLightness.toFixed(2)} (${((outputLightness - inputLightness) / inputLightness * 100).toFixed(2)}% change)`);
       
       // Allow larger tolerance for grain effects in linear space
       const tolerance = 0.25; // 25% tolerance in linear space
-      const brightnessDifference = Math.abs(outputBrightness - inputBrightness) / inputBrightness;
+      const lightnessDifference = Math.abs(outputLightness - inputLightness) / inputLightness;
       
-      expect(brightnessDifference).toBeLessThan(tolerance);
+      expect(lightnessDifference).toBeLessThan(tolerance);
     }
   });
 
-  it('should preserve overall brightness for black and white extremes', async () => {
+  it('should preserve overall lightness for black and white extremes', async () => {
     const width = 50;
     const height = 50;
     
@@ -101,26 +101,26 @@ describe('Exposure Brightness Preservation', () => {
     const grainProcessor1 = new GrainProcessor(width, height, DEFAULT_SETTINGS);
     const blackResult = await grainProcessor1.processImage(blackImage as ImageData);
     
-    const blackInputBrightness = calculateAverageBrightness(blackImage);
-    const blackOutputBrightness = calculateAverageBrightness(blackResult);
+    const blackInputLightness = calculateAverageLightness(blackImage);
+    const blackOutputLightness = calculateAverageLightness(blackResult);
     
-    console.log(`Black: Input ${blackInputBrightness.toFixed(2)} -> Output ${blackOutputBrightness.toFixed(2)}`);
+    console.log(`Black: Input ${blackInputLightness.toFixed(2)} -> Output ${blackOutputLightness.toFixed(2)}`);
     
     // Black should remain very close to black
-    expect(blackOutputBrightness).toBeLessThan(10);
+    expect(blackOutputLightness).toBeLessThan(10);
     
     // Test pure white (should have grain effect but not be much darker)
     const whiteImage = createTestImage(width, height, 255);
     const grainProcessor2 = new GrainProcessor(width, height, DEFAULT_SETTINGS);
     const whiteResult = await grainProcessor2.processImage(whiteImage as ImageData);
     
-    const whiteInputBrightness = calculateAverageBrightness(whiteImage);
-    const whiteOutputBrightness = calculateAverageBrightness(whiteResult);
+    const whiteInputLightness = calculateAverageLightness(whiteImage);
+    const whiteOutputLightness = calculateAverageLightness(whiteResult);
     
-    console.log(`White: Input ${whiteInputBrightness.toFixed(2)} -> Output ${whiteOutputBrightness.toFixed(2)} (${((whiteOutputBrightness - whiteInputBrightness) / whiteInputBrightness * 100).toFixed(2)}% change)`);
+    console.log(`White: Input ${whiteInputLightness.toFixed(2)} -> Output ${whiteOutputLightness.toFixed(2)} (${((whiteOutputLightness - whiteInputLightness) / whiteInputLightness * 100).toFixed(2)}% change)`);
     
     // White should not be significantly darkened by grain (larger tolerance in linear space)
-    const whiteBrightnessDifference = Math.abs(whiteOutputBrightness - whiteInputBrightness) / whiteInputBrightness;
-    expect(whiteBrightnessDifference).toBeLessThan(0.25); // Allow 25% tolerance for white in linear space
+    const whiteLightnessDifference = Math.abs(whiteOutputLightness - whiteInputLightness) / whiteInputLightness;
+    expect(whiteLightnessDifference).toBeLessThan(0.25); // Allow 25% tolerance for white in linear space
   });
 });

@@ -59,18 +59,18 @@ export function convertSrgbToLinearFloat(uint8Data: Uint8ClampedArray): Float32A
 }
 
 /**
- * Apply brightness scaling to linear RGB values
+ * Apply lightness scaling to linear RGB values
  * Scales RGB channels while preserving alpha channel
  */
-export function applyBrightnessScaling(floatData: Float32Array, brightnessFactor: number): Float32Array {
+export function applyLightnessScaling(floatData: Float32Array, lightnessFactor: number): Float32Array {
   const scaledData = new Float32Array(floatData.length);
   for (let i = 0; i < floatData.length; i++) {
     if (i % 4 === 3) {
       // Alpha channel - no scaling
       scaledData[i] = floatData[i];
     } else {
-      // RGB channels - apply brightness scaling
-      scaledData[i] = floatData[i] * brightnessFactor;
+      // RGB channels - apply lightness scaling
+      scaledData[i] = floatData[i] * lightnessFactor;
     }
   }
   return scaledData;
@@ -101,15 +101,15 @@ export function convertLinearFloatToSrgb(floatData: Float32Array): Uint8ClampedA
 }
 
 /**
- * Calculate average brightness ratio between original and processed image
- * for brightness preservation using perceptually accurate luminance calculation
- * Operates on linear RGB values for physically correct brightness calculation
+ * Calculate average lightness ratio between original and processed image
+ * for lightness preservation using perceptually accurate luminance calculation
+ * Operates on linear RGB values for physically correct lightness calculation
  */
-export function calculateBrightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
+export function calculateLightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
   let originalSum = 0;
   let processedSum = 0;
 
-  // Calculate average brightness for RGB channels only (skip alpha)
+  // Calculate average lightness for RGB channels only (skip alpha)
   // Using ITU-R BT.709 luminance weights applied to linear RGB values
   for (let i = 0; i < originalData.length; i += 4) {
     // ITU-R BT.709 luminance weights
@@ -124,30 +124,30 @@ export function calculateBrightnessFactor(originalData: Float32Array, processedD
   }
 
   const pixelCount = originalData.length / 4;
-  const avgOriginalBrightness = originalSum / pixelCount;
-  const avgProcessedBrightness = processedSum / pixelCount;
+  const avgOriginalLightness = originalSum / pixelCount;
+  const avgProcessedLightness = processedSum / pixelCount;
 
   // Special case: if original image is very dark (near black), don't amplify
   // grain effects - they should remain minimal
   const DARK_THRESHOLD = 0.01;
   const PROCESSED_MIN = 0.001;
-  const BRIGHTNESS_FACTOR_MIN = 0.01;
-  const BRIGHTNESS_FACTOR_MAX = 100.0;
+  const LIGHTNESS_FACTOR_MIN = 0.01;
+  const LIGHTNESS_FACTOR_MAX = 100.0;
 
-  if (avgOriginalBrightness < DARK_THRESHOLD) {
-    return Math.min(1.0, avgOriginalBrightness / Math.max(avgProcessedBrightness, PROCESSED_MIN));
+  if (avgOriginalLightness < DARK_THRESHOLD) {
+    return Math.min(1.0, avgOriginalLightness / Math.max(avgProcessedLightness, PROCESSED_MIN));
   }
 
   // Avoid division by zero and ensure reasonable bounds
-  if (avgProcessedBrightness < PROCESSED_MIN) {
-    return 1.0; // Keep original brightness if processed is nearly black
+  if (avgProcessedLightness < PROCESSED_MIN) {
+    return 1.0; // Keep original lightness if processed is nearly black
   }
 
-  const brightnessFactor = avgOriginalBrightness / avgProcessedBrightness;
+  const lightnessFactor = avgOriginalLightness / avgProcessedLightness;
 
   // Clamp to reasonable range to avoid extreme corrections
   // In linear space, corrections can be more extreme than in gamma space
-  return Math.max(BRIGHTNESS_FACTOR_MIN, Math.min(BRIGHTNESS_FACTOR_MAX, brightnessFactor));
+  return Math.max(LIGHTNESS_FACTOR_MIN, Math.min(LIGHTNESS_FACTOR_MAX, lightnessFactor));
 }
 
 /**
