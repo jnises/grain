@@ -4,26 +4,15 @@
   **COMPLETED**: Implemented comprehensive gamma correction throughout the grain processing pipeline. The system now: 1) Converts input sRGB values to linear space using proper gamma correction functions (`srgbToLinear`), 2) Performs all grain calculations (Beer-Lambert law, brightness calculations, etc.) in linear RGB space for physically correct light blending, 3) Converts back to sRGB space using gamma encoding (`linearToSrgb`) before output. This ensures that light transmission calculations are physically accurate and brightness preservation works correctly in the perceptually correct color space. All tests pass with the updated linear color space processing.
 - [x] Make sure we work with colors in linear space as much as possible. Convert from/to gamma on input/output.
   **COMPLETED**: All color processing, grain compositing, and exposure calculations are performed in linear RGB space. Input is converted from sRGB to linear at the start, and output is converted back to sRGB at the end. All relevant tests pass, confirming correct implementation.
-- [ ] Go through the code and apply the rules around constants from the instructions
-    - [x] src/color-space.ts: Refactor to use constants for non-obvious values, place and name constants appropriately (already follows guidelines)
-    - [x] src/grain-density.ts: Refactor to use constants for non-obvious values, place and name constants appropriately (now follows guidelines)
-    - [x] src/constants.ts: Review and organize constants, ensure naming and placement follow guidelines
-    - [ ] src/grain-generator.ts
-    - [ ] src/utils.ts
-    - [ ] src/noise.ts
-    - [ ] src/grain-worker.ts
-    - [ ] src/grain-math.ts
-    - [ ] src/grain-sampling.ts
-    - [ ] src/performance-tracker.ts
-    - [ ] src/grain-worker-manager.ts
-- [ ] Go through the code and apply the rules around asserts from the instructions
-- [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
 - [ ] Use "lightness" rather than "brightness" in the processing pipeline
-- [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.
+- [ ] Try to clean up processImage and related code a bit. It has been refactored a bunch and there seems to be a bunch of unnecessary remnants of old things.
 - [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. Also look at git history for what changes have been made. If this is difficult to do we should probably just remove the file.
   For example we are not using voronoi diagrams.
   The change from multi layer to variable grain size.
-- [ ] Try to clean up processImage and related code a bit. It has been refactored a bunch and there seems to be a bunch of unnecessary remnants of old things.
+- [ ] Go through the code and apply the rules around constants from the instructions
+- [ ] Go through the code and apply the rules around asserts from the instructions
+- [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there?
+- [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.
 - [ ] When checking surrounding cells in processImage, are we sure a 3x3 neighborhood is large enough to fit the largest size grains?
 - [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
