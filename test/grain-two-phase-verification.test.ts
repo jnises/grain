@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
-import { GrainProcessor } from '../src/grain-worker';
 import type { GrainSettings } from '../src/types';
-import { createMockImageData } from './test-utils';
+import { createMockImageData, createTestGrainProcessor } from './test-utils';
 
 describe('Phase 4: Two-Phase Grain Processing Verification', () => {
   let grainSettings: GrainSettings;
@@ -56,7 +55,7 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
   describe('Visual Effects (Position Dependent)', () => {
     it('should process different image areas differently', async () => {
       // Create processor and image with matching dimensions
-      const testProcessor = new GrainProcessor(20, 20, grainSettings);
+      const testProcessor = createTestGrainProcessor(20, 20, grainSettings);
       const imageData = createMockImageData(20, 20, 128);
       
       // Make one quadrant brighter
@@ -80,7 +79,7 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
 
     it('should apply grain effects based on local pixel values', async () => {
       // Create a processor with matching dimensions for the test image
-      const testProcessor = new GrainProcessor(10, 10, grainSettings);
+      const testProcessor = createTestGrainProcessor(10, 10, grainSettings);
       
       // Create simple gradient image
       const imageData = createMockImageData(10, 10, 0);
@@ -117,7 +116,7 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
   describe('Performance Characteristics', () => {
     it('should process images within reasonable time', async () => {
       // Create a processor with matching dimensions for the test image
-      const testProcessor = new GrainProcessor(50, 50, grainSettings);
+      const testProcessor = createTestGrainProcessor(50, 50, grainSettings);
       const imageData = createMockImageData(50, 50, 128);
       
       const startTime = performance.now();
@@ -132,8 +131,8 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
     });
 
     it('should scale reasonably with image size', async () => {
-      const smallProcessor = new GrainProcessor(25, 25, grainSettings);
-      const largeProcessor = new GrainProcessor(50, 50, grainSettings);
+      const smallProcessor = createTestGrainProcessor(25, 25, grainSettings);
+      const largeProcessor = createTestGrainProcessor(50, 50, grainSettings);
       
       const smallImage = createMockImageData(25, 25, 128);
       const largeImage = createMockImageData(50, 50, 128);
@@ -160,8 +159,8 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
   describe('Two-Phase Architecture Validation', () => {
     it('should maintain consistent grain structure across different images', () => {
       // Create two different processors with same settings
-      const processor1 = new GrainProcessor(30, 30, grainSettings);
-      const processor2 = new GrainProcessor(30, 30, grainSettings);
+      const processor1 = createTestGrainProcessor(30, 30, grainSettings);
+      const processor2 = createTestGrainProcessor(30, 30, grainSettings);
       
       // Both should use same grain generation logic
       expect(processor1).toBeDefined();
@@ -170,7 +169,7 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
 
     it('should handle edge cases gracefully', async () => {
       // Test with very small image - create a processor matching the image size
-      const tinyProcessor = new GrainProcessor(1, 1, grainSettings);
+      const tinyProcessor = createTestGrainProcessor(1, 1, grainSettings);
       const tinyImage = createMockImageData(1, 1, 128);
       const result = await tinyProcessor.processImage(tinyImage);
       

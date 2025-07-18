@@ -21,7 +21,8 @@ import type {
   ProcessMessage,
   ProgressMessage,
   ResultMessage,
-  ErrorMessage
+  ErrorMessage,
+  RandomNumberGenerator
 } from './types';
 import { 
   assertPositiveInteger, 
@@ -52,7 +53,7 @@ export class GrainProcessor {
   private kernelGenerator: KernelGenerator;
   private grainDensityCalculator: GrainDensityCalculator;
 
-  constructor(width: number, height: number, settings: GrainSettings) {
+  constructor(width: number, height: number, settings: GrainSettings, rng?: RandomNumberGenerator) {
     // Validate input parameters with custom assertions that provide type narrowing
     assertPositiveInteger(width, 'width');
     assertPositiveInteger(height, 'height');
@@ -70,7 +71,7 @@ export class GrainProcessor {
     this.width = width;
     this.height = height;
     this.settings = settings;
-    this.grainGenerator = new GrainGenerator(width, height, settings);
+    this.grainGenerator = new GrainGenerator(width, height, settings, rng);
     this.performanceTracker = new PerformanceTracker();
     this.kernelGenerator = new KernelGenerator();
     this.grainDensityCalculator = new GrainDensityCalculator(settings);

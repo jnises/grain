@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { GrainProcessor } from '../src/grain-worker';
 import type { GrainSettings } from '../src/types';
-import { createMockImageData } from './test-utils';
+import { createMockImageData, createTestGrainProcessor } from './test-utils';
 
 /**
  * Integration tests for the complete grain processing algorithm
@@ -23,7 +22,7 @@ describe('GrainProcessor Integration Tests', () => {
       const testGrayValues = [0, 64, 128, 192, 255];
       
       for (const grayValue of testGrayValues) {
-        const processor = new GrainProcessor(width, height, defaultSettings);
+        const processor = createTestGrainProcessor(width, height, defaultSettings);
         const inputImage = createMockImageData(width, height, grayValue);
         
         const result = await processor.processImage(inputImage);
@@ -58,7 +57,7 @@ describe('GrainProcessor Integration Tests', () => {
     it('should process gradient patterns correctly', async () => {
       const width = 100;
       const height = 100;
-      const processor = new GrainProcessor(width, height, defaultSettings);
+      const processor = createTestGrainProcessor(width, height, defaultSettings);
       
       // Create horizontal gradient
       const gradientImage = createMockImageData(width, height, 0);
@@ -89,7 +88,7 @@ describe('GrainProcessor Integration Tests', () => {
     it('should process checkerboard patterns correctly', async () => {
       const width = 64;
       const height = 64;
-      const processor = new GrainProcessor(width, height, defaultSettings);
+      const processor = createTestGrainProcessor(width, height, defaultSettings);
       
       // Create checkerboard pattern
       const checkerboardImage = createMockImageData(width, height, 0);
@@ -123,7 +122,7 @@ describe('GrainProcessor Integration Tests', () => {
     it('should process radial patterns correctly', async () => {
       const width = 100;
       const height = 100;
-      const processor = new GrainProcessor(width, height, defaultSettings);
+      const processor = createTestGrainProcessor(width, height, defaultSettings);
       
       // Create radial gradient (bright center, dark edges)
       const radialImage = createMockImageData(width, height, 0);
@@ -169,7 +168,7 @@ describe('GrainProcessor Integration Tests', () => {
       
       for (const filmType of filmTypes) {
         const settings = { ...defaultSettings, filmType };
-        const processor = new GrainProcessor(width, height, settings);
+        const processor = createTestGrainProcessor(width, height, settings);
         const result = await processor.processImage(testImage);
         results.push(result);
       }
@@ -202,8 +201,8 @@ describe('GrainProcessor Integration Tests', () => {
       const lowISOSettings = { ...defaultSettings, iso: 100 };
       const highISOSettings = { ...defaultSettings, iso: 1600 };
       
-      const lowISOProcessor = new GrainProcessor(width, height, lowISOSettings);
-      const highISOProcessor = new GrainProcessor(width, height, highISOSettings);
+      const lowISOProcessor = createTestGrainProcessor(width, height, lowISOSettings);
+      const highISOProcessor = createTestGrainProcessor(width, height, highISOSettings);
       
       const lowISOResult = await lowISOProcessor.processImage(testImage);
       const highISOResult = await highISOProcessor.processImage(testImage);
@@ -235,8 +234,8 @@ describe('GrainProcessor Integration Tests', () => {
       const lowIntensitySettings = { ...defaultSettings, grainIntensity: 0.2 };
       const highIntensitySettings = { ...defaultSettings, grainIntensity: 2.0 };
       
-      const lowIntensityProcessor = new GrainProcessor(width, height, lowIntensitySettings);
-      const highIntensityProcessor = new GrainProcessor(width, height, highIntensitySettings);
+      const lowIntensityProcessor = createTestGrainProcessor(width, height, lowIntensitySettings);
+      const highIntensityProcessor = createTestGrainProcessor(width, height, highIntensitySettings);
       
       const lowIntensityResult = await lowIntensityProcessor.processImage(testImage);
       const highIntensityResult = await highIntensityProcessor.processImage(testImage);
@@ -252,7 +251,7 @@ describe('GrainProcessor Integration Tests', () => {
 
   describe('Edge Cases and Robustness', () => {
     it('should handle very small images', async () => {
-      const processor = new GrainProcessor(1, 1, defaultSettings);
+      const processor = createTestGrainProcessor(1, 1, defaultSettings);
       const tinyImage = createMockImageData(1, 1, 128);
       
       const result = await processor.processImage(tinyImage);
@@ -265,7 +264,7 @@ describe('GrainProcessor Integration Tests', () => {
     it('should handle images with extreme brightness values', async () => {
       const width = 50;
       const height = 50;
-      const processor = new GrainProcessor(width, height, defaultSettings);
+      const processor = createTestGrainProcessor(width, height, defaultSettings);
       
       // Test pure black
       const blackImage = createMockImageData(width, height, 0);
@@ -283,7 +282,7 @@ describe('GrainProcessor Integration Tests', () => {
     it('should maintain reasonable processing times', async () => {
       const width = 200;
       const height = 150;
-      const processor = new GrainProcessor(width, height, defaultSettings);
+      const processor = createTestGrainProcessor(width, height, defaultSettings);
       const testImage = createMockImageData(width, height, 128);
       
       const startTime = performance.now();
@@ -312,7 +311,7 @@ describe('GrainProcessor Integration Tests', () => {
       const testBrightnessLevels = [64, 128, 192]; // Dark, mid, bright tones
       
       for (const brightness of testBrightnessLevels) {
-        const processor = new GrainProcessor(width, height, lowISOSettings);
+        const processor = createTestGrainProcessor(width, height, lowISOSettings);
         const originalImage = createMockImageData(width, height, brightness);
         
         // Process the image
@@ -387,7 +386,7 @@ describe('GrainProcessor Integration Tests', () => {
         grainIntensity: 0.3 // Minimal grain intensity
       };
       
-      const processor = new GrainProcessor(width, height, veryLowISOSettings);
+      const processor = createTestGrainProcessor(width, height, veryLowISOSettings);
       const originalImage = createMockImageData(width, height, 128); // Mid-gray
       
       const processedImage = await processor.processImage(originalImage);
@@ -453,7 +452,7 @@ describe('GrainProcessor Integration Tests', () => {
         }
       }
       
-      const processor = new GrainProcessor(width, height, lowISOSettings);
+      const processor = createTestGrainProcessor(width, height, lowISOSettings);
       const processedImage = await processor.processImage(testImage);
       
       // Check that the basic structure is preserved

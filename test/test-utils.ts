@@ -2,6 +2,10 @@
  * Shared test utilities for the grain processing test suite
  */
 
+import { GrainProcessor } from '../src/grain-worker';
+import { SeededRandomNumberGenerator } from '../src/grain-generator';
+import type { GrainSettings } from '../src/types';
+
 /**
  * Create mock ImageData for testing (Node.js compatible)
  */
@@ -30,4 +34,12 @@ export function createMockImageDataWithCustomLength(width: number, height: numbe
     height,
     data: new Uint8ClampedArray(dataLength ?? width * height * 4)
   };
+}
+
+/**
+ * Create a GrainProcessor with deterministic RNG for testing
+ */
+export function createTestGrainProcessor(width: number, height: number, settings: GrainSettings, seed = 12345): GrainProcessor {
+  const rng = new SeededRandomNumberGenerator(seed);
+  return new GrainProcessor(width, height, settings, rng);
 }

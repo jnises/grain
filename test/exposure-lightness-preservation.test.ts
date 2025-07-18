@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { GrainProcessor } from '../src/grain-worker';
 import { srgbToLinear } from '../src/color-space';
 import type { GrainSettings } from '../src/types';
+import { createTestGrainProcessor } from './test-utils';
 
 describe('Exposure Lightness Preservation', () => {
   const DEFAULT_SETTINGS: GrainSettings = {
@@ -50,7 +50,7 @@ describe('Exposure Lightness Preservation', () => {
     const grayValue = Math.round(255 * 0.18); // 18% middle gray
     
     const inputImage = createTestImage(width, height, grayValue);
-    const grainProcessor = new GrainProcessor(width, height, DEFAULT_SETTINGS);
+    const grainProcessor = createTestGrainProcessor(width, height, DEFAULT_SETTINGS);
     
     const result = await grainProcessor.processImage(inputImage as ImageData);
     
@@ -75,7 +75,7 @@ describe('Exposure Lightness Preservation', () => {
     
     for (const grayValue of testGrayValues) {
       const inputImage = createTestImage(width, height, grayValue);
-      const grainProcessor = new GrainProcessor(width, height, DEFAULT_SETTINGS);
+      const grainProcessor = createTestGrainProcessor(width, height, DEFAULT_SETTINGS);
       
       const result = await grainProcessor.processImage(inputImage as ImageData);
       
@@ -98,7 +98,7 @@ describe('Exposure Lightness Preservation', () => {
     
     // Test pure black (should have minimal grain effect)
     const blackImage = createTestImage(width, height, 0);
-    const grainProcessor1 = new GrainProcessor(width, height, DEFAULT_SETTINGS);
+    const grainProcessor1 = createTestGrainProcessor(width, height, DEFAULT_SETTINGS);
     const blackResult = await grainProcessor1.processImage(blackImage as ImageData);
     
     const blackInputLightness = calculateAverageLightness(blackImage);
@@ -111,7 +111,7 @@ describe('Exposure Lightness Preservation', () => {
     
     // Test pure white (should have grain effect but not be much darker)
     const whiteImage = createTestImage(width, height, 255);
-    const grainProcessor2 = new GrainProcessor(width, height, DEFAULT_SETTINGS);
+    const grainProcessor2 = createTestGrainProcessor(width, height, DEFAULT_SETTINGS);
     const whiteResult = await grainProcessor2.processImage(whiteImage as ImageData);
     
     const whiteInputLightness = calculateAverageLightness(whiteImage);
