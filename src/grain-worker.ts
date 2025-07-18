@@ -196,133 +196,16 @@ export class GrainProcessor {
     
     // Step 4: Process each pixel
     safePostMessage({ type: 'progress', progress: 30, stage: 'Processing pixels...' } as ProgressMessage);
-    this.performanceTracker.startBenchmark('Pixel Processing', totalImagePixels);
-    
-    let grainEffectCount = 0;
-    let processedPixels = 0;
-    
-    // Start performance benchmark for pixel processing
     this.performanceTracker.startBenchmark('Pixel Processing', this.width * this.height);
     
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const pixelIndex = (y * this.width + x) * 4;
-        processedPixels++;
-        
-        const a = resultFloatData[pixelIndex + 3];
-        
-        // Initialize grain density
-        let totalGrainDensity: GrainDensity = { r: 0, g: 0, b: 0 };
-        let totalWeight = 0;
-        
-        // Get grains from nearby grid cells
-        const pixelGridX = Math.floor(x / gridSize);
-        const pixelGridY = Math.floor(y / gridSize);
-        const nearbyGrains: GrainPoint[] = [];
-        
-        // Check surrounding grid cells (3x3 neighborhood)
-        for (let dx = -1; dx <= 1; dx++) {
-          for (let dy = -1; dy <= 1; dy++) {
-            const gridKey = `${pixelGridX + dx},${pixelGridY + dy}`;
-            const cellGrains = grainGrid.get(gridKey);
-            if (cellGrains) {
-              nearbyGrains.push(...cellGrains);
-            }
-          }
-        }
-        
-        // Process grain effects (single layer with varying sizes)
-        // Start benchmark for single layer processing (first pixel only)
-        if (x === 0 && y === 0) {
-          this.performanceTracker.startBenchmark('Single Layer Processing');
-        }
-        
-        // Process nearby grains directly (already filtered by spatial grid)
-        for (const grain of nearbyGrains) {
-          const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
-
-          // Constant for grain influence radius
-          const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
-          if (distance < grain.size * GRAIN_INFLUENCE_RADIUS_FACTOR) {
-            const weight = Math.exp(-distance / grain.size);
-            
-            // Use pre-calculated intrinsic grain density
-            const intrinsicDensity = grainIntrinsicDensityMap.get(grain);
-            assert(
-              intrinsicDensity !== undefined,
-              'Intrinsic grain density not found in calculated map - this indicates a logic error',
-              { 
-                grain: { x: grain.x, y: grain.y, size: grain.size },
-                mapSize: grainIntrinsicDensityMap.size,
-                grainStructureLength: grainStructure.length
-              }
-            );
-            
-            // Calculate pixel-level grain effects using pre-calculated intrinsic density
-            const pixelGrainEffect = this.grainDensityCalculator.calculatePixelGrainEffect(intrinsicDensity, grain, x, y);
-            const grainDensity = this.calculateGrainDensity(pixelGrainEffect, grain);
-            
-            // Apply film-specific channel characteristics with enhanced color effects
-            const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];
-            const channelSensitivity = filmCharacteristics.channelSensitivity;
-            const baseColorShift = filmCharacteristics.colorShift;
-            
-            // Calculate position-dependent color temperature shift
-            const normalizedDistance = distance / grain.size;
-            const temperatureShift = this.calculateTemperatureShift(grain, normalizedDistance);
-            
-            // Calculate chromatic aberration based on distance from grain center
-            const chromaticAberration = calculateChromaticAberration(normalizedDistance);
-            
-            // Apply enhanced color response with temperature and chromatic effects
-            const redSensitivity = channelSensitivity.red * (1 + baseColorShift.red + temperatureShift.red);
-            const greenSensitivity = channelSensitivity.green * (1 + baseColorShift.green + temperatureShift.green);
-            const blueSensitivity = channelSensitivity.blue * (1 + baseColorShift.blue + temperatureShift.blue);
-            
-            totalGrainDensity.r += grainDensity * weight * redSensitivity * chromaticAberration.red;
-            totalGrainDensity.g += grainDensity * weight * greenSensitivity * chromaticAberration.green;
-            totalGrainDensity.b += grainDensity * weight * blueSensitivity * chromaticAberration.blue;
-            
-            totalWeight += weight;
-          }
-        }
-        
-        // End benchmark for single layer processing (last pixel only)
-        if (x === this.width - 1 && y === this.height - 1) {
-          this.performanceTracker.endBenchmark('Single Layer Processing');
-        }
-        
-        // Apply final compositing
-        if (totalWeight > 0) {
-          grainEffectCount++;
-          
-          // Normalize by total weight
-          totalGrainDensity.r /= totalWeight;
-          totalGrainDensity.g /= totalWeight;
-          totalGrainDensity.b /= totalWeight;
-          
-          let finalColor: [number, number, number];
-          
-          // Use Beer-Lambert law compositing for physically accurate results (floating-point)
-          finalColor = applyBeerLambertCompositingFloat(totalGrainDensity);
-          
-          resultFloatData[pixelIndex] = finalColor[0];
-          resultFloatData[pixelIndex + 1] = finalColor[1];
-          resultFloatData[pixelIndex + 2] = finalColor[2];
-          resultFloatData[pixelIndex + 3] = a;
-        }
-      }
-      
-      // Update progress periodically
-      if (y % Math.floor(this.height / 10) === 0) {
-        const progress = 30 + (y / this.height) * 60;
-        safePostMessage({ 
-          type: 'progress', 
-          progress, 
-          stage: `Processing pixels... ${Math.floor(progress)}%` 
-        } as ProgressMessage);
-      }
-    }
+    // Process pixel effects through extracted pure function
+    const { grainEffectCount, processedPixels } = this.processPixelEffects(
+      grainStructure,
+      grainGrid,
+      grainIntrinsicDensityMap,
+      resultFloatData,
+      gridSize
+    );
     
     // End pixel processing benchmark
     this.performanceTracker.endBenchmark('Pixel Processing');
@@ -423,6 +306,122 @@ export class GrainProcessor {
       green: temperatureIntensity * GREEN_TEMP_SHIFT, // Slight green adjustment
       blue: -temperatureIntensity * BLUE_TEMP_SHIFT  // Cooler at edges
     };
+  }
+
+  /**
+   * Process pixel effects with grain compositing
+   * Pure function that applies grain effects to image data
+   */
+  private processPixelEffects(
+    grainStructure: GrainPoint[],
+    grainGrid: Map<string, GrainPoint[]>,
+    grainIntrinsicDensityMap: Map<GrainPoint, number>,
+    resultFloatData: Float32Array,
+    gridSize: number
+  ): { grainEffectCount: number; processedPixels: number } {
+    let grainEffectCount = 0;
+    let processedPixels = 0;
+    
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const pixelIndex = (y * this.width + x) * 4;
+        processedPixels++;
+        
+        const a = resultFloatData[pixelIndex + 3];
+        
+        // Initialize grain density
+        let totalGrainDensity: GrainDensity = { r: 0, g: 0, b: 0 };
+        let totalWeight = 0;
+        
+        // Get grains from nearby grid cells
+        const pixelGridX = Math.floor(x / gridSize);
+        const pixelGridY = Math.floor(y / gridSize);
+        const nearbyGrains: GrainPoint[] = [];
+        
+        // Check surrounding grid cells (3x3 neighborhood)
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const gridKey = `${pixelGridX + dx},${pixelGridY + dy}`;
+            const cellGrains = grainGrid.get(gridKey);
+            if (cellGrains) {
+              nearbyGrains.push(...cellGrains);
+            }
+          }
+        }
+        
+        // Process nearby grains directly (already filtered by spatial grid)
+        for (const grain of nearbyGrains) {
+          const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
+
+          // Constant for grain influence radius
+          const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
+          if (distance < grain.size * GRAIN_INFLUENCE_RADIUS_FACTOR) {
+            const weight = Math.exp(-distance / grain.size);
+            
+            // Use pre-calculated intrinsic grain density
+            const intrinsicDensity = grainIntrinsicDensityMap.get(grain);
+            assert(
+              intrinsicDensity !== undefined,
+              'Intrinsic grain density not found in calculated map - this indicates a logic error',
+              { 
+                grain: { x: grain.x, y: grain.y, size: grain.size },
+                mapSize: grainIntrinsicDensityMap.size,
+                grainStructureLength: grainStructure.length
+              }
+            );
+            
+            // Calculate pixel-level grain effects using pre-calculated intrinsic density
+            const pixelGrainEffect = this.grainDensityCalculator.calculatePixelGrainEffect(intrinsicDensity, grain, x, y);
+            const grainDensity = this.calculateGrainDensity(pixelGrainEffect, grain);
+            
+            // Apply film-specific channel characteristics with enhanced color effects
+            const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];
+            const channelSensitivity = filmCharacteristics.channelSensitivity;
+            const baseColorShift = filmCharacteristics.colorShift;
+            
+            // Calculate position-dependent color temperature shift
+            const normalizedDistance = distance / grain.size;
+            const temperatureShift = this.calculateTemperatureShift(grain, normalizedDistance);
+            
+            // Calculate chromatic aberration based on distance from grain center
+            const chromaticAberration = calculateChromaticAberration(normalizedDistance);
+            
+            // Apply enhanced color response with temperature and chromatic effects
+            const redSensitivity = channelSensitivity.red * (1 + baseColorShift.red + temperatureShift.red);
+            const greenSensitivity = channelSensitivity.green * (1 + baseColorShift.green + temperatureShift.green);
+            const blueSensitivity = channelSensitivity.blue * (1 + baseColorShift.blue + temperatureShift.blue);
+            
+            totalGrainDensity.r += grainDensity * weight * redSensitivity * chromaticAberration.red;
+            totalGrainDensity.g += grainDensity * weight * greenSensitivity * chromaticAberration.green;
+            totalGrainDensity.b += grainDensity * weight * blueSensitivity * chromaticAberration.blue;
+            
+            totalWeight += weight;
+          }
+        }
+        
+        // Apply final compositing
+        if (totalWeight > 0) {
+          grainEffectCount++;
+          
+          // Normalize by total weight
+          totalGrainDensity.r /= totalWeight;
+          totalGrainDensity.g /= totalWeight;
+          totalGrainDensity.b /= totalWeight;
+          
+          let finalColor: [number, number, number];
+          
+          // Use Beer-Lambert law compositing for physically accurate results (floating-point)
+          finalColor = applyBeerLambertCompositingFloat(totalGrainDensity);
+          
+          resultFloatData[pixelIndex] = finalColor[0];
+          resultFloatData[pixelIndex + 1] = finalColor[1];
+          resultFloatData[pixelIndex + 2] = finalColor[2];
+          resultFloatData[pixelIndex + 3] = a;
+        }
+      }
+    }
+    
+    return { grainEffectCount, processedPixels };
   }
 
   /**
