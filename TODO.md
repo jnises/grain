@@ -15,8 +15,11 @@
   For example we are not using voronoi diagrams.
   The change from multi layer to variable grain size.
   **COMPLETED**: The `ALGORITHM_DESIGN.md` file was significantly outdated and described a much more complex and aspirational algorithm than the current implementation. It was removed to avoid confusion.
-- [ ] When checking surrounding cells in processImage, are we sure a 3x3 neighborhood is large enough to fit the largest size grains?
-- [ ] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
+- [x] When checking surrounding cells in processImage, are we sure a 3x3 neighborhood is large enough to fit the largest size grains?
+  **COMPLETED**: Analyzed the `createGrainGrid` function in `src/grain-generator.ts` and the `processPixelEffects` function in `src/grain-worker.ts`. The `gridSize` is calculated based on `maxGrainSize`, and `createGrainGrid` correctly assigns grains to all grid cells they can influence based on their `influenceRadius`. The 3x3 neighborhood check in `processPixelEffects` is therefore sufficient to find all relevant grains for a given pixel. The logic is sound.
+- [] Add tests that applies the entire algorithm to some test patterns and make sure the result makes sense. Specifically test GrainProcessor.processImage using some kind of test pattern.
+- [ ] What does the current "grain intensity" setting control?
+- [ ] Add test to grain-processor.test.ts that checks that at low iso the resulting image is mostly the same as the original image.
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] The grain shapes, are those only used when generating the final image, or are they also considered when doing grain development?
 - [ ] Go through the code and apply the rules around constants from the instructions

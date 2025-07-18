@@ -209,7 +209,21 @@ export class GrainProcessor {
     
     // End pixel processing benchmark
     this.performanceTracker.endBenchmark('Pixel Processing');
-    
+
+    // Invert the image to go from a "negative" to a "positive"
+    for (let i = 0; i < resultFloatData.length; i+=4) {
+        resultFloatData[i] = 1.0 - resultFloatData[i];
+        resultFloatData[i+1] = 1.0 - resultFloatData[i+1];
+        resultFloatData[i+2] = 1.0 - resultFloatData[i+2];
+    }
+
+    // Invert the image to go from a "negative" to a "positive"
+    for (let i = 0; i < resultFloatData.length; i+=4) {
+        resultFloatData[i] = 1.0 - resultFloatData[i];
+        resultFloatData[i+1] = 1.0 - resultFloatData[i+1];
+        resultFloatData[i+2] = 1.0 - resultFloatData[i+2];
+    }
+
     // Calculate lightness correction factor to preserve overall image lightness
     // Now operates on linear RGB values for physically correct lightness calculation
     const lightnessFactor = calculateLightnessFactor(floatData, resultFloatData);
@@ -220,6 +234,8 @@ export class GrainProcessor {
     
     // Convert back to Uint8ClampedArray with gamma encoding
     const finalData = convertLinearFloatToSrgb(lightnessAdjustedData);
+
+    
     
     // Create ImageData result - handle both browser and Node.js environments
     const result = typeof ImageData !== 'undefined' 
@@ -338,8 +354,6 @@ export class GrainProcessor {
         const pixelIndex = (y * this.width + x) * 4;
         processedPixels++;
         
-        const a = resultFloatData[pixelIndex + 3];
-        
         // Initialize grain density
         let totalGrainDensity: GrainDensity = { r: 0, g: 0, b: 0 };
         let totalWeight = 0;
@@ -419,15 +433,12 @@ export class GrainProcessor {
           totalGrainDensity.g /= totalWeight;
           totalGrainDensity.b /= totalWeight;
           
-          let finalColor: [number, number, number];
-          
           // Use Beer-Lambert law compositing for physically accurate results (floating-point)
-          finalColor = applyBeerLambertCompositingFloat(totalGrainDensity);
+          const finalColor = applyBeerLambertCompositingFloat(totalGrainDensity);
           
           resultFloatData[pixelIndex] = finalColor[0];
           resultFloatData[pixelIndex + 1] = finalColor[1];
           resultFloatData[pixelIndex + 2] = finalColor[2];
-          resultFloatData[pixelIndex + 3] = a;
         }
       }
     }

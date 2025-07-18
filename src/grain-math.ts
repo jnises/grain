@@ -62,7 +62,7 @@ export function convertSrgbToLinearFloat(uint8Data: Uint8ClampedArray): Float32A
  * Apply lightness scaling to linear RGB values
  * Scales RGB channels while preserving alpha channel
  */
-export function applyLightnessScaling(floatData: Float32Array, lightnessFactor: number): Float32Array {
+export function applyLightnessScaling(floatData: Float32Array, lightnessFactor: number, isDataNegative: boolean = false): Float32Array {
   const scaledData = new Float32Array(floatData.length);
   for (let i = 0; i < floatData.length; i++) {
     if (i % 4 === 3) {
@@ -70,7 +70,17 @@ export function applyLightnessScaling(floatData: Float32Array, lightnessFactor: 
       scaledData[i] = floatData[i];
     } else {
       // RGB channels - apply lightness scaling
-      scaledData[i] = floatData[i] * lightnessFactor;
+      if (isDataNegative) {
+        // If lightnessFactor > 1 (processed positive was too dark), we need to make negative brighter
+        // So, we want to multiply by a factor < 1.0.
+        // Example: negative 0.1 (dark) needs to become 0.5 (less dark)
+        // If lightnessFactor = 2 (processed positive was half as bright as original)
+        // We want to make negative twice as bright.
+        // So, new_negative = old_negative * (1.0 / lightnessFactor)
+        scaledData[i] = floatData[i] * (1.0 / lightnessFactor);
+      } else {
+        scaledData[i] = floatData[i] * lightnessFactor;
+      }
     }
   }
   return scaledData;
@@ -105,7 +115,7 @@ export function convertLinearFloatToSrgb(floatData: Float32Array): Uint8ClampedA
  * for lightness preservation using perceptually accurate luminance calculation
  * Operates on linear RGB values for physically correct lightness calculation
  */
-export function calculateLightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
+export function calculateLightnessFactor(originalData: Float32Array, processedData: Float32Array, isProcessedDataNegative: boolean = false): number {
   let originalSum = 0;
   let processedSum = 0;
 
@@ -117,10 +127,20 @@ export function calculateLightnessFactor(originalData: Float32Array, processedDa
     const LUMA_G = 0.7152;
     const LUMA_B = 0.0722;
     const originalLuminance = originalData[i] * LUMA_R + originalData[i + 1] * LUMA_G + originalData[i + 2] * LUMA_B;
-    const processedLuminance = processedData[i] * LUMA_R + processedData[i + 1] * LUMA_G + processedData[i + 2] * LUMA_B;
+    
+    let currentProcessedLuminance;
+    if (isProcessedDataNegative) {
+      // If the processed data is a negative, invert it for lightness calculation
+      const invertedR = 1.0 - processedData[i];
+      const invertedG = 1.0 - processedData[i + 1];
+      const invertedB = 1.0 - processedData[i + 2];
+      currentProcessedLuminance = invertedR * LUMA_R + invertedG * LUMA_G + invertedB * LUMA_B;
+    } else {
+      currentProcessedLuminance = processedData[i] * LUMA_R + processedData[i + 1] * LUMA_G + processedData[i + 2] * LUMA_B;
+    }
     
     originalSum += originalLuminance;
-    processedSum += processedLuminance;
+    processedSum += currentProcessedLuminance;
   }
 
   const pixelCount = originalData.length / 4;
@@ -149,6 +169,7 @@ export function calculateLightnessFactor(originalData: Float32Array, processedDa
   // In linear space, corrections can be more extreme than in gamma space
   return Math.max(LIGHTNESS_FACTOR_MIN, Math.min(LIGHTNESS_FACTOR_MAX, lightnessFactor));
 }
+
 
 /**
  * Apply Beer-Lambert law compositing for physically accurate results (floating-point version)
