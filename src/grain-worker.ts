@@ -159,25 +159,25 @@ export class GrainProcessor {
     this.performanceTracker.startBenchmark('Total Processing', totalImagePixels);
     
     // Step 1: Generate grain structure
-    safePostMessage({ type: 'progress', progress: 10, stage: 'Generating grain structure...' } as ProgressMessage);
+    this.reportProgress(10, 'Generating grain structure...');
     this.performanceTracker.startBenchmark('Grain Generation');
     const grainStructure = this.generateGrainStructure();
     this.performanceTracker.endBenchmark('Grain Generation');
     
     // Step 2: Create spatial acceleration grid
-    safePostMessage({ type: 'progress', progress: 20, stage: 'Creating spatial grid...' } as ProgressMessage);
+    this.reportProgress(20, 'Creating spatial grid...');
     this.performanceTracker.startBenchmark('Spatial Grid Creation');
     const grainGrid = this.createGrainGrid(grainStructure);
     this.performanceTracker.endBenchmark('Spatial Grid Creation');
     
     // Step 3: Calculate grain exposures using kernel-based sampling
-    safePostMessage({ type: 'progress', progress: 25, stage: 'Calculating kernel-based grain exposures...' } as ProgressMessage);
+    this.reportProgress(25, 'Calculating kernel-based grain exposures...');
     this.performanceTracker.startBenchmark('Kernel Exposure Calculation');
     const grainExposureMap = this.calculateGrainExposures(grainStructure, floatData);
     this.performanceTracker.endBenchmark('Kernel Exposure Calculation');
     
     // Step 3.5: Pre-calculate intrinsic grain densities (Phase 1)
-    safePostMessage({ type: 'progress', progress: 27, stage: 'Pre-calculating intrinsic grain densities...' } as ProgressMessage);
+    this.reportProgress(27, 'Pre-calculating intrinsic grain densities...');
     this.performanceTracker.startBenchmark('Intrinsic Density Calculation');
     const grainIntrinsicDensityMap = this.grainDensityCalculator.calculateIntrinsicGrainDensities(grainStructure, grainExposureMap);
     this.performanceTracker.endBenchmark('Intrinsic Density Calculation');
@@ -195,7 +195,7 @@ export class GrainProcessor {
     const gridSize = Math.max(MIN_GRID_SIZE, Math.floor(maxGrainSize * GRID_SIZE_FACTOR));
     
     // Step 4: Process each pixel
-    safePostMessage({ type: 'progress', progress: 30, stage: 'Processing pixels...' } as ProgressMessage);
+    this.reportProgress(30, 'Processing pixels...');
     this.performanceTracker.startBenchmark('Pixel Processing', this.width * this.height);
     
     // Process pixel effects through extracted pure function
@@ -258,12 +258,12 @@ export class GrainProcessor {
     
     // Debug: Draw grain center points if requested
     if (this.settings.debugGrainCenters) {
-      safePostMessage({ type: 'progress', progress: 95, stage: 'Drawing debug grain centers...' } as ProgressMessage);
+      this.reportProgress(95, 'Drawing debug grain centers...');
       console.log('Debug mode: Drawing grain center points');
       this.drawGrainCenters(result, grainStructure);
     }
     
-    safePostMessage({ type: 'progress', progress: 100, stage: 'Complete!' } as ProgressMessage);
+    this.reportProgress(100, 'Complete!');
     return result;
   }
 
@@ -306,6 +306,17 @@ export class GrainProcessor {
       green: temperatureIntensity * GREEN_TEMP_SHIFT, // Slight green adjustment
       blue: -temperatureIntensity * BLUE_TEMP_SHIFT  // Cooler at edges
     };
+  }
+
+  /**
+   * Helper to report progress with standardized messaging
+   */
+  private reportProgress(progress: number, stage: string): void {
+    safePostMessage({ 
+      type: 'progress', 
+      progress, 
+      stage 
+    } as ProgressMessage);
   }
 
   /**

@@ -10,10 +10,9 @@
   - [x] ~~Extract lightness correction into pure function~~ (Already done - `calculateLightnessFactor` and `applyLightnessScaling` exist)
   - [x] ~~Extract grain exposure calculation into pure function~~ (Already done - `calculateGrainExposures` is pure)
   - [x] Extract main pixel processing loop into pure function `processPixelEffects(grains, exposureMap, imageData) -> Float32Array`
-  - [ ] Extract progress reporting helper to reduce inline clutter and standardize progress percentages
+  - [x] Extract progress reporting helper to reduce inline clutter and standardize progress percentages
   - [ ] Remove redundant performance benchmarking calls (duplicate "Pixel Processing" benchmarks on lines 199, 205)
   - [ ] Simplify main `processImage` method to orchestrate pure functions with clear separation of concerns
-  **COMPLETED**: Analyzed the current state and confirmed the cleanup is needed. The 250-line `processImage` method has redundant performance benchmarking, scattered progress reporting, and a complex 120-line pixel processing loop that should be extracted. Two subtasks were already completed (lightness correction and grain exposure calculation are already pure functions).
 - [ ] Update ALGORITHM_DESIGN.md to reflect the changes that have been made to the algorithm. Also look at git history for what changes have been made. If this is difficult to do we should probably just remove the file.
   For example we are not using voronoi diagrams.
   The change from multi layer to variable grain size.
