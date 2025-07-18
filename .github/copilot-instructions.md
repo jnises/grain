@@ -1,46 +1,16 @@
 # Coding Guidelines
 - This is a prototype, no need to worry about backwards compatibility and such.
 
-## Core Principles
-
-### Code Reuse and Testing
-- Import and use actual production classes in tests (e.g., `GrainGenerator`)
-- **NEVER reimplement production functions in test files** - always import and test the actual production code
-- If testing private methods, make them protected and create a test subclass, or extract to a testable utility module
-- Test files verify behavior, not reimplement functionality
-- Use dependency injection or factories for mocking external dependencies
-- Test behavior, not implementation details
-- Expose private methods via protected access or testing interfaces when needed
-- When testing is difficult due to private methods or complex dependencies, refactor production code to be more testable rather than duplicating functionality in tests
-- **NEVER use `new ImageData()` in tests** - Node.js test environment doesn't have DOM ImageData. Instead, create mock objects with `{ width, height, data: new Uint8ClampedArray(width * height * 4) }` structure
-
-## Project Structure and File Organization
-
-### Temporary Files and Tools
-When creating temporary files, debug utilities, or development tools, please follow these guidelines to keep the repository clean:
-
-#### Temporary File Locations
-- **Temporary scripts**: Place in `scripts/temp/` (will be git-ignored)
-- **Debug utilities**: Place in `src/debug/` for source files or `public/debug/` for HTML files
-- **Test data/fixtures**: Place in `test/fixtures/` or `test/temp/`
-- **Benchmark files**: Place in `test/benchmarks/` 
-- **Development tools**: Place in `scripts/dev/`
-
-#### Naming Conventions
-- Prefix temporary files with `temp_` or `debug_`
-- Use descriptive names that indicate purpose: `temp_grain_analysis.js`, `debug_visualizer.html`
-- Include date/timestamp for time-sensitive files: `temp_performance_test_2024-01-15.js`
-
-#### Cleanup Guidelines
-- Remove temporary files after completing the task
-- Keep debug utilities only if they provide ongoing value
-- Avoid committing files to the root directory unless they're permanent project files
-
-### File Naming and Organization
-- Use kebab-case for filenames: `grain-generator.ts`, `test-utils.ts`
-- Use descriptive names that clearly indicate purpose
-
 ## Development Guidelines
+
+### Functional Design and Pure Functions
+- Prefer pure functions and functional programming patterns over imperative code and mutation
+- Pure functions should not modify their inputs or rely on external state; always return new values
+- Minimize side effects and shared mutable state throughout the codebase
+- Favor immutable data structures and transformations using map/filter/reduce where possible
+- Use functional composition to build complex logic from simple, reusable functions
+- Reserve mutation for performance-critical sections only, and document the rationale clearly
+- Functional design improves testability, predictability, and maintainability
 
 ### Object Design and Lifecycle
 - Design objects so all fields remain valid throughout the object's lifetime
@@ -88,6 +58,17 @@ When creating temporary files, debug utilities, or development tools, please fol
 - Log errors with sufficient context for debugging before throwing/asserting
 - Use the existing assertion utilities in `src/utils.ts`
 
+### Code Reuse and Testing
+- Import and use actual production classes in tests (e.g., `GrainGenerator`)
+- **NEVER reimplement production functions in test files** - always import and test the actual production code
+- If testing private methods, make them protected and create a test subclass, or extract to a testable utility module
+- Test files verify behavior, not reimplement functionality
+- Use dependency injection or factories for mocking external dependencies
+- Test behavior, not implementation details
+- Expose private methods via protected access or testing interfaces when needed
+- When testing is difficult due to private methods or complex dependencies, refactor production code to be more testable rather than duplicating functionality in tests
+- **NEVER use `new ImageData()` in tests** - Node.js test environment doesn't have DOM ImageData. Instead, create mock objects with `{ width, height, data: new Uint8ClampedArray(width * height * 4) }` structure
+
 ## Development Workflow
 
 ### Server Management (CRITICAL)
@@ -114,6 +95,33 @@ When creating temporary files, debug utilities, or development tools, please fol
 3. Ensure all tests pass
 4. Run `npm run check` to verify code quality and TypeScript errors
 5. Check that no unnecessary files were added to the repository
+
+## Project Structure and File Organization
+
+### Temporary Files and Tools
+When creating temporary files, debug utilities, or development tools, please follow these guidelines to keep the repository clean:
+
+#### Temporary File Locations
+- **Temporary scripts**: Place in `scripts/temp/` (will be git-ignored)
+- **Debug utilities**: Place in `src/debug/` for source files or `public/debug/` for HTML files
+- **Test data/fixtures**: Place in `test/fixtures/` or `test/temp/`
+- **Benchmark files**: Place in `test/benchmarks/` 
+- **Development tools**: Place in `scripts/dev/`
+
+#### Naming Conventions
+- Prefix temporary files with `temp_` or `debug_`
+- Use descriptive names that indicate purpose: `temp_grain_analysis.js`, `debug_visualizer.html`
+- Include date/timestamp for time-sensitive files: `temp_performance_test_2024-01-15.js`
+
+#### Cleanup Guidelines
+- Remove temporary files after completing the task
+- Keep debug utilities only if they provide ongoing value
+- Avoid committing files to the root directory unless they're permanent project files
+
+### File Naming and Organization
+- Use kebab-case for filenames: `grain-generator.ts`, `test-utils.ts`
+- Use descriptive names that clearly indicate purpose
+
 
 # Memory and Learned Preferences
 - When the user provides feedback that seems like a lasting preference rather than a one-time correction, add it to the appropriate section above with context about when and why it applies.
