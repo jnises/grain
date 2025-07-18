@@ -22,6 +22,8 @@
 - [x] Add test to grain-processor.test.ts that checks that at low iso the resulting image is mostly the same as the original image.
   **COMPLETED**: Created comprehensive tests that verify low ISO processing produces minimal changes to the original image. The test suite includes: 1) Testing at ISO 100 with various brightness levels (64, 128, 192) to ensure average pixel differences stay under 50 units and brightness preservation within 20 units, 2) Testing at very low ISO (50) to ensure 85% of pixels remain nearly identical (within 5 units), 3) Testing structure preservation with a two-tone pattern to ensure basic image structure is maintained. **Tests have been moved to `test/grain-processor-integration.test.ts` as a "Low ISO Processing" test section.**
 - [ ] Make sure GrainProcessor is created with a deterministic rng whenever it is used in tests.
+- [ ] Add a test for GrainProcessor.processImage that uses a colored image as input and makes sure the output is mostly that color still. Iso should be high.
+- [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] The grain shapes, are those only used when generating the final image, or are they also considered when doing grain development?
 - [ ] Go through the code and apply the rules around constants from the instructions
