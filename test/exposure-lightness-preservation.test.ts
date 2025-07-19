@@ -7,7 +7,6 @@ describe('Exposure Lightness Preservation', () => {
   const DEFAULT_SETTINGS: GrainSettings = {
     iso: 400,
     filmType: 'kodak',
-    grainIntensity: 0.5,
     upscaleFactor: 1.0
   };
 

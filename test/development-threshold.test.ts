@@ -15,7 +15,6 @@ describe('Development Threshold System', () => {
   const settings = {
     iso: 400,
     filmType: 'kodak' as const,
-    grainIntensity: 1.0,
     upscaleFactor: 1.0
   };
 

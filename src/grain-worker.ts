@@ -62,7 +62,7 @@ export class GrainProcessor {
     assert(
       this.isValidGrainSettings(settings),
       'Invalid grain settings provided',
-      { settings, requiredProperties: ['iso', 'filmType', 'grainIntensity', 'upscaleFactor'] }
+      { settings, requiredProperties: ['iso', 'filmType', 'upscaleFactor'] }
     );
 
     console.log(`Initializing GrainProcessor: ${width}x${height}, ISO: ${settings.iso}`);
@@ -85,8 +85,6 @@ export class GrainProcessor {
            'filmType' in settings &&
            typeof (settings as GrainSettings).filmType === 'string' &&
            ['kodak', 'fuji', 'ilford'].includes((settings as GrainSettings).filmType) &&
-           'grainIntensity' in settings &&
-           typeof (settings as GrainSettings).grainIntensity === 'number' && (settings as GrainSettings).grainIntensity >= 0 &&
            'upscaleFactor' in settings &&
            typeof (settings as GrainSettings).upscaleFactor === 'number' && (settings as GrainSettings).upscaleFactor > 0;
   }
@@ -283,8 +281,8 @@ export class GrainProcessor {
     // Apply film characteristic curve for density response
     const densityResponse = this.grainDensityCalculator.filmCurve(normalizedDensity);
     
-    // Scale by grain intensity setting and restore density range
-    return densityResponse * this.settings.grainIntensity * 0.8; // Increased multiplier for density model
+    // Return the density response directly from film curve
+    return densityResponse;
   }
 
   /**

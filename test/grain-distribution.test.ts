@@ -11,7 +11,6 @@ describe('Grain Distribution Bug Tests', () => {
     settings = {
       iso: 400,
       filmType: 'kodak',
-      grainIntensity: 1.0,
       upscaleFactor: 1.0
     };
   });

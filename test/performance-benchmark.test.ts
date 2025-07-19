@@ -25,7 +25,6 @@ function createTestSettings(iso: number): GrainSettings {
   return {
     iso,
     filmType: 'kodak',
-    grainIntensity: 1.0,
     upscaleFactor: 1.0
   };
 }

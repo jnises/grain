@@ -34,7 +34,6 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
     const lowISOSettings: GrainSettings = {
       iso: 200,
       filmType: 'kodak',
-      grainIntensity: 1.0,
       upscaleFactor: 1.0
     };
     
@@ -49,7 +48,6 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
     const highISOSettings: GrainSettings = {
       iso: 1600,
       filmType: 'kodak',
-      grainIntensity: 1.0,
       upscaleFactor: 1.0
     };
     
@@ -90,7 +88,6 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
       const settings: GrainSettings = {
         iso: 800,
         filmType: 'kodak',
-        grainIntensity: 1.0,
         upscaleFactor: 1.0
       };
       
@@ -142,7 +139,6 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
     const settings: GrainSettings = {
       iso: 1200, // High ISO = more grains with size variation
       filmType: 'kodak',
-      grainIntensity: 1.5,
       upscaleFactor: 1.0
     };
     

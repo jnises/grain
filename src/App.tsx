@@ -422,20 +422,6 @@ function App() {
           </div>
           <div className="control-group">
             <label>
-              Grain Intensity: {Math.round(customSettings.grainIntensity * 100)}%
-              <input 
-                type="range" 
-                min="0" 
-                max="2" 
-                step="0.1"
-                value={customSettings.grainIntensity}
-                onChange={(e) => handleCustomSettingChange('grainIntensity', parseFloat(e.target.value))}
-                disabled={isProcessing}
-              />
-            </label>
-          </div>
-          <div className="control-group">
-            <label>
               Film Type:
               <select 
                 value={customSettings.filmType}

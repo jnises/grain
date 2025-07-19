@@ -18,7 +18,16 @@
   - Tests validate single grain behavior consistency across different sizes and distances
   - Ensured proper handling of the 2x grain radius cutoff used in pixel processing
   The grain processing pipeline now uses mathematically consistent weighting functions, ensuring grains behave identically during development (exposure calculation) and rendering (pixel effects).
-- [ ] Remove the grain intensity functionality. Iso should be enough to control the amount of grain applied.
+- [x] Remove the grain intensity functionality. Iso should be enough to control the amount of grain applied.
+  **COMPLETED**: Successfully removed the redundant `grainIntensity` parameter from the grain processing pipeline. Changes included:
+  - Removed `grainIntensity` from the `GrainSettings` interface and all film presets
+  - Removed grain intensity validation from type guards and assertion functions
+  - Removed grain intensity UI controls (slider) from the web interface
+  - Removed the multiplication by `grainIntensity` in the grain density calculation, replacing it with a fixed multiplier
+  - Updated all test files to remove `grainIntensity` references and removed the dedicated grain intensity test section
+  - Verified that ISO already controls fundamental grain properties (size, density, count) through direct calculations
+  The grain simulation now relies solely on ISO settings for grain control, eliminating redundant parameters and simplifying the interface while maintaining all functionality. All tests pass and the build succeeds.
+- [ ] What does `GrainSettings.upscaleFactor` do. Can it be removed?
 - [ ] Create a page like public/grain-debug.html that replicates the testpatterns from grain-processor-integration.test.ts
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?

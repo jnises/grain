@@ -8,7 +8,6 @@ export interface RandomNumberGenerator {
 export interface GrainSettings {
   iso: number;
   filmType: 'kodak' | 'fuji' | 'ilford';
-  grainIntensity: number;
   upscaleFactor: number;
   debugGrainCenters?: boolean; // Optional debug option to draw grain center points
 }

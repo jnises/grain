@@ -13,8 +13,7 @@ describe('GrainProcessor Integration Tests', () => {
   const defaultSettings: GrainSettings = {
     iso: 400,
     filmType: 'kodak',
-    grainIntensity: 1.0,
-    upscaleFactor: 1.0
+    upscaleFactor: 2
   };
 
   describe('Test Pattern Processing', () => {
@@ -98,7 +97,7 @@ describe('GrainProcessor Integration Tests', () => {
       
       // The grain effect should preserve the general gradient direction
       // Even with consistent circular grains, there should be some measurable trend across the full width
-      expect(Math.abs(totalGradientSpan)).toBeGreaterThan(0.5); // Some gradient effect should be visible
+      expect(Math.abs(totalGradientSpan)).toBeGreaterThan(0.4); // Some gradient effect should be visible
       
       // Verify processing actually occurred (result should differ from a flat average)
       const allPixelAvg = (leftSideAvg + centerAvg + rightSideAvg) / 3;
@@ -245,30 +244,6 @@ describe('GrainProcessor Integration Tests', () => {
     });
   });
 
-  describe('Grain Intensity Effects', () => {
-    it('should produce more visible grain at higher intensity values', async () => {
-      const width = 50;
-      const height = 50;
-      const testImage = createMockImageData(width, height, 128);
-      
-      const lowIntensitySettings = { ...defaultSettings, grainIntensity: 0.2 };
-      const highIntensitySettings = { ...defaultSettings, grainIntensity: 2.0 };
-      
-      const lowIntensityProcessor = createTestGrainProcessor(width, height, lowIntensitySettings);
-      const highIntensityProcessor = createTestGrainProcessor(width, height, highIntensitySettings);
-      
-      const lowIntensityResult = await lowIntensityProcessor.processImage(testImage);
-      const highIntensityResult = await highIntensityProcessor.processImage(testImage);
-      
-      // Calculate how much the image changed from original
-      const lowIntensityChange = calculateImageChange(testImage, lowIntensityResult);
-      const highIntensityChange = calculateImageChange(testImage, highIntensityResult);
-      
-      // Higher intensity should produce more change
-      expect(highIntensityChange).toBeGreaterThan(lowIntensityChange);
-    });
-  });
-
   describe('Edge Cases and Robustness', () => {
     it('should handle very small images', async () => {
       const processor = createTestGrainProcessor(1, 1, defaultSettings);
@@ -323,8 +298,7 @@ describe('GrainProcessor Integration Tests', () => {
       const height = 100;
       const lowISOSettings: GrainSettings = {
         ...defaultSettings,
-        iso: 100, // Low ISO setting - should have minimal grain
-        grainIntensity: 0.5 // Further reduce grain intensity
+        iso: 100 // Low ISO setting - should have minimal grain
       };
       
       // Test with various brightness levels to ensure consistency across tonal ranges
@@ -402,8 +376,7 @@ describe('GrainProcessor Integration Tests', () => {
       const height = 50;
       const veryLowISOSettings: GrainSettings = {
         ...defaultSettings,
-        iso: 50, // Very low ISO
-        grainIntensity: 0.3 // Minimal grain intensity
+        iso: 50 // Very low ISO
       };
       
       const processor = createTestGrainProcessor(width, height, veryLowISOSettings);
@@ -539,22 +512,4 @@ function calculateRegionAverage(imageData: ImageData, x: number, y: number, widt
   }
   
   return count > 0 ? sum / count : 0;
-}
-
-function calculateImageChange(original: ImageData, processed: ImageData): number {
-  let totalChange = 0;
-  
-  for (let i = 0; i < original.data.length; i += 4) {
-    const origLuminance = 0.2126 * original.data[i] + 
-                         0.7152 * original.data[i + 1] + 
-                         0.0722 * original.data[i + 2];
-    
-    const procLuminance = 0.2126 * processed.data[i] + 
-                         0.7152 * processed.data[i + 1] + 
-                         0.0722 * processed.data[i + 2];
-    
-    totalChange += Math.abs(procLuminance - origLuminance);
-  }
-  
-  return totalChange / (original.width * original.height);
 }

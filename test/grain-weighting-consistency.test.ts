@@ -32,7 +32,6 @@ describe('Grain Weighting Consistency', () => {
     grainDensityCalculator = new GrainDensityCalculator({
       iso: 400,
       filmType: 'kodak',
-      grainIntensity: 100,
       upscaleFactor: 1
     });
     kernelGenerator = new KernelGenerator();

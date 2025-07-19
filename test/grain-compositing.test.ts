@@ -10,7 +10,6 @@ describe('Variable Grain Size Generation', () => {
   const settings: GrainSettings = {
     iso: 400,
     filmType: 'kodak',
-    grainIntensity: 1.0,
     upscaleFactor: 1
   };
 
@@ -92,7 +91,6 @@ describe('Grain Structure Properties', () => {
     const settings: GrainSettings = {
       iso: 400,
       filmType: 'kodak',
-      grainIntensity: 1.0,
       upscaleFactor: 1
     };
 
