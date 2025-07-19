@@ -13,7 +13,9 @@
   - [ ] Update all tests to work with grayscale processing expectations
   - [ ] Remove color specific types and functions that have been superseeded by grayscale versions
 - [ ] Go through the code and apply the rules around asserts from the instructions
-- [ ] Describe the current algorithm. Write it to ALGORITHM_DESIGN.md
+- [ ] Describe the current algorithm. Write it to CURRENT_ALGORITHM_DESIGN.md
+- [ ] The user copies CURRENT_ALGORITHM_DESIGN.md to TARGET_ALGORITHM_DESIGN.md and updates it to match the desired algorithm.
+- [ ] Look at CURRENT_ALGORITHM_DESIGN.md and TARGET_ALGORITHM_DESIGN.md and add the subtasks needed to convert the current algorithm to the target one.
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] The grain shapes, are those only used when generating the final image, or are they also considered when doing grain development?
