@@ -2,7 +2,6 @@
 // Implements physically plausible analog film grain algorithm
 
 import { GrainGenerator } from './grain-generator';
-import { FILM_CHARACTERISTICS } from './constants';
 import { PerformanceTracker } from './performance-tracker';
 import { KernelGenerator, sampleGrainAreaExposure } from './grain-sampling';
 import { GrainDensityCalculator } from './grain-density';
@@ -11,14 +10,12 @@ import {
   convertLinearFloatToSrgb,
   applyLightnessScaling,
   calculateLightnessFactor,
-  applyBeerLambertCompositingFloat,
-  calculateChromaticAberration
+  applyBeerLambertCompositingGrayscale
 } from './grain-math';
 import { convertImageDataToGrayscale } from './color-space';
 import type {
   GrainSettings,
   GrainPoint,
-  GrainDensity,
   ProcessMessage,
   ProgressMessage,
   ResultMessage,
@@ -306,31 +303,6 @@ export class GrainProcessor {
   }
 
   /**
-   * Calculate temperature-dependent color shift based on grain properties
-   * Simulates color temperature variations within individual grains
-   */
-  private calculateTemperatureShift(grain: GrainPoint, normalizedDistance: number): { red: number; green: number; blue: number } {
-    // Use grain's shape and sensitivity properties to create per-grain color variation
-    // Constants for temperature shift
-    const VARIATION_FACTOR = 0.01;
-    const RED_TEMP_SHIFT = 0.02;
-    const GREEN_TEMP_SHIFT = 0.005;
-    const BLUE_TEMP_SHIFT = 0.015;
-
-    const grainVariation = grain.shape * grain.sensitivity * VARIATION_FACTOR; // Small variation factor
-
-    // Simulate warmer center, cooler edges (typical of film grain)
-    const distanceFactor = 1 - normalizedDistance;
-    const temperatureIntensity = grainVariation * distanceFactor;
-
-    return {
-      red: temperatureIntensity * RED_TEMP_SHIFT,    // Warmer tones toward grain center
-      green: temperatureIntensity * GREEN_TEMP_SHIFT, // Slight green adjustment
-      blue: -temperatureIntensity * BLUE_TEMP_SHIFT  // Cooler at edges
-    };
-  }
-
-  /**
    * Helper to report progress with standardized messaging
    */
   private reportProgress(progress: number, stage: string): void {
@@ -360,8 +332,8 @@ export class GrainProcessor {
         const pixelIndex = (y * this.width + x) * 4;
         processedPixels++;
         
-        // Initialize grain density
-        let totalGrainDensity: GrainDensity = { r: 0, g: 0, b: 0 };
+        // Initialize grain density for monochrome processing
+        let totalGrainDensity = 0;
         let totalWeight = 0;
         
         // Get grains from nearby grid cells
@@ -405,26 +377,9 @@ export class GrainProcessor {
             const pixelGrainEffect = this.grainDensityCalculator.calculatePixelGrainEffect(intrinsicDensity, grain, x, y);
             const grainDensity = this.calculateGrainDensity(pixelGrainEffect, grain);
             
-            // Apply film-specific channel characteristics with enhanced color effects
-            const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];
-            const channelSensitivity = filmCharacteristics.channelSensitivity;
-            const baseColorShift = filmCharacteristics.colorShift;
-            
-            // Calculate position-dependent color temperature shift
-            const normalizedDistance = distance / grain.size;
-            const temperatureShift = this.calculateTemperatureShift(grain, normalizedDistance);
-            
-            // Calculate chromatic aberration based on distance from grain center
-            const chromaticAberration = calculateChromaticAberration(normalizedDistance);
-            
-            // Apply enhanced color response with temperature and chromatic effects
-            const redSensitivity = channelSensitivity.red * (1 + baseColorShift.red + temperatureShift.red);
-            const greenSensitivity = channelSensitivity.green * (1 + baseColorShift.green + temperatureShift.green);
-            const blueSensitivity = channelSensitivity.blue * (1 + baseColorShift.blue + temperatureShift.blue);
-            
-            totalGrainDensity.r += grainDensity * weight * redSensitivity * chromaticAberration.red;
-            totalGrainDensity.g += grainDensity * weight * greenSensitivity * chromaticAberration.green;
-            totalGrainDensity.b += grainDensity * weight * blueSensitivity * chromaticAberration.blue;
+            // For monochrome processing, use simple grayscale density accumulation
+            // Skip color-specific effects (channel sensitivity, color shifts, chromatic aberration)
+            totalGrainDensity += grainDensity * weight;
             
             totalWeight += weight;
           }
@@ -434,17 +389,16 @@ export class GrainProcessor {
         if (totalWeight > 0) {
           grainEffectCount++;
           
-          // Normalize by total weight
-          totalGrainDensity.r /= totalWeight;
-          totalGrainDensity.g /= totalWeight;
-          totalGrainDensity.b /= totalWeight;
+          // Normalize by total weight for grayscale processing
+          const normalizedDensity = totalGrainDensity / totalWeight;
           
-          // Use Beer-Lambert law compositing for physically accurate results (floating-point)
-          const finalColor = applyBeerLambertCompositingFloat(totalGrainDensity);
+          // Use Beer-Lambert law compositing for physically accurate grayscale results
+          const finalGrayscale = applyBeerLambertCompositingGrayscale(normalizedDensity);
           
-          resultFloatData[pixelIndex] = finalColor[0];
-          resultFloatData[pixelIndex + 1] = finalColor[1];
-          resultFloatData[pixelIndex + 2] = finalColor[2];
+          // Duplicate grayscale value to RGB channels
+          resultFloatData[pixelIndex] = finalGrayscale;
+          resultFloatData[pixelIndex + 1] = finalGrayscale;
+          resultFloatData[pixelIndex + 2] = finalGrayscale;
         }
       }
     }

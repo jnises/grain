@@ -9,12 +9,13 @@
 - [ ] Convert the algorithm to only be monochrome. Convert any color incoming images to grayscale.
   - [x] Add grayscale conversion function to convert input ImageData to grayscale
   - [x] Update GrainProcessor.processImage to convert input to grayscale at the start
-  - [ ] Modify grain compositing logic to work with single grayscale channel instead of RGB
+  - [x] Modify grain compositing logic to work with single grayscale channel instead of RGB
   - [ ] Remove color-specific film characteristics (channelSensitivity, colorShift, chromaticAberration)
   - [ ] Update grain density calculations to work with grayscale values
   - [ ] Update lightness calculation functions to work with grayscale
   - [ ] Update output generation to duplicate grayscale to RGB channels or keep as grayscale
   - [ ] Update all tests to work with grayscale processing expectations
+  - [ ] Remove color specific types and functions that have been superseeded by grayscale versions
 - [ ] Describe the current algorithm. Write it to ALGORITHM_DESIGN.md
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)

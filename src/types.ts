@@ -80,6 +80,10 @@ export interface GrainDensity {
   b: number;
 }
 
+export interface GrayscaleGrainDensity {
+  density: number;
+}
+
 export interface ChannelSensitivity {
   red: number;
   green: number;

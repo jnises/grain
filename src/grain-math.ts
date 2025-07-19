@@ -190,6 +190,19 @@ export function applyBeerLambertCompositingFloat(grainDensity: GrainDensity): [n
 }
 
 /**
+ * Apply Beer-Lambert law compositing for grayscale processing (floating-point version)
+ * Pure function implementing Beer-Lambert law physics for monochrome film
+ */
+export function applyBeerLambertCompositingGrayscale(density: number): number {
+  // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
+  // When "viewing" the film, WHITE printing light passes through the developed grains.
+  // Beer-Lambert law: final = white_light * exp(-density)
+  const WHITE_LIGHT = 1.0; // Floating-point white light (normalized)
+  
+  return WHITE_LIGHT * Math.exp(-density);
+}
+
+/**
  * Calculate chromatic aberration effect
  * Simulates slight color separation based on distance from grain center
  */
