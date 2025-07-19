@@ -6,6 +6,7 @@
 // Only truly shared constants should remain here. Function-specific and single-use constants are moved into their respective functions.
 
 import { FILM_CHARACTERISTICS } from './constants';
+import { calculateGrainFalloff } from './grain-math';
 import type { GrainSettings, GrainPoint } from './types';
 import { assertInRange, assert, assertArray, assertFiniteNumber } from './utils';
 
@@ -202,10 +203,10 @@ export class GrainDensityCalculator {
       return 0; // No effect beyond falloff radius
     }
     
-    // Apply distance-based falloff (exponential decay)
-    const falloffFactor = Math.exp(-distance / grain.size);
+    // Apply distance-based falloff using shared Gaussian function for consistency with exposure sampling
+    const falloffFactor = calculateGrainFalloff(distance, grain.size);
     
-    // Circular grains use clean exponential falloff without noise modulation
+    // Apply the intrinsic density with consistent falloff
     const pixelEffect = intrinsicDensity * falloffFactor;
     return pixelEffect;
   }

@@ -16,6 +16,27 @@ export function seededRandom(seed: number): number {
 }
 
 /**
+ * Calculates grain falloff weight using Gaussian distribution
+ * Shared function used for both exposure sampling and pixel effects
+ * Pure function for calculating falloff based on distance and grain properties
+ */
+export function calculateGrainFalloff(distance: number, grainRadius: number): number {
+  // Validate input parameters
+  assertFiniteNumber(distance, 'distance');
+  assert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
+  
+  // Constants for grain falloff calculation
+  const GAUSSIAN_SIGMA_FACTOR = 0.7; // Controls spread of Gaussian based on grain radius
+  const MIN_FALLOFF_WEIGHT = 0.0;     // No minimum weight for falloff (unlike sampling)
+
+  // Gaussian falloff for consistent behavior between sampling and rendering
+  const gaussianSigma = grainRadius * GAUSSIAN_SIGMA_FACTOR;
+  const gaussianWeight = Math.exp(-(distance * distance) / (2 * gaussianSigma * gaussianSigma));
+
+  return Math.max(gaussianWeight, MIN_FALLOFF_WEIGHT);
+}
+
+/**
  * Calculates sample weight using enhanced weighting profiles
  * Pure function for calculating sample weights based on distance and grain properties
  */
@@ -25,15 +46,13 @@ export function calculateSampleWeight(distance: number, grainRadius: number): nu
   assert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
   
   // Constants for sample weight calculation
-  const GAUSSIAN_SIGMA_FACTOR = 0.7; // Controls spread of Gaussian based on grain radius
   const MIN_SAMPLE_WEIGHT = 0.05;     // Minimum weight for edge samples
 
-  // Base Gaussian weighting for circular grains
-  const gaussianSigma = grainRadius * GAUSSIAN_SIGMA_FACTOR;
-  const gaussianWeight = Math.exp(-(distance * distance) / (2 * gaussianSigma * gaussianSigma));
+  // Use shared grain falloff function for consistency
+  const falloffWeight = calculateGrainFalloff(distance, grainRadius);
 
-  // Circular grains use standard Gaussian weighting
-  return Math.max(gaussianWeight, MIN_SAMPLE_WEIGHT);
+  // For sampling, we want a minimum weight to avoid complete zeros
+  return Math.max(falloffWeight, MIN_SAMPLE_WEIGHT);
 }
 
 /**
