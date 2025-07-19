@@ -1,3 +1,4 @@
+- [ ] Remove the isProcessedDataNegative hack.
 - [ ] Convert the algorithm to only be monochrome. Convert any color incoming images to grayscale.
   - [x] Add grayscale conversion function to convert input ImageData to grayscale
   - [x] Update GrainProcessor.processImage to convert input to grayscale at the start
@@ -5,7 +6,8 @@
   - [x] Remove color-specific film characteristics (channelSensitivity, colorShift, chromaticAberration)
   - [x] Update grain density calculations to work with grayscale values
     **COMPLETED**: Created a new `grayscaleToExposure()` function in `src/grain-math.ts` that calculates exposure directly from single grayscale luminance values, avoiding redundant RGB-to-luminance conversion. Updated `sampleGrainAreaExposure()` in `src/grain-sampling.ts` to use grayscale exposure calculation and sample only the red channel (since all RGB channels contain identical grayscale values after conversion). Added comprehensive tests in `test/exposure-conversion.test.ts` (5 new tests) and `test/grain-sampling.test.ts` (9 new tests) to verify correct functionality. All tests pass, and the system now efficiently processes grayscale exposure calculations while maintaining identical results to the previous RGB-based approach.
-  - [ ] Update lightness calculation functions to work with grayscale
+  - [x] Update lightness calculation functions to work with grayscale
+    **COMPLETED**: Updated `calculateLightnessFactor()` function in `src/grain-math.ts` to work properly with grayscale data. Since all RGB channels contain identical values after grayscale conversion, simplified the luminance calculation to use a single channel instead of weighted RGB calculation. This is both more efficient and conceptually correct for monochrome processing. All existing lightness preservation tests continue to pass, confirming the functionality works correctly.
   - [ ] Update output generation to duplicate grayscale to RGB channels or keep as grayscale
   - [ ] Update all tests to work with grayscale processing expectations
   - [ ] Remove color specific types and functions that have been superseeded by grayscale versions

@@ -93,7 +93,7 @@ describe('Grain Area Sampling with Grayscale', () => {
 
   it('should handle gradient patterns correctly', () => {
     // Create horizontal gradient from black to white
-    const imageData = createGrayscaleImageData(20, 20, (x, _y) => x / 19);
+    const imageData = createGrayscaleImageData(20, 20, (x) => x / 19);
     
     // Sample from left side (should be dark)
     const leftExposure = sampleGrainAreaExposure(

@@ -112,31 +112,25 @@ export function convertLinearFloatToSrgb(floatData: Float32Array): Uint8ClampedA
 
 /**
  * Calculate average lightness ratio between original and processed image
- * for lightness preservation using perceptually accurate luminance calculation
- * Operates on linear RGB values for physically correct lightness calculation
+ * for lightness preservation using grayscale luminance calculation
+ * Operates on linear grayscale values for physically correct lightness calculation
  */
 export function calculateLightnessFactor(originalData: Float32Array, processedData: Float32Array, isProcessedDataNegative: boolean = false): number {
   let originalSum = 0;
   let processedSum = 0;
 
-  // Calculate average lightness for RGB channels only (skip alpha)
-  // Using ITU-R BT.709 luminance weights applied to linear RGB values
+  // Calculate average lightness for grayscale data (RGB channels contain identical values)
+  // Since the image has been converted to grayscale, we can use any single channel
   for (let i = 0; i < originalData.length; i += 4) {
-    // ITU-R BT.709 luminance weights
-    const LUMA_R = 0.2126;
-    const LUMA_G = 0.7152;
-    const LUMA_B = 0.0722;
-    const originalLuminance = originalData[i] * LUMA_R + originalData[i + 1] * LUMA_G + originalData[i + 2] * LUMA_B;
+    // Use red channel since all RGB channels contain identical grayscale values
+    const originalLuminance = originalData[i];
     
     let currentProcessedLuminance;
     if (isProcessedDataNegative) {
       // If the processed data is a negative, invert it for lightness calculation
-      const invertedR = 1.0 - processedData[i];
-      const invertedG = 1.0 - processedData[i + 1];
-      const invertedB = 1.0 - processedData[i + 2];
-      currentProcessedLuminance = invertedR * LUMA_R + invertedG * LUMA_G + invertedB * LUMA_B;
+      currentProcessedLuminance = 1.0 - processedData[i];
     } else {
-      currentProcessedLuminance = processedData[i] * LUMA_R + processedData[i + 1] * LUMA_G + processedData[i + 2] * LUMA_B;
+      currentProcessedLuminance = processedData[i];
     }
     
     originalSum += originalLuminance;
