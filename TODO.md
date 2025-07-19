@@ -1,23 +1,3 @@
-- [x] Make KernelGenerator accept a rng argument for deterministic testing. Same as GrainProcessor.
-  **COMPLETED**: Successfully modified KernelGenerator to accept an optional RandomNumberGenerator parameter for deterministic testing. Changes included:
-  - Added optional rng parameter to KernelGenerator constructor with DefaultRandomNumberGenerator fallback
-  - Replaced all Math.random() calls with this.rng.random() for deterministic jitter generation
-  - Updated GrainProcessor to pass the rng parameter through to KernelGenerator constructor
-  - Maintained backward compatibility - existing code continues to work without changes
-  - Verified with tests showing deterministic behavior with seeded RNG and different results with different seeds
-  The KernelGenerator now provides deterministic sampling kernel generation when provided with a seeded RNG, matching the pattern used by GrainProcessor.
-- [x] Replace any call to Math.random in the code with a dependencyinjected rng, for deterministic testing. Pipe the injected rng through to everywhere it is needed.
-  **COMPLETED**: Successfully implemented dependency injection for random number generation throughout the codebase. All direct Math.random() calls have been replaced with injected RandomNumberGenerator interface. The only remaining Math.random() call is in DefaultRandomNumberGenerator class, which is the correct abstraction layer. RNG is properly piped through all components: GrainGenerator, KernelGenerator, and GrainProcessor all accept optional RNG parameters. Tests use SeededRandomNumberGenerator for deterministic behavior while production code uses DefaultRandomNumberGenerator for true randomness. The system now supports fully deterministic testing while maintaining random behavior in the UI.
-- [x] Make sure the gaussian sample weighting used for the exposure calculation matches the weighting used in the pixel processing part of the pipeline. Grains should behave the same when developing as when they are printed to the output. Add tests where you check that a single grain with different sizes and exposures result in an expected output shape.
-  **COMPLETED**: Successfully unified the weighting functions used for exposure calculation and pixel processing to ensure consistent grain behavior throughout the pipeline. Changes included:
-  - Created shared `calculateGrainFalloff` function in `grain-math.ts` using Gaussian weighting for consistent falloff behavior
-  - Updated `calculateSampleWeight` to use the shared falloff function while maintaining minimum weight for sampling
-  - Modified `calculatePixelGrainEffect` to use the same Gaussian falloff instead of simple exponential decay
-  - Both exposure calculation (kernel sampling) and pixel effects now use identical distance weighting formula
-  - Added comprehensive test suite (`grain-weighting-consistency.test.ts`) to verify mathematical consistency
-  - Tests validate single grain behavior consistency across different sizes and distances
-  - Ensured proper handling of the 2x grain radius cutoff used in pixel processing
-  The grain processing pipeline now uses mathematically consistent weighting functions, ensuring grains behave identically during development (exposure calculation) and rendering (pixel effects).
 - [x] Remove the grain intensity functionality. Iso should be enough to control the amount of grain applied.
   **COMPLETED**: Successfully removed the redundant `grainIntensity` parameter from the grain processing pipeline. Changes included:
   - Removed `grainIntensity` from the `GrainSettings` interface and all film presets
@@ -28,6 +8,7 @@
   - Verified that ISO already controls fundamental grain properties (size, density, count) through direct calculations
   The grain simulation now relies solely on ISO settings for grain control, eliminating redundant parameters and simplifying the interface while maintaining all functionality. All tests pass and the build succeeds.
 - [ ] What does `GrainSettings.upscaleFactor` do. Can it be removed?
+- [ ] processPixelEffects should return a new result image rather than writing to resultFloatData.
 - [ ] Create a page like public/grain-debug.html that replicates the testpatterns from grain-processor-integration.test.ts
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
