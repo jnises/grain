@@ -1,6 +1,6 @@
 // Tests for color space conversion functions
 import { describe, it, expect } from 'vitest';
-import { srgbToLinear, linearToSrgb, rgbToLab } from '../src/color-space';
+import { srgbToLinear, linearToSrgb, rgbToLab, convertImageDataToGrayscale } from '../src/color-space';
 
 describe('Color Space Conversions', () => {
   describe('Gamma Correction Functions', () => {
@@ -190,6 +190,120 @@ describe('Color Space Conversions', () => {
       expect(() => rgbToLab(256, 0, 0)).toThrow();
       expect(() => rgbToLab(0, 256, 0)).toThrow();
       expect(() => rgbToLab(0, 0, 256)).toThrow();
+    });
+  });
+
+  describe('Grayscale Conversion', () => {
+    // Helper function to create mock ImageData for testing
+    function createMockImageData(width: number, height: number, rgbValues: number[][]): ImageData {
+      const data = new Uint8ClampedArray(width * height * 4);
+      
+      for (let i = 0; i < rgbValues.length; i++) {
+        const baseIndex = i * 4;
+        data[baseIndex] = rgbValues[i][0];     // Red
+        data[baseIndex + 1] = rgbValues[i][1]; // Green
+        data[baseIndex + 2] = rgbValues[i][2]; // Blue
+        data[baseIndex + 3] = rgbValues[i][3] !== undefined ? rgbValues[i][3] : 255; // Alpha
+      }
+      
+      return { width, height, data } as ImageData;
+    }
+
+    describe('convertImageDataToGrayscale', () => {
+      it('should convert pure colors to correct grayscale values', () => {
+        const testImage = createMockImageData(2, 2, [
+          [255, 0, 0, 255],   // Pure red
+          [0, 255, 0, 255],   // Pure green
+          [0, 0, 255, 255],   // Pure blue
+          [255, 255, 255, 255] // Pure white
+        ]);
+        
+        const grayscaleImage = convertImageDataToGrayscale(testImage);
+        
+        // Check dimensions are preserved
+        expect(grayscaleImage.width).toBe(2);
+        expect(grayscaleImage.height).toBe(2);
+        expect(grayscaleImage.data.length).toBe(16); // 2x2 pixels * 4 channels
+        
+        // Check ITU-R BT.709 weighted conversions in linear space
+        // Red: sRGB(255,0,0) -> linear -> weighted -> sRGB ≈ 127
+        expect(grayscaleImage.data[0]).toBe(127);  // Red channel
+        expect(grayscaleImage.data[1]).toBe(127);  // Green channel
+        expect(grayscaleImage.data[2]).toBe(127);  // Blue channel
+        expect(grayscaleImage.data[3]).toBe(255);  // Alpha preserved
+        
+        // Green: sRGB(0,255,0) -> linear -> weighted -> sRGB ≈ 220
+        expect(grayscaleImage.data[4]).toBe(220);  // Red channel
+        expect(grayscaleImage.data[5]).toBe(220);  // Green channel
+        expect(grayscaleImage.data[6]).toBe(220);  // Blue channel
+        expect(grayscaleImage.data[7]).toBe(255);  // Alpha preserved
+        
+        // Blue: sRGB(0,0,255) -> linear -> weighted -> sRGB ≈ 76
+        expect(grayscaleImage.data[8]).toBe(76);   // Red channel
+        expect(grayscaleImage.data[9]).toBe(76);   // Green channel
+        expect(grayscaleImage.data[10]).toBe(76);  // Blue channel
+        expect(grayscaleImage.data[11]).toBe(255); // Alpha preserved
+        
+        // White: Linear luminance calculation results in 255
+        expect(grayscaleImage.data[12]).toBe(255); // Red channel
+        expect(grayscaleImage.data[13]).toBe(255); // Green channel
+        expect(grayscaleImage.data[14]).toBe(255); // Blue channel
+        expect(grayscaleImage.data[15]).toBe(255); // Alpha preserved
+      });
+
+      it('should handle black and gray values correctly', () => {
+        const testImage = createMockImageData(1, 3, [
+          [0, 0, 0, 255],     // Black
+          [128, 128, 128, 255], // Middle gray
+          [64, 96, 160, 128]  // Mixed color with partial alpha
+        ]);
+        
+        const grayscaleImage = convertImageDataToGrayscale(testImage);
+        
+        // Black should remain black
+        expect(grayscaleImage.data[0]).toBe(0);
+        expect(grayscaleImage.data[1]).toBe(0);
+        expect(grayscaleImage.data[2]).toBe(0);
+        expect(grayscaleImage.data[3]).toBe(255);
+        
+        // Middle gray should remain middle gray
+        expect(grayscaleImage.data[4]).toBe(128);
+        expect(grayscaleImage.data[5]).toBe(128);
+        expect(grayscaleImage.data[6]).toBe(128);
+        expect(grayscaleImage.data[7]).toBe(255);
+        
+        // Mixed color in linear space: sRGB(64,96,160) -> linear -> weighted -> sRGB ≈ 97
+        expect(grayscaleImage.data[8]).toBe(97);
+        expect(grayscaleImage.data[9]).toBe(97);
+        expect(grayscaleImage.data[10]).toBe(97);
+        expect(grayscaleImage.data[11]).toBe(128); // Alpha preserved
+      });
+
+      it('should preserve alpha channel correctly', () => {
+        const testImage = createMockImageData(1, 2, [
+          [255, 255, 255, 0],   // White with transparent alpha
+          [255, 255, 255, 127]  // White with semi-transparent alpha
+        ]);
+        
+        const grayscaleImage = convertImageDataToGrayscale(testImage);
+        
+        // Check alpha values are preserved
+        expect(grayscaleImage.data[3]).toBe(0);   // Transparent
+        expect(grayscaleImage.data[7]).toBe(127); // Semi-transparent
+      });
+
+      it('should handle edge case values without errors', () => {
+        const testImage = createMockImageData(1, 1, [
+          [255, 255, 255, 255]
+        ]);
+        
+        expect(() => convertImageDataToGrayscale(testImage)).not.toThrow();
+        
+        const result = convertImageDataToGrayscale(testImage);
+        expect(result.width).toBe(1);
+        expect(result.height).toBe(1);
+        expect(result.data.length).toBe(4);
+      });
     });
   });
 });

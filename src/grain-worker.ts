@@ -44,6 +44,7 @@ function safePostMessage(message: ProgressMessage | ResultMessage | ErrorMessage
 }
 
 // Utility functions for grain generation
+// All operations should be done on linear colors. The incoming image is immedeately converted from srgb to linear. Only convert back to srgb when writing the output image.
 export class GrainProcessor {
   private width: number;
   private height: number;

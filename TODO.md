@@ -7,6 +7,15 @@
 - [x] Make sure GrainProcessor is created with a deterministic rng whenever it is used in tests.
   **COMPLETED**: Modified GrainProcessor constructor to accept an optional RandomNumberGenerator parameter and updated all test files to use deterministic seeded RNG. Added a `createTestGrainProcessor` utility function that creates GrainProcessor instances with a SeededRandomNumberGenerator (seed=12345) for consistent, reproducible test results. Updated test files: grain-processor-integration.test.ts, grain-processor.test.ts, grain-two-phase-verification.test.ts, and exposure-lightness-preservation.test.ts. All tests now pass with deterministic behavior, as evidenced by consistent grain generation attempts (e.g., 400 grains in 928 attempts consistently).
 - [ ] Convert the algorithm to only be monochrome. Convert any color incoming images to grayscale.
+  - [x] Add grayscale conversion function to convert input ImageData to grayscale
+  - [ ] Update GrainProcessor.processImage to convert input to grayscale at the start
+  - [ ] Modify grain compositing logic to work with single grayscale channel instead of RGB
+  - [ ] Remove color-specific film characteristics (channelSensitivity, colorShift, chromaticAberration)
+  - [ ] Update grain density calculations to work with grayscale values
+  - [ ] Update lightness calculation functions to work with grayscale
+  - [ ] Update output generation to duplicate grayscale to RGB channels or keep as grayscale
+  - [ ] Update all tests to work with grayscale processing expectations
+- [ ] Describe the current algorithm. Write it to ALGORITHM_DESIGN.md
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] The grain shapes, are those only used when generating the final image, or are they also considered when doing grain development?
@@ -19,7 +28,6 @@
 - [ ] Create a separate assert util for slow checks that is only run when in dev mode.
 - [ ] Update agent instructions on how to use the asserts.
 - [ ] Update hot code to use the dev assert.
-- [ ] Add option for monochrome grains
 - [ ] Go through the testcases and make sure they are all enabled and makes sense
 - [ ] Optimize the algorithm
 - [ ] Clean up unused files and debug utils such as `public/grain-test.html`
