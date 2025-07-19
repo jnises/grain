@@ -1,5 +1,6 @@
 # Coding Guidelines
 - This is a prototype, no need to worry about backwards compatibility and such.
+- The tests were vibecoded and can often be wrong. If the user or design documents say something that contradicts the tests, trust the user and the documents.
 
 ## Development Guidelines
 

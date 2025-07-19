@@ -1,4 +1,15 @@
-- [x] Remove the grain intensity functionality. Iso should be enough to control the amount of grain applied.
+- [x] Remove - [x] processPixelEffects should return a new result image rather than writing to resultFloatData.
+- [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
+  - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
+  - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"  
+  - [ ] `test/grain-processor.test.ts` > "should preserve image structure at low ISO"
+  - [ ] `test/grain-processor-integration.test.ts` > "should process checkerboard patterns correctly"
+  - [ ] `test/grain-processor-integration.test.ts` > "should produce minimal changes to the original image at low ISO"
+  - [ ] `test/grain-processor-integration.test.ts` > "should have minimal grain effect at very low ISO (50)"
+  - [ ] `test/grain-processor-integration.test.ts` > "should preserve image structure at low ISO" 
+  - [ ] `test/exposure-lightness-preservation.test.ts` > "should preserve overall lightness for middle gray (18% gray)"
+  - [ ] `test/exposure-lightness-preservation.test.ts` > "should preserve overall lightness for various gray levels"
+  - [ ] `test/exposure-lightness-preservation.test.ts` > "should preserve overall lightness for black and white extremes" grain intensity functionality. Iso should be enough to control the amount of grain applied.
   **COMPLETED**: Successfully removed the redundant `grainIntensity` parameter from the grain processing pipeline. Changes included:
   - Removed `grainIntensity` from the `GrainSettings` interface and all film presets
   - Removed grain intensity validation from type guards and assertion functions
@@ -11,7 +22,9 @@
 - [x] Add a document called ALGORITHM_DESIGN.md that contains some high level design goals for the desired algorithm implementation.
   - [x] It should mention that the input image is only used to develop or expose the grains. The grains are then used to "print" a final photo. As if the input image was the light that the camera saw. Then the developed film is used in a darkroom to create a photo. Explain it using a analog film processing analogy.
   - [x] All color operations should be done in linear space. srgb packing/unpacking is done on output/input from the pipeline.
-- [ ] processPixelEffects should return a new result image rather than writing to resultFloatData.
+- [x] processPixelEffects should return a new result image rather than writing to resultFloatData.
+- [ ] It looks like only the large grains have an effect on the resulting image. Is the grain size behavior correct? Write some tests to make sure. Both when exposing using the incoming data and when printing to the output.
+- [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
 - [ ] Create a page like public/grain-debug.html that replicates the testpatterns from grain-processor-integration.test.ts
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?

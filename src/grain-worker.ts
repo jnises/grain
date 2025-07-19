@@ -234,11 +234,12 @@ export class GrainProcessor {
     this.performanceTracker.startBenchmark('Pixel Processing', this.width * this.height);
     
     // Process pixel effects through extracted pure function
-    const { grainEffectCount, processedPixels } = this.processPixelEffects(
+    const { resultFloatData: processedFloatData, grainEffectCount, processedPixels } = this.processPixelEffects(
       grainStructure,
       grainGrid,
       grainIntrinsicDensityMap,
-      resultFloatData,
+      this.width,
+      this.height,
       gridSize
     );
     
@@ -253,11 +254,11 @@ export class GrainProcessor {
 
     // Calculate lightness correction factor to preserve overall image lightness
     // Now operates on linear RGB values for physically correct lightness calculation
-    const lightnessFactor = calculateLightnessFactor(floatData, resultFloatData);
+    const lightnessFactor = calculateLightnessFactor(floatData, processedFloatData);
     console.log(`Lightness correction factor: ${lightnessFactor.toFixed(4)}`);
     
     // Apply lightness scaling in linear space
-    const lightnessAdjustedData = applyLightnessScaling(resultFloatData, lightnessFactor);
+    const lightnessAdjustedData = applyLightnessScaling(processedFloatData, lightnessFactor);
     
     // Convert back to Uint8ClampedArray with gamma encoding (sRGB packing at pipeline boundary)
     const finalData = convertLinearFloatToSrgb(lightnessAdjustedData);
@@ -351,16 +352,27 @@ export class GrainProcessor {
     grainStructure: GrainPoint[],
     grainGrid: Map<string, GrainPoint[]>,
     grainIntrinsicDensityMap: Map<GrainPoint, number>, // Grain densities from development phase
-    // TODO: remove this argument. all information needed to "print" a photo should be contained in the grains that have already been "exposed" to the original image. Return the genreated image instead.
-    resultFloatData: Float32Array,
+    outputWidth: number,
+    outputHeight: number,
     gridSize: number
-  ): { grainEffectCount: number; processedPixels: number } {
+  ): { resultFloatData: Float32Array; grainEffectCount: number; processedPixels: number } {
+    // Create new result array starting with uniform white light (darkroom enlarger light)
+    // This simulates the light that will pass through the developed film negative
+    const resultFloatData = new Float32Array(outputWidth * outputHeight * 4);
+    // Initialize all pixels to maximum brightness (white light from enlarger)
+    for (let i = 0; i < resultFloatData.length; i += 4) {
+      resultFloatData[i] = 1.0;     // Red channel
+      resultFloatData[i + 1] = 1.0; // Green channel  
+      resultFloatData[i + 2] = 1.0; // Blue channel
+      resultFloatData[i + 3] = 1.0; // Alpha channel
+    }
+    
     let grainEffectCount = 0;
     let processedPixels = 0;
     
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const pixelIndex = (y * this.width + x) * 4;
+    for (let y = 0; y < outputHeight; y++) {
+      for (let x = 0; x < outputWidth; x++) {
+        const pixelIndex = (y * outputWidth + x) * 4;
         processedPixels++;
         
         // Initialize grain density for monochrome processing
@@ -416,27 +428,36 @@ export class GrainProcessor {
           }
         }
         
-        // TODO: this if makes no sense. all pixels must be written
-        // Apply final compositing
+        // Apply grain effects using proper darkroom printing physics
+        // Start with uniform white enlarger light, apply grain density to simulate light passing through developed film
+        let finalGrayscale = 1.0; // Start with maximum brightness (white enlarger light)
+        
         if (totalWeight > 0) {
           grainEffectCount++;
           
           // Normalize by total weight for grayscale processing
           const normalizedDensity = totalGrainDensity / totalWeight;
           
-          // TODO: what does BeerLambert return actually? the amount of light absorbed by the grains? The grains should behave like the _negative_ in an analog film process. Do we need to invert the result or something?
-          // Use Beer-Lambert law compositing for physically accurate grayscale results
-          const finalGrayscale = applyBeerLambertCompositingGrayscale(normalizedDensity);
+          // Use Beer-Lambert law to calculate light transmission through developed grains
+          // Dense grains (heavily exposed) block more light
+          const lightTransmission = applyBeerLambertCompositingGrayscale(normalizedDensity);
           
-          // Duplicate grayscale value to RGB channels
-          resultFloatData[pixelIndex] = finalGrayscale;
-          resultFloatData[pixelIndex + 1] = finalGrayscale;
-          resultFloatData[pixelIndex + 2] = finalGrayscale;
+          // In darkroom printing: less light transmission = lighter final print
+          // This simulates how photographic paper works (less exposure = lighter result)
+          finalGrayscale = 1.0 - lightTransmission;
+        } else {
+          // If no grains affect this pixel, full enlarger light passes through → darkest areas
+          finalGrayscale = 0.0; // Maximum exposure on paper = darkest result
         }
+        
+        // Set the final pixel value (duplicate grayscale to RGB channels)
+        resultFloatData[pixelIndex] = finalGrayscale;
+        resultFloatData[pixelIndex + 1] = finalGrayscale;
+        resultFloatData[pixelIndex + 2] = finalGrayscale;
       }
     }
     
-    return { grainEffectCount, processedPixels };
+    return { resultFloatData, grainEffectCount, processedPixels };
   }
 
   /**
