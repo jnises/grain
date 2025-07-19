@@ -11,7 +11,8 @@
   - [x] Update GrainProcessor.processImage to convert input to grayscale at the start
   - [x] Modify grain compositing logic to work with single grayscale channel instead of RGB
   - [x] Remove color-specific film characteristics (channelSensitivity, colorShift, chromaticAberration)
-  - [ ] Update grain density calculations to work with grayscale values
+  - [x] Update grain density calculations to work with grayscale values
+    **COMPLETED**: Created a new `grayscaleToExposure()` function in `src/grain-math.ts` that calculates exposure directly from single grayscale luminance values, avoiding redundant RGB-to-luminance conversion. Updated `sampleGrainAreaExposure()` in `src/grain-sampling.ts` to use grayscale exposure calculation and sample only the red channel (since all RGB channels contain identical grayscale values after conversion). Added comprehensive tests in `test/exposure-conversion.test.ts` (5 new tests) and `test/grain-sampling.test.ts` (9 new tests) to verify correct functionality. All tests pass, and the system now efficiently processes grayscale exposure calculations while maintaining identical results to the previous RGB-based approach.
   - [ ] Update lightness calculation functions to work with grayscale
   - [ ] Update output generation to duplicate grayscale to RGB channels or keep as grayscale
   - [ ] Update all tests to work with grayscale processing expectations

@@ -247,3 +247,35 @@ export function rgbToExposureFloat(r: number, g: number, b: number): number {
   
   return result;
 }
+
+/**
+ * Calculate exposure from grayscale luminance value
+ * Pure logarithmic exposure calculation from single luminance value
+ * This is used for monochrome grain processing where input has already been converted to grayscale
+ * @param luminance - Grayscale luminance value [0, 1]
+ * @returns Normalized exposure value [0, 1]
+ */
+export function grayscaleToExposure(luminance: number): number {
+  // Validate input
+  assertInRange(luminance, 0, 1, 'luminance');
+
+  // Add small offset to prevent log(0) in pure black areas
+  const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;
+
+  // Convert to logarithmic exposure scale
+  const logExposure = Math.log(safeLuminance / EXPOSURE_CONVERSION.MIDDLE_GRAY_LUMINANCE) / 
+                     Math.log(EXPOSURE_CONVERSION.LOG_BASE);
+  
+  // Scale and normalize exposure to [0, 1] range
+  const normalizedExposure = (logExposure + EXPOSURE_CONVERSION.EXPOSURE_SCALE) / 
+                            (2 * EXPOSURE_CONVERSION.EXPOSURE_SCALE);
+
+  // Clamp to [0, 1] range and validate result
+  const result = Math.max(0, Math.min(1, normalizedExposure));
+  
+  assert(Number.isFinite(result), 'grayscaleToExposure produced non-finite result', {
+    luminance, safeLuminance, logExposure, normalizedExposure, result
+  });
+  
+  return result;
+}

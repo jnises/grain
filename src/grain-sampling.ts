@@ -1,7 +1,7 @@
 // Grain sampling kernel generation and area sampling utilities
 // Provides adaptive sampling patterns for grain exposure calculation and rendering
 
-import { calculateSampleWeight, rgbToExposureFloat } from './grain-math';
+import { calculateSampleWeight, grayscaleToExposure } from './grain-math';
 
 // Sampling kernel constants
 export const KERNEL_SAMPLE_COUNT_SMALL = 4;   // For grains < 1.5px radius
@@ -266,11 +266,10 @@ export function sampleGrainAreaExposure(
     // Check bounds
     if (sampleX >= 0 && sampleX < width && sampleY >= 0 && sampleY < height) {
       const pixelIndex = (sampleY * width + sampleX) * 4;
-      const r = imageData[pixelIndex];
-      const g = imageData[pixelIndex + 1];
-      const b = imageData[pixelIndex + 2];
+      // For grayscale data, all RGB channels have the same value, so we only need the red channel
+      const grayscaleValue = imageData[pixelIndex];
       
-      const exposure = rgbToExposureFloat(r, g, b);
+      const exposure = grayscaleToExposure(grayscaleValue);
       
       totalExposure += exposure * samplePoint.weight;
       totalWeight += samplePoint.weight;
@@ -285,10 +284,9 @@ export function sampleGrainAreaExposure(
     
     if (centerX >= 0 && centerX < width && centerY >= 0 && centerY < height) {
       const pixelIndex = (centerY * width + centerX) * 4;
-      const r = imageData[pixelIndex];
-      const g = imageData[pixelIndex + 1];
-      const b = imageData[pixelIndex + 2];
-      return rgbToExposureFloat(r, g, b);
+      // For grayscale data, all RGB channels have the same value, so we only need the red channel
+      const grayscaleValue = imageData[pixelIndex];
+      return grayscaleToExposure(grayscaleValue);
     }
     
     return 0; // Default exposure for completely out-of-bounds grains

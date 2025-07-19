@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rgbToExposureFloat } from '../src/grain-math';
+import { rgbToExposureFloat, grayscaleToExposure } from '../src/grain-math';
 
 describe('Exposure Conversion', () => {
   it('should convert RGB to logarithmic exposure following photographic principles', () => {
@@ -110,5 +110,110 @@ describe('Exposure Conversion', () => {
     const diff1 = stop2 - stop1;
     const diff2 = stop3 - stop2;
     expect(Math.abs(diff1 - diff2)).toBeLessThan(0.2); // Allow some tolerance
+  });
+});
+
+describe('Grayscale Exposure Conversion', () => {
+  it('should convert grayscale luminance to logarithmic exposure following photographic principles', () => {
+    // Test key photographic reference points for grayscale:
+    
+    // 1. Pure black (0.0) should give zero exposure due to clamping
+    const blackExposure = grayscaleToExposure(0.0);
+    expect(blackExposure).toBe(0); // Clamped to 0 due to extreme log value
+    
+    // 2. 18% middle gray should give mid-range exposure around 0.5
+    const middleGrayFloat = 0.18; // 18% gray in floating-point
+    const middleGrayExposure = grayscaleToExposure(middleGrayFloat);
+    expect(middleGrayExposure).toBeGreaterThan(0.49);
+    expect(middleGrayExposure).toBeLessThan(0.51);
+    
+    // 3. Pure white (1.0) should give high exposure near (but not at) 1.0
+    const whiteExposure = grayscaleToExposure(1.0);
+    expect(whiteExposure).toBeGreaterThan(0.65);
+    expect(whiteExposure).toBeLessThan(0.7);
+    
+    // 4. Exposure should increase monotonically with brightness
+    const slightlyBrighterGrayExposure = grayscaleToExposure(0.25); // 64/255 ≈ 0.25
+    const lightGrayExposure = grayscaleToExposure(0.75); // 192/255 ≈ 0.75
+    
+    expect(blackExposure).toBeLessThan(middleGrayExposure);
+    expect(middleGrayExposure).toBeLessThan(slightlyBrighterGrayExposure);
+    expect(slightlyBrighterGrayExposure).toBeLessThan(lightGrayExposure);
+    expect(lightGrayExposure).toBeLessThan(whiteExposure);
+  });
+
+  it('should handle edge cases in grayscale exposure conversion', () => {
+    // Test edge cases without crashing:
+    
+    // Pure black should not crash due to log(0)
+    expect(() => grayscaleToExposure(0.0)).not.toThrow();
+    
+    // Pure white should not exceed bounds
+    const whiteExposure = grayscaleToExposure(1.0);
+    expect(whiteExposure).toBeLessThanOrEqual(1.0);
+    expect(whiteExposure).toBeGreaterThanOrEqual(0.0);
+    
+    // Various luminance values should be in [0, 1] range
+    const testValues = [0.0, 0.1, 0.2, 0.5, 0.8, 0.9, 1.0];
+    testValues.forEach(luminance => {
+      const exposure = grayscaleToExposure(luminance);
+      expect(exposure).toBeGreaterThanOrEqual(0);
+      expect(exposure).toBeLessThanOrEqual(1);
+      expect(Number.isFinite(exposure)).toBe(true);
+    });
+  });
+
+  it('should produce equivalent results to rgbToExposureFloat for grayscale values', () => {
+    // For grayscale data, grayscaleToExposure should produce the same result as
+    // rgbToExposureFloat when all RGB channels have the same value
+    
+    const testLuminanceValues = [0.0, 0.18, 0.25, 0.5, 0.75, 1.0];
+    
+    testLuminanceValues.forEach(luminance => {
+      const grayscaleExposure = grayscaleToExposure(luminance);
+      const rgbExposure = rgbToExposureFloat(luminance, luminance, luminance);
+      
+      // Should be exactly equal since they use the same mathematical operations
+      expect(grayscaleExposure).toBeCloseTo(rgbExposure, 10); // High precision
+    });
+  });
+
+  it('should produce consistent logarithmic scaling for grayscale values', () => {
+    // Test that doubling luminance doesn't double exposure (due to log scale)
+    const lowExposure = grayscaleToExposure(0.125); // 32/255 ≈ 0.125
+    const highExposure = grayscaleToExposure(0.25); // 64/255 ≈ 0.25
+    
+    // Doubling luminance shouldn't double exposure in log scale
+    expect(highExposure).toBeLessThan(lowExposure * 2);
+    expect(highExposure).toBeGreaterThan(lowExposure);
+    
+    // Test stops progression (photographic concept)
+    const stop1 = grayscaleToExposure(0.18); // 18% gray
+    const stop2 = grayscaleToExposure(0.36); // 36% gray (1 stop higher)
+    const stop3 = grayscaleToExposure(0.72); // 72% gray (2 stops higher)
+    
+    // Each stop should increase exposure, but not linearly
+    expect(stop2).toBeGreaterThan(stop1);
+    expect(stop3).toBeGreaterThan(stop2);
+    
+    // The differences should be roughly equal in log space
+    const diff1 = stop2 - stop1;
+    const diff2 = stop3 - stop2;
+    expect(Math.abs(diff1 - diff2)).toBeLessThan(0.2); // Allow some tolerance
+  });
+
+  it('should validate input parameters correctly', () => {
+    // Test that invalid inputs are caught by assertions
+    
+    // Values outside [0, 1] range should throw
+    expect(() => grayscaleToExposure(-0.1)).toThrow();
+    expect(() => grayscaleToExposure(1.1)).toThrow();
+    expect(() => grayscaleToExposure(NaN)).toThrow();
+    expect(() => grayscaleToExposure(Infinity)).toThrow();
+    expect(() => grayscaleToExposure(-Infinity)).toThrow();
+    
+    // Boundary values should work
+    expect(() => grayscaleToExposure(0.0)).not.toThrow();
+    expect(() => grayscaleToExposure(1.0)).not.toThrow();
   });
 });
