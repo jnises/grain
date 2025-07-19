@@ -1,7 +1,6 @@
 // Mathematical utility functions for grain processing
 // These are pure functions that don't depend on class state
 
-import type { GrainDensity } from './types';
 import { SEEDED_RANDOM_MULTIPLIER, EXPOSURE_CONVERSION } from './constants';
 import { srgbToLinear, linearToSrgb } from './color-space';
 import { assertInRange, assert } from './utils';
@@ -157,32 +156,6 @@ export function calculateLightnessFactor(originalData: Float32Array, processedDa
   return Math.max(LIGHTNESS_FACTOR_MIN, Math.min(LIGHTNESS_FACTOR_MAX, lightnessFactor));
 }
 
-
-/**
- * Apply Beer-Lambert law compositing for physically accurate results (floating-point version)
- * Pure function implementing Beer-Lambert law physics
- */
-/**
- * Apply Beer-Lambert law compositing for grain density calculation
- * @deprecated This RGB-based version is legacy from the color processing era.
- * The system now processes grayscale images exclusively, but this function
- * may still be used internally. Consider refactoring to grayscale-only version.
- * @param grainDensity RGB grain density values
- * @returns RGB transmission values after Beer-Lambert law application
- */
-export function applyBeerLambertCompositingFloat(grainDensity: GrainDensity): [number, number, number] {
-  // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
-  // When "viewing" the film, WHITE printing light passes through the developed grains.
-  // Beer-Lambert law: final = white_light * exp(-density)
-  // This is correct physics - the original color should NOT be used here.
-  const WHITE_LIGHT = 1.0; // Floating-point white light (normalized)
-  
-  return [
-    WHITE_LIGHT * Math.exp(-grainDensity.r),
-    WHITE_LIGHT * Math.exp(-grainDensity.g),
-    WHITE_LIGHT * Math.exp(-grainDensity.b)
-  ];
-}
 
 /**
  * Apply Beer-Lambert law compositing for grayscale processing (floating-point version)

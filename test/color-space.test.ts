@@ -1,6 +1,6 @@
 // Tests for color space conversion functions
 import { describe, it, expect } from 'vitest';
-import { srgbToLinear, linearToSrgb, rgbToLab, convertImageDataToGrayscale } from '../src/color-space';
+import { srgbToLinear, linearToSrgb, convertImageDataToGrayscale } from '../src/color-space';
 
 describe('Color Space Conversions', () => {
   describe('Gamma Correction Functions', () => {
@@ -147,49 +147,6 @@ describe('Color Space Conversions', () => {
         const expected = 1.055 * Math.pow(highValue, 1.0 / 2.4) - 0.055;
         expect(linearToSrgb(highValue)).toBeCloseTo(expected, 10);
       });
-    });
-  });
-
-  describe('rgbToLab function', () => {
-    it('should convert white RGB (255,255,255) to approximately white LAB', () => {
-      const lab = rgbToLab(255, 255, 255);
-      expect(lab.l).toBeCloseTo(100, 1); // L should be close to 100 for white
-      expect(lab.a).toBeCloseTo(0, 1);   // a should be close to 0 for neutral
-      expect(lab.b).toBeCloseTo(0, 1);   // b should be close to 0 for neutral
-    });
-
-    it('should convert black RGB (0,0,0) to approximately black LAB', () => {
-      const lab = rgbToLab(0, 0, 0);
-      expect(lab.l).toBeCloseTo(0, 1);   // L should be close to 0 for black
-      expect(lab.a).toBeCloseTo(0, 1);   // a should be close to 0 for neutral
-      expect(lab.b).toBeCloseTo(0, 1);   // b should be close to 0 for neutral
-    });
-
-    it('should convert red RGB (255,0,0) to positive a value', () => {
-      const lab = rgbToLab(255, 0, 0);
-      expect(lab.a).toBeGreaterThan(0);  // Red should have positive a
-    });
-
-    it('should convert blue RGB (0,0,255) to negative b value', () => {
-      const lab = rgbToLab(0, 0, 255);
-      expect(lab.b).toBeLessThan(0);     // Blue should have negative b
-    });
-
-    it('should handle mid-gray consistently', () => {
-      const lab = rgbToLab(128, 128, 128);
-      expect(lab.l).toBeGreaterThan(0);
-      expect(lab.l).toBeLessThan(100);
-      expect(lab.a).toBeCloseTo(0, 1);   // Should be neutral
-      expect(lab.b).toBeCloseTo(0, 1);   // Should be neutral
-    });
-
-    it('should throw on invalid RGB values', () => {
-      expect(() => rgbToLab(-1, 0, 0)).toThrow();
-      expect(() => rgbToLab(0, -1, 0)).toThrow();
-      expect(() => rgbToLab(0, 0, -1)).toThrow();
-      expect(() => rgbToLab(256, 0, 0)).toThrow();
-      expect(() => rgbToLab(0, 256, 0)).toThrow();
-      expect(() => rgbToLab(0, 0, 256)).toThrow();
     });
   });
 
