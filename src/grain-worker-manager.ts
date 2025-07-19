@@ -180,52 +180,42 @@ export class GrainWorkerManager {
 export const FILM_PRESETS: Record<string, GrainSettings> = {
   'kodak-100': {
     iso: 100,
-    filmType: 'kodak',
-    upscaleFactor: 2
+    filmType: 'kodak'
   },
   'kodak-400': {
     iso: 400,
-    filmType: 'kodak',
-    upscaleFactor: 2
+    filmType: 'kodak'
   },
   'kodak-800': {
     iso: 800,
-    filmType: 'kodak',
-    upscaleFactor: 3
+    filmType: 'kodak'
   },
   'kodak-1600': {
     iso: 1600,
-    filmType: 'kodak',
-    upscaleFactor: 3
+    filmType: 'kodak'
   },
   'fuji-100': {
     iso: 100,
-    filmType: 'fuji',
-    upscaleFactor: 2
+    filmType: 'fuji'
   },
   'fuji-400': {
     iso: 400,
-    filmType: 'fuji',
-    upscaleFactor: 2
+    filmType: 'fuji'
   },
   'fuji-800': {
     iso: 800,
-    filmType: 'fuji',
-    upscaleFactor: 3
+    filmType: 'fuji'
   },
   'ilford-100': {
     iso: 100,
-    filmType: 'ilford',
-    upscaleFactor: 2
+    filmType: 'ilford'
   },
   'ilford-400': {
     iso: 400,
-    filmType: 'ilford',
-    upscaleFactor: 2
+    filmType: 'ilford'
   },
   'ilford-800': {
     iso: 800,
-    filmType: 'ilford',
-    upscaleFactor: 3
+    filmType: 'ilford'
   }
 };

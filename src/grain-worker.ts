@@ -62,7 +62,7 @@ export class GrainProcessor {
     assert(
       this.isValidGrainSettings(settings),
       'Invalid grain settings provided',
-      { settings, requiredProperties: ['iso', 'filmType', 'upscaleFactor'] }
+      { settings, requiredProperties: ['iso', 'filmType'] }
     );
 
     console.log(`Initializing GrainProcessor: ${width}x${height}, ISO: ${settings.iso}`);
@@ -84,9 +84,7 @@ export class GrainProcessor {
            typeof (settings as GrainSettings).iso === 'number' && (settings as GrainSettings).iso > 0 &&
            'filmType' in settings &&
            typeof (settings as GrainSettings).filmType === 'string' &&
-           ['kodak', 'fuji', 'ilford'].includes((settings as GrainSettings).filmType) &&
-           'upscaleFactor' in settings &&
-           typeof (settings as GrainSettings).upscaleFactor === 'number' && (settings as GrainSettings).upscaleFactor > 0;
+           ['kodak', 'fuji', 'ilford'].includes((settings as GrainSettings).filmType);
   }
 
   // Kernel-based grain area sampling methods

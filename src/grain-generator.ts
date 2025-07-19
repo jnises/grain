@@ -76,7 +76,6 @@ export class GrainGenerator {
     
     // Validate settings properties
     assertPositiveNumber(settings.iso, 'settings.iso');
-    assertPositiveNumber(settings.upscaleFactor, 'settings.upscaleFactor');
     
     // Validate film type
     assert(

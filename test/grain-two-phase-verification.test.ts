@@ -10,7 +10,6 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
     grainSettings = {
       iso: 400,
       filmType: 'kodak',
-      upscaleFactor: 1.0
     };
   });
 

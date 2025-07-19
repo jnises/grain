@@ -114,8 +114,6 @@ interface GrainPoint {
 interface GrainSettings {
   iso: number;                  // Film ISO sensitivity (100-3200)
   filmType: 'kodak'|'fuji'|'ilford'; // Film characteristic type
-  grainIntensity: number;       // Overall grain strength multiplier
-  upscaleFactor: number;        // Processing resolution multiplier
 }
 ```
 

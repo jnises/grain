@@ -15,7 +15,6 @@ const testConfig = {
   iso: 800,
   filmType: 'kodak',
   grainIntensity: 1.0,
-  upscaleFactor: 1.0
 };
 
 async function runDemo() {

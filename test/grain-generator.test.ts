@@ -12,7 +12,6 @@ describe('GrainGenerator', () => {
     settings = {
       iso: 400,
       filmType: 'kodak',
-      upscaleFactor: 1.0
     };
     generator = new GrainGenerator(400, 300, settings);
   });
@@ -50,9 +49,6 @@ describe('GrainGenerator', () => {
     });
 
     it('should throw on invalid upscale factor', () => {
-      expect(() => new GrainGenerator(400, 300, { ...settings, upscaleFactor: 0 })).toThrow(/upscalefactor.*positive.*finite.*number/i);
-      expect(() => new GrainGenerator(400, 300, { ...settings, upscaleFactor: -1 })).toThrow(/upscalefactor.*positive.*finite.*number/i);
-      expect(() => new GrainGenerator(400, 300, { ...settings, upscaleFactor: 'invalid' as any })).toThrow(/upscalefactor.*positive.*finite.*number/i);
     });
 
     it('should throw on invalid film type', () => {

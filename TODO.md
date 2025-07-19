@@ -7,7 +7,7 @@
   - Updated all test files to remove `grainIntensity` references and removed the dedicated grain intensity test section
   - Verified that ISO already controls fundamental grain properties (size, density, count) through direct calculations
   The grain simulation now relies solely on ISO settings for grain control, eliminating redundant parameters and simplifying the interface while maintaining all functionality. All tests pass and the build succeeds.
-- [ ] What does `GrainSettings.upscaleFactor` do. Can it be removed?
+- [x] What does `GrainSettings.upscaleFactor` do. Can it be removed? ✅ **COMPLETED**: Successfully removed - parameter was defined but never used in actual processing logic. Removed from GrainSettings interface, film presets, validation code, tests, and documentation.
 - [ ] processPixelEffects should return a new result image rather than writing to resultFloatData.
 - [ ] Create a page like public/grain-debug.html that replicates the testpatterns from grain-processor-integration.test.ts
 - [ ] Go through the code and apply the rules around constants from the instructions

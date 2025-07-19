@@ -7,7 +7,6 @@ describe('Grain Density Fixes', () => {
     const settings: GrainSettings = {
       iso: 1350,
       filmType: 'kodak',
-      upscaleFactor: 1
     };
 
     const generator = new GrainGenerator(400, 300, settings);
@@ -33,7 +32,6 @@ describe('Grain Density Fixes', () => {
     const settings: GrainSettings = {
       iso: 1350,
       filmType: 'kodak',
-      upscaleFactor: 1
     };
 
     const generator = new GrainGenerator(400, 300, settings);
@@ -56,7 +54,6 @@ describe('Grain Density Fixes', () => {
     const settings: GrainSettings = {
       iso: 1350,
       filmType: 'kodak',
-      upscaleFactor: 1
     };
 
     const generator = new GrainGenerator(400, 300, settings);

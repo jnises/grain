@@ -10,7 +10,6 @@ describe('Variable Grain Size Generation', () => {
   const settings: GrainSettings = {
     iso: 400,
     filmType: 'kodak',
-    upscaleFactor: 1
   };
 
   const generator = new GrainGenerator(400, 300, settings); // Reduced from 800x600
@@ -91,7 +90,6 @@ describe('Grain Structure Properties', () => {
     const settings: GrainSettings = {
       iso: 400,
       filmType: 'kodak',
-      upscaleFactor: 1
     };
 
     const generator = new GrainGenerator(800, 600, settings);

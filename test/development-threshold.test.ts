@@ -15,7 +15,6 @@ describe('Development Threshold System', () => {
   const settings = {
     iso: 400,
     filmType: 'kodak' as const,
-    upscaleFactor: 1.0
   };
 
   describe('Per-Grain Development Thresholds', () => {

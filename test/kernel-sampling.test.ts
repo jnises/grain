@@ -60,7 +60,6 @@ async function testGrainExposureVariability(
   const generator = new GrainGenerator(width, height, { 
     iso: 800, 
     filmType: 'kodak' as const,
-    upscaleFactor: 1
   });
   const grains = generator.generateGrainStructure().slice(0, sampleCount);
   
@@ -299,7 +298,6 @@ describe('Kernel Sampling Integration', () => {
     const settings = {
       iso: 800,
       filmType: 'kodak' as const,
-      upscaleFactor: 1
     };
 
     // Import and create grain generator

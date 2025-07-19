@@ -7,7 +7,6 @@ describe('Exposure Lightness Preservation', () => {
   const DEFAULT_SETTINGS: GrainSettings = {
     iso: 400,
     filmType: 'kodak',
-    upscaleFactor: 1.0
   };
 
   // Test function for calculating average lightness of grayscale images

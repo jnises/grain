@@ -13,7 +13,6 @@ describe('GrainProcessor Integration Tests', () => {
   const defaultSettings: GrainSettings = {
     iso: 400,
     filmType: 'kodak',
-    upscaleFactor: 2
   };
 
   describe('Test Pattern Processing', () => {

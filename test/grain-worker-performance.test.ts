@@ -34,7 +34,6 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
     const lowISOSettings: GrainSettings = {
       iso: 200,
       filmType: 'kodak',
-      upscaleFactor: 1.0
     };
     
     const lowISOProcessor = await createGrainProcessor(width, height, lowISOSettings);
@@ -48,7 +47,6 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
     const highISOSettings: GrainSettings = {
       iso: 1600,
       filmType: 'kodak',
-      upscaleFactor: 1.0
     };
     
     const highISOProcessor = await createGrainProcessor(width, height, highISOSettings);
@@ -88,7 +86,6 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
       const settings: GrainSettings = {
         iso: 800,
         filmType: 'kodak',
-        upscaleFactor: 1.0
       };
       
       const processor = await createGrainProcessor(size.width, size.height, settings);
@@ -139,7 +136,6 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
     const settings: GrainSettings = {
       iso: 1200, // High ISO = more grains with size variation
       filmType: 'kodak',
-      upscaleFactor: 1.0
     };
     
     console.log(`\n🎯 Variable Grain Size Generation Analysis (ISO ${settings.iso}):`);
