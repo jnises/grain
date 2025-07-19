@@ -72,7 +72,7 @@ export class GrainProcessor {
     this.settings = settings;
     this.grainGenerator = new GrainGenerator(width, height, settings, rng);
     this.performanceTracker = new PerformanceTracker();
-    this.kernelGenerator = new KernelGenerator();
+    this.kernelGenerator = new KernelGenerator(rng);
     this.grainDensityCalculator = new GrainDensityCalculator(settings);
   }
 

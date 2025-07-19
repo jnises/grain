@@ -3,6 +3,8 @@
 
 import { calculateSampleWeight, grayscaleToExposure } from './grain-math';
 import { assertPositiveNumber, assert } from './utils';
+import type { RandomNumberGenerator } from './types';
+import { DefaultRandomNumberGenerator } from './grain-generator';
 
 // Sampling kernel constants
 export const KERNEL_SAMPLE_COUNT_SMALL = 4;   // For grains < 1.5px radius
@@ -29,6 +31,11 @@ export interface SamplingKernel {
  */
 export class KernelGenerator {
   private kernelCache: Map<string, SamplingKernel> = new Map();
+  private rng: RandomNumberGenerator;
+
+  constructor(rng?: RandomNumberGenerator) {
+    this.rng = rng || new DefaultRandomNumberGenerator();
+  }
 
   /**
    * Determines appropriate sample count based on grain radius
@@ -121,14 +128,14 @@ export class KernelGenerator {
       
       // Add small jitter for more organic sampling
       const jitterMagnitude = angleStep * 0.1; // 10% of angle step
-      const jitterAngle = (Math.random() - 0.5) * jitterMagnitude;
+      const jitterAngle = (this.rng.random() - 0.5) * jitterMagnitude;
       const angle = baseAngle + jitterAngle;
       
       // Circular grains - no shape modulation needed
       const radius = baseRadius;
       
       // Small radial jitter for organic variation
-      const radiusJitter = 1.0 + (Math.random() - 0.5) * 0.1; // ±5% radius variation
+      const radiusJitter = 1.0 + (this.rng.random() - 0.5) * 0.1; // ±5% radius variation
       const finalRadius = radius * radiusJitter;
       
       const x = Math.cos(angle) * finalRadius;
@@ -187,14 +194,14 @@ export class KernelGenerator {
       
       // Add jitter for organic sampling
       const jitterMagnitude = angleStep * 0.08; // 8% of angle step for rings
-      const jitterAngle = (Math.random() - 0.5) * jitterMagnitude;
+      const jitterAngle = (this.rng.random() - 0.5) * jitterMagnitude;
       const angle = baseAngle + jitterAngle;
       
       // Circular grains - no shape modulation needed
       const radius = baseRadius;
       
       // Radial jitter
-      const radiusJitter = 1.0 + (Math.random() - 0.5) * 0.08; // ±4% for rings
+      const radiusJitter = 1.0 + (this.rng.random() - 0.5) * 0.08; // ±4% for rings
       const finalRadius = radius * radiusJitter;
       
       const x = Math.cos(angle) * finalRadius;

@@ -17,8 +17,15 @@
   - Deleted the now-unused noise.ts file containing Perlin noise implementation
   - Updated grain effects to use clean exponential falloff for circular shapes
   All tests pass (with one expected integration test change due to more consistent grain behavior) and grains now have perfectly circular falloff patterns.
-- [ ] Make KernelGenerator accept a rng argument for deterministic testing. Same as GrainProcessor.
-- [ ] Replace any call to Math.random in the code with a dependencyinjected rng, for deterministic testing. Pipe the rng through everywhere.
+- [x] Make KernelGenerator accept a rng argument for deterministic testing. Same as GrainProcessor.
+  **COMPLETED**: Successfully modified KernelGenerator to accept an optional RandomNumberGenerator parameter for deterministic testing. Changes included:
+  - Added optional rng parameter to KernelGenerator constructor with DefaultRandomNumberGenerator fallback
+  - Replaced all Math.random() calls with this.rng.random() for deterministic jitter generation
+  - Updated GrainProcessor to pass the rng parameter through to KernelGenerator constructor
+  - Maintained backward compatibility - existing code continues to work without changes
+  - Verified with tests showing deterministic behavior with seeded RNG and different results with different seeds
+  The KernelGenerator now provides deterministic sampling kernel generation when provided with a seeded RNG, matching the pattern used by GrainProcessor.
+- [ ] Replace any call to Math.random in the code with a dependencyinjected rng, for deterministic testing. Pipe the injected rng through to everywhere it is needed.
 - [ ] Make sure the gaussian sample weighting used for the exposure calculation matches the weighting used in the pixel processing part of the pipeline. Grains should behave the same when developing as when they are printed to the output. Add tests where you check that a single grain with different sizes and exposures result in an expected output shape.
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
