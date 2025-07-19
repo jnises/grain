@@ -47,46 +47,6 @@ describe('Constants Validation', () => {
           expect(Number.isFinite(characteristics.colorVariation)).toBe(true);
         });
 
-        it('should have valid channelSensitivity values', () => {
-          const { channelSensitivity } = characteristics;
-          
-          expect(typeof channelSensitivity.red).toBe('number');
-          expect(typeof channelSensitivity.green).toBe('number');
-          expect(typeof channelSensitivity.blue).toBe('number');
-          
-          // Sensitivities should be positive and reasonable (usually 0.5-1.0 range)
-          expect(channelSensitivity.red).toBeGreaterThan(0);
-          expect(channelSensitivity.red).toBeLessThanOrEqual(1);
-          expect(channelSensitivity.green).toBeGreaterThan(0);
-          expect(channelSensitivity.green).toBeLessThanOrEqual(1);
-          expect(channelSensitivity.blue).toBeGreaterThan(0);
-          expect(channelSensitivity.blue).toBeLessThanOrEqual(1);
-          
-          expect(Number.isFinite(channelSensitivity.red)).toBe(true);
-          expect(Number.isFinite(channelSensitivity.green)).toBe(true);
-          expect(Number.isFinite(channelSensitivity.blue)).toBe(true);
-        });
-
-        it('should have valid colorShift values', () => {
-          const { colorShift } = characteristics;
-          
-          expect(typeof colorShift.red).toBe('number');
-          expect(typeof colorShift.green).toBe('number');
-          expect(typeof colorShift.blue).toBe('number');
-          
-          // Color shifts should be small values (typically -0.1 to 0.1)
-          expect(colorShift.red).toBeGreaterThanOrEqual(-0.5);
-          expect(colorShift.red).toBeLessThanOrEqual(0.5);
-          expect(colorShift.green).toBeGreaterThanOrEqual(-0.5);
-          expect(colorShift.green).toBeLessThanOrEqual(0.5);
-          expect(colorShift.blue).toBeGreaterThanOrEqual(-0.5);
-          expect(colorShift.blue).toBeLessThanOrEqual(0.5);
-          
-          expect(Number.isFinite(colorShift.red)).toBe(true);
-          expect(Number.isFinite(colorShift.green)).toBe(true);
-          expect(Number.isFinite(colorShift.blue)).toBe(true);
-        });
-
         it('should have valid filmCurve parameters', () => {
           const { filmCurve } = characteristics;
           

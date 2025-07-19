@@ -203,26 +203,6 @@ export function applyBeerLambertCompositingGrayscale(density: number): number {
 }
 
 /**
- * Calculate chromatic aberration effect
- * Simulates slight color separation based on distance from grain center
- */
-export function calculateChromaticAberration(normalizedDistance: number): { red: number; green: number; blue: number } {
-  // Constants for chromatic aberration
-  const ABERRATION_STRENGTH_FACTOR = 0.02; // Controls overall strength
-  const RED_SHIFT_FACTOR = 0.5;
-  const BLUE_SHIFT_FACTOR = 0.3;
-
-  // Chromatic aberration is strongest at edges
-  const aberrationStrength = normalizedDistance * ABERRATION_STRENGTH_FACTOR;
-
-  return {
-    red: 1 + aberrationStrength * RED_SHIFT_FACTOR,   // Red slightly displaced outward
-    green: 1,                                         // Green remains centered (reference)
-    blue: 1 - aberrationStrength * BLUE_SHIFT_FACTOR   // Blue slightly displaced inward
-  };
-}
-
-/**
  * Convert linear RGB to photographic exposure
  * Operates on linear RGB values (0.0-1.0) for physically correct exposure calculation
  * 

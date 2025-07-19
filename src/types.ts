@@ -84,22 +84,8 @@ export interface GrayscaleGrainDensity {
   density: number;
 }
 
-export interface ChannelSensitivity {
-  red: number;
-  green: number;
-  blue: number;
-}
-
-export interface ColorShift {
-  red: number;
-  green: number;
-  blue: number;
-}
-
 export interface FilmCharacteristics {
   contrast: number;
   grainClumping: number;
   colorVariation: number;
-  channelSensitivity: ChannelSensitivity;
-  colorShift: ColorShift;
 }

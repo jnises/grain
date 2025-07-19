@@ -10,7 +10,7 @@ A TypeScript/React application that simulates realistic analog film grain effect
 - **Variable Grain Size**: Creates realistic grain with natural size variation across the image
 - **ISO-Responsive**: Grain size and density automatically adjust based on film speed settings
 - **Luminance-Dependent Response**: Grain visibility varies realistically across shadows, mid-tones, and highlights
-- **Color Channel Modeling**: Separate grain characteristics for RGB channels, matching real film behavior
+- **Monochrome Processing**: Processes all input images as grayscale for authentic film grain simulation
 - **High Performance**: Optimized algorithms with Web Worker support for non-blocking processing
 - **Interactive Visualization**: Real-time grain preview and parameter adjustment
 
