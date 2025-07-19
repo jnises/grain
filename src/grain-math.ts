@@ -162,6 +162,14 @@ export function calculateLightnessFactor(originalData: Float32Array, processedDa
  * Apply Beer-Lambert law compositing for physically accurate results (floating-point version)
  * Pure function implementing Beer-Lambert law physics
  */
+/**
+ * Apply Beer-Lambert law compositing for grain density calculation
+ * @deprecated This RGB-based version is legacy from the color processing era.
+ * The system now processes grayscale images exclusively, but this function
+ * may still be used internally. Consider refactoring to grayscale-only version.
+ * @param grainDensity RGB grain density values
+ * @returns RGB transmission values after Beer-Lambert law application
+ */
 export function applyBeerLambertCompositingFloat(grainDensity: GrainDensity): [number, number, number] {
   // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
   // When "viewing" the film, WHITE printing light passes through the developed grains.

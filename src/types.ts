@@ -53,12 +53,20 @@ export interface Point2D {
   y: number;
 }
 
+/**
+ * @deprecated RGB-based LAB color representation from the color processing era.
+ * The system now processes grayscale images exclusively. Consider removing in future cleanup.
+ */
 export interface LabColor {
   l: number;
   a: number;
   b: number;
 }
 
+/**
+ * @deprecated RGB-based effect representation from the color processing era.
+ * The system now processes grayscale images exclusively. Consider removing in future cleanup.
+ */
 export interface RgbEffect {
   r: number;
   g: number;
@@ -74,6 +82,10 @@ export interface GrainPoint {
   developmentThreshold: number; // Per-grain development threshold for activation
 }
 
+/**
+ * @deprecated RGB-based grain density from the color processing era.
+ * The system now processes grayscale images exclusively. Consider removing in future cleanup.
+ */
 export interface GrainDensity {
   r: number;
   g: number;

@@ -2,7 +2,7 @@
 // Pure functions for converting between different color spaces
 
 import type { LabColor } from './types';
-import { assertInRange, assert } from './utils';
+import { assert, assertInRange } from './utils';
 
 /**
  * Convert sRGB gamma-encoded value to linear RGB
@@ -105,6 +105,9 @@ const LAB_B_MULTIPLIER = 200;
 
 /**
  * Convert RGB color values to LAB color space
+ * @deprecated This function is legacy from the RGB processing era. 
+ * The system now processes grayscale images exclusively where R=G=B.
+ * Consider removing this function in future cleanup tasks.
  * @param r Red component (0-255)
  * @param g Green component (0-255)
  * @param b Blue component (0-255)

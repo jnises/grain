@@ -11,23 +11,22 @@ describe('Exposure Lightness Preservation', () => {
     upscaleFactor: 1.0
   };
 
+  // Test function for calculating average lightness of grayscale images
+  // Since the algorithm converts all input to grayscale where R=G=B,
+  // we can optimize the luminance calculation to use only one channel
+
   function calculateAverageLightness(imageData: { data: Uint8ClampedArray; width: number; height: number }): number {
     let totalLightness = 0;
     const pixelCount = imageData.width * imageData.height;
     
     for (let i = 0; i < imageData.data.length; i += 4) {
-      const r = imageData.data[i] / 255.0;
-      const g = imageData.data[i + 1] / 255.0;
-      const b = imageData.data[i + 2] / 255.0;
+      // Since the image is grayscale (R=G=B), we only need to read one channel
+      const grayValue = imageData.data[i] / 255.0;
       
       // Convert from sRGB to linear space for consistent lightness calculation
-      const linearR = srgbToLinear(r);
-      const linearG = srgbToLinear(g);
-      const linearB = srgbToLinear(b);
+      const linearLightness = srgbToLinear(grayValue);
       
-      // Calculate luminance using ITU-R BT.709 weights in linear space
-      const lightness = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-      totalLightness += lightness;
+      totalLightness += linearLightness;
     }
     
     return totalLightness / pixelCount;

@@ -5,7 +5,9 @@ import { createMockImageData, createTestGrainProcessor } from './test-utils';
 /**
  * Integration tests for the complete grain processing algorithm
  * Tests GrainProcessor.processImage with various test patterns to verify
- * that the entire algorithm produces sensible results
+ * that the entire grayscale grain processing algorithm produces sensible results.
+ * Since the algorithm converts all inputs to grayscale, all tests verify 
+ * that R=G=B is maintained throughout processing.
  */
 describe('GrainProcessor Integration Tests', () => {
   const defaultSettings: GrainSettings = {
@@ -50,6 +52,12 @@ describe('GrainProcessor Integration Tests', () => {
         // Verify that alpha channel is preserved
         for (let i = 3; i < result.data.length; i += 4) {
           expect(result.data[i]).toBe(255);
+        }
+        
+        // Verify grayscale format is maintained (R=G=B for all pixels)
+        for (let i = 0; i < result.data.length; i += 4) {
+          expect(result.data[i]).toBe(result.data[i + 1]); // R should equal G
+          expect(result.data[i + 1]).toBe(result.data[i + 2]); // G should equal B
         }
       }
     });

@@ -11,8 +11,15 @@
     **COMPLETED**: Updated `calculateLightnessFactor()` function in `src/grain-math.ts` to work properly with grayscale data. Since all RGB channels contain identical values after grayscale conversion, simplified the luminance calculation to use a single channel instead of weighted RGB calculation. This is both more efficient and conceptually correct for monochrome processing. All existing lightness preservation tests continue to pass, confirming the functionality works correctly.
   - [x] Update output generation to duplicate grayscale to RGB channels or keep as grayscale
     **COMPLETED**: The `convertImageDataToGrayscale()` function in `src/color-space.ts` already duplicates grayscale values across all RGB channels (R=G=B) in the output ImageData. All processing maintains this monochrome format throughout the pipeline. The output is properly formatted as RGBA ImageData where R=G=B for all pixels, making it compatible with standard image display while maintaining monochrome characteristics. Multiple tests verify this behavior works correctly.
-  - [ ] Update all tests to work with grayscale processing expectations
+  - [x] Update all tests to work with grayscale processing expectations
+    **COMPLETED**: Updated tests to reflect the current grayscale-only processing architecture. Key changes include:
+    - Modified `exposure-lightness-preservation.test.ts` to use optimized grayscale lightness calculation (single channel instead of RGB-to-luminance)
+    - Added grayscale format validation in `grain-processor-integration.test.ts` to verify R=G=B is maintained throughout processing
+    - Updated test documentation to clarify grayscale processing expectations
+    - Added deprecation notices to legacy color-specific types (`LabColor`, `RgbEffect`, `GrainDensity`) and functions (`rgbToLab`, `applyBeerLambertCompositingFloat`)
+    - All 233 tests pass, confirming the grayscale processing pipeline works correctly and maintains monochrome format (R=G=B) as expected
   - [ ] Remove color specific types and functions that have been superseeded by grayscale versions
+- [ ] Remove any deprecated function or type
 - [ ] Go through the code and apply the rules around asserts from the instructions
 - [ ] Describe the current algorithm. Write it to CURRENT_ALGORITHM_DESIGN.md
 - [ ] The user copies CURRENT_ALGORITHM_DESIGN.md to TARGET_ALGORITHM_DESIGN.md and updates it to match the desired algorithm.
