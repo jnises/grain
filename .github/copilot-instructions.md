@@ -110,8 +110,8 @@ When creating temporary files, debug utilities, or development tools, please fol
 
 #### Naming Conventions
 - Prefix temporary files with `temp_` or `debug_`
-- Use descriptive names that indicate purpose: `temp_grain_analysis.js`, `debug_visualizer.html`
-- Include date/timestamp for time-sensitive files: `temp_performance_test_2024-01-15.js`
+- Use descriptive names that indicate purpose: `temp_grain_analysis.ts`, `debug_visualizer.html`
+- Include date/timestamp for time-sensitive files: `temp_performance_test_2024-01-15.ts`
 
 #### Cleanup Guidelines
 - Remove temporary files after completing the task
@@ -122,6 +122,12 @@ When creating temporary files, debug utilities, or development tools, please fol
 - Use kebab-case for filenames: `grain-generator.ts`, `test-utils.ts`
 - Use descriptive names that clearly indicate purpose
 
+## Tools
+- Always use TypeScript for new tools; avoid JavaScript for scripts and utilities.
+- Place tool scripts in the appropriate directory (see "Temporary File Locations" above).
+- Use `npx tsx scriptpath.ts` to run TypeScript tools.
+- Prefer pure functions and functional patterns in tool scripts for maintainability.
+- Add comments or documentation to clarify tool purpose and usage.
 
 # Memory and Learned Preferences
 - When the user provides feedback that seems like a lasting preference rather than a one-time correction, add it to the appropriate section above with context about when and why it applies.

@@ -451,6 +451,7 @@ export class GrainProcessor {
   }
 }
 
+// TODO: this should probably be the only thing in this file, all the non-worker-specific code should move to a separate file.
 // Worker message handler
 self.onmessage = async function(e: MessageEvent<ProcessMessage>) {
   try {
