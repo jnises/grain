@@ -55,8 +55,12 @@
 - For recoverable errors: throw descriptive exceptions with context
 - Always validate inputs at function boundaries
 - Use type guards for runtime type checking when TypeScript types aren't sufficient
+- Don't use type guard asserts redundantly. If you do check something that is already guaranteed by typescript, write a comment why you think that is useful.
 - Log errors with sufficient context for debugging before throwing/asserting
 - Use the existing assertion utilities in `src/utils.ts`
+
+### Doc comments
+- Document any function argument whose meaning isn't obvious.
 
 ### Code Reuse and Testing
 - Import and use actual production classes in tests (e.g., `GrainGenerator`)

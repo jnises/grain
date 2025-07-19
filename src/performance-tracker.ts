@@ -1,6 +1,8 @@
 // Performance tracking utilities for grain processing operations
 // Provides benchmarking and timing capabilities for optimization analysis
 
+import { assert, assertPositiveNumber } from './utils';
+
 export interface PerformanceBenchmark {
   operation: string;
   startTime: number;
@@ -23,6 +25,11 @@ export class PerformanceTracker {
    * @param pixelsProcessed - Optional number of pixels processed for throughput calculation
    */
   startBenchmark(operation: string, pixelsProcessed?: number): void {
+    assert(typeof operation === 'string' && operation.length > 0, 'operation must be a non-empty string', { operation });
+    if (pixelsProcessed !== undefined) {
+      assertPositiveNumber(pixelsProcessed, 'pixelsProcessed');
+    }
+    
     this.benchmarks.set(operation, {
       operation,
       startTime: performance.now(),
@@ -36,6 +43,8 @@ export class PerformanceTracker {
    * @returns The completed benchmark or null if operation wasn't started
    */
   endBenchmark(operation: string): PerformanceBenchmark | null {
+    assert(typeof operation === 'string' && operation.length > 0, 'operation must be a non-empty string', { operation });
+    
     const benchmark = this.benchmarks.get(operation);
     if (!benchmark) return null;
     

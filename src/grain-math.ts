@@ -3,13 +3,14 @@
 
 import { SEEDED_RANDOM_MULTIPLIER, EXPOSURE_CONVERSION } from './constants';
 import { srgbToLinear, linearToSrgb } from './color-space';
-import { assertInRange, assert } from './utils';
+import { assertInRange, assert, assertFiniteNumber } from './utils';
 
 /**
  * Generate pseudorandom number with seed
  * Pure function for deterministic random number generation
  */
 export function seededRandom(seed: number): number {
+  assertFiniteNumber(seed, 'seed');
   const x = Math.sin(seed) * SEEDED_RANDOM_MULTIPLIER;
   return x - Math.floor(x);
 }
@@ -19,6 +20,11 @@ export function seededRandom(seed: number): number {
  * Pure function for calculating sample weights based on distance and grain properties
  */
 export function calculateSampleWeight(distance: number, grainRadius: number, grainShape: number): number {
+  // Validate input parameters
+  assertFiniteNumber(distance, 'distance');
+  assert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
+  assertInRange(grainShape, 0, 1, 'grainShape');
+  
   // Constants for sample weight calculation
   const GAUSSIAN_SIGMA_FACTOR = 0.7; // Controls spread of Gaussian based on grain radius
   const SHAPE_INFLUENCE_BASE = 0.5;  // Minimum shape influence
@@ -43,6 +49,9 @@ export function calculateSampleWeight(distance: number, grainRadius: number, gra
  * Applies gamma correction to convert from sRGB to linear space for physically correct processing
  */
 export function convertSrgbToLinearFloat(uint8Data: Uint8ClampedArray): Float32Array {
+  assert(uint8Data.length > 0, 'uint8Data must not be empty', { length: uint8Data.length });
+  assert(uint8Data.length % 4 === 0, 'uint8Data length must be divisible by 4 (RGBA format)', { length: uint8Data.length });
+  
   const floatData = new Float32Array(uint8Data.length);
   for (let i = 0; i < uint8Data.length; i++) {
     if (i % 4 === 3) {
@@ -62,6 +71,11 @@ export function convertSrgbToLinearFloat(uint8Data: Uint8ClampedArray): Float32A
  * Scales RGB channels while preserving alpha channel
  */
 export function applyLightnessScaling(floatData: Float32Array, lightnessFactor: number, isDataNegative: boolean = false): Float32Array {
+  assert(floatData.length > 0, 'floatData must not be empty', { length: floatData.length });
+  assert(floatData.length % 4 === 0, 'floatData length must be divisible by 4 (RGBA format)', { length: floatData.length });
+  assertFiniteNumber(lightnessFactor, 'lightnessFactor');
+  assert(lightnessFactor >= 0, 'lightnessFactor must be non-negative', { lightnessFactor });
+  
   const scaledData = new Float32Array(floatData.length);
   for (let i = 0; i < floatData.length; i++) {
     if (i % 4 === 3) {
@@ -90,6 +104,9 @@ export function applyLightnessScaling(floatData: Float32Array, lightnessFactor: 
  * Applies gamma encoding to convert from linear space back to sRGB
  */
 export function convertLinearFloatToSrgb(floatData: Float32Array): Uint8ClampedArray {
+  assert(floatData.length > 0, 'floatData must not be empty', { length: floatData.length });
+  assert(floatData.length % 4 === 0, 'floatData length must be divisible by 4 (RGBA format)', { length: floatData.length });
+  
   const uint8Data = new Uint8ClampedArray(floatData.length);
   for (let i = 0; i < floatData.length; i++) {
     const value = floatData[i];
@@ -115,6 +132,13 @@ export function convertLinearFloatToSrgb(floatData: Float32Array): Uint8ClampedA
  * Operates on linear grayscale values for physically correct lightness calculation
  */
 export function calculateLightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
+  assert(originalData.length > 0, 'originalData must not be empty', { length: originalData.length });
+  assert(processedData.length === originalData.length, 'processedData must have same length as originalData', { 
+    originalLength: originalData.length, 
+    processedLength: processedData.length 
+  });
+  assert(originalData.length % 4 === 0, 'data length must be divisible by 4 (RGBA format)', { length: originalData.length });
+  
   let originalSum = 0;
   let processedSum = 0;
 
@@ -162,6 +186,8 @@ export function calculateLightnessFactor(originalData: Float32Array, processedDa
  * Pure function implementing Beer-Lambert law physics for monochrome film
  */
 export function applyBeerLambertCompositingGrayscale(density: number): number {
+  assertFiniteNumber(density, 'density');
+  
   // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
   // When "viewing" the film, WHITE printing light passes through the developed grains.
   // Beer-Lambert law: final = white_light * exp(-density)

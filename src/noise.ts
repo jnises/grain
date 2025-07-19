@@ -2,6 +2,7 @@
 // Pure functions for generating various types of noise
 
 import { seededRandom } from './grain-math';
+import { assertFiniteNumber } from './utils';
 
 // Noise generation constants
 const NOISE_GRID_MASK = 255;
@@ -15,6 +16,9 @@ const PERLIN_FADE_COEFFICIENT_B = 2;
  * @returns Noise value between 0 and 1
  */
 export function noise(x: number, y: number): number {
+  assertFiniteNumber(x, 'x');
+  assertFiniteNumber(y, 'y');
+  
   const X = Math.floor(x) & NOISE_GRID_MASK;
   const Y = Math.floor(y) & NOISE_GRID_MASK;
   x -= Math.floor(x);

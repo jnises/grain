@@ -2,6 +2,7 @@
 // Provides adaptive sampling patterns for grain exposure calculation and rendering
 
 import { calculateSampleWeight, grayscaleToExposure } from './grain-math';
+import { assertPositiveNumber, assertInRange, assert } from './utils';
 
 // Sampling kernel constants
 export const KERNEL_SAMPLE_COUNT_SMALL = 4;   // For grains < 1.5px radius
@@ -52,6 +53,9 @@ export class KernelGenerator {
    * @returns Cached or newly generated sampling kernel
    */
   generateSamplingKernel(grainRadius: number, grainShape: number = 0.5): SamplingKernel {
+    assertPositiveNumber(grainRadius, 'grainRadius');
+    assertInRange(grainShape, 0, 1, 'grainShape');
+    
     const sampleCount = this.determineSampleCount(grainRadius);
     
     // Create cache key based on radius and shape (rounded to 0.1 precision for caching efficiency)
@@ -252,6 +256,18 @@ export function sampleGrainAreaExposure(
   height: number,
   kernelGenerator: KernelGenerator
 ): number {
+  // Validate input parameters
+  assert(imageData.length > 0, 'imageData must not be empty', { length: imageData.length });
+  assert(imageData.length % 4 === 0, 'imageData length must be divisible by 4 (RGBA format)', { length: imageData.length });
+  assert(Number.isFinite(grainX), 'grainX must be a finite number', { grainX });
+  assert(Number.isFinite(grainY), 'grainY must be a finite number', { grainY });
+  assertPositiveNumber(grainRadius, 'grainRadius');
+  assertInRange(grainShape, 0, 1, 'grainShape');
+  assertPositiveNumber(width, 'width');
+  assertPositiveNumber(height, 'height');
+  // KernelGenerator type is guaranteed by TypeScript, but we validate it provides expected methods
+  assert(typeof kernelGenerator.generateSamplingKernel === 'function', 'kernelGenerator must have generateSamplingKernel method', { kernelGenerator });
+  
   const kernel = kernelGenerator.generateSamplingKernel(grainRadius, grainShape);
   
   let totalExposure = 0;

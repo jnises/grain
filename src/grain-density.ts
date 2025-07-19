@@ -8,7 +8,7 @@
 import { FILM_CHARACTERISTICS } from './constants';
 import { noise } from './noise';
 import type { GrainSettings, GrainPoint } from './types';
-import { assertInRange, assert } from './utils';
+import { assertInRange, assert, assertArray, assertFiniteNumber } from './utils';
 
 /**
  * Handles grain density calculations and film physics simulation
@@ -17,6 +17,14 @@ export class GrainDensityCalculator {
   private settings: GrainSettings;
 
   constructor(settings: GrainSettings) {
+    assert(settings && typeof settings === 'object', 'settings must be a valid settings object', { settings });
+    assert(
+      ['kodak', 'fuji', 'ilford'].includes(settings.filmType),
+      'settings.filmType must be one of: kodak, fuji, ilford',
+      { filmType: settings.filmType, validTypes: ['kodak', 'fuji', 'ilford'] }
+    );
+    assert(typeof settings.iso === 'number' && settings.iso > 0, 'settings.iso must be a positive number', { iso: settings.iso });
+    
     this.settings = settings;
   }
 
@@ -26,6 +34,12 @@ export class GrainDensityCalculator {
    * and caches them for efficient pixel processing
    */
   calculateIntrinsicGrainDensities(grains: GrainPoint[], grainExposureMap: Map<GrainPoint, number>): Map<GrainPoint, number> {
+    assertArray(grains, 'grains');
+    // Allow empty grains array in edge cases (e.g., very small images or high ISO where no grains are generated)
+    // Map type is guaranteed by TypeScript, but we validate it has the expected methods
+    assert(typeof grainExposureMap.has === 'function' && typeof grainExposureMap.get === 'function', 
+           'grainExposureMap must be a Map with expected methods', { grainExposureMap });
+    
     console.log(`Pre-calculating intrinsic densities for ${grains.length} grains...`);
     
     const intrinsicDensityMap = new Map<GrainPoint, number>();
@@ -95,6 +109,17 @@ export class GrainDensityCalculator {
    * This method computes grain-specific properties that don't depend on pixel position
    */
   private calculateIntrinsicGrainDensity(exposure: number, grain: GrainPoint): number {
+    assertFiniteNumber(exposure, 'exposure');
+    assertInRange(exposure, 0, 1, 'exposure');
+    assert(grain && typeof grain === 'object', 'grain must be a valid grain object', { grain });
+    assertFiniteNumber(grain.x, 'grain.x');
+    assertFiniteNumber(grain.y, 'grain.y');
+    assert(typeof grain.size === 'number' && grain.size > 0, 'grain.size must be a positive number', { size: grain.size });
+    assertInRange(grain.sensitivity, 0, 10, 'grain.sensitivity');
+    assertInRange(grain.shape, 0, 1, 'grain.shape');
+    // Development threshold can be outside [0,1] in some film simulation cases
+    assertFiniteNumber(grain.developmentThreshold, 'grain.developmentThreshold');
+    
     // Function-specific constants
     const GRAIN_RANDOM_SEED_X = 12345;
     const GRAIN_RANDOM_SEED_Y = 67890;
