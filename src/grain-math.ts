@@ -115,7 +115,7 @@ export function convertLinearFloatToSrgb(floatData: Float32Array): Uint8ClampedA
  * for lightness preservation using grayscale luminance calculation
  * Operates on linear grayscale values for physically correct lightness calculation
  */
-export function calculateLightnessFactor(originalData: Float32Array, processedData: Float32Array, isProcessedDataNegative: boolean = false): number {
+export function calculateLightnessFactor(originalData: Float32Array, processedData: Float32Array): number {
   let originalSum = 0;
   let processedSum = 0;
 
@@ -124,14 +124,7 @@ export function calculateLightnessFactor(originalData: Float32Array, processedDa
   for (let i = 0; i < originalData.length; i += 4) {
     // Use red channel since all RGB channels contain identical grayscale values
     const originalLuminance = originalData[i];
-    
-    let currentProcessedLuminance;
-    if (isProcessedDataNegative) {
-      // If the processed data is a negative, invert it for lightness calculation
-      currentProcessedLuminance = 1.0 - processedData[i];
-    } else {
-      currentProcessedLuminance = processedData[i];
-    }
+    const currentProcessedLuminance = processedData[i];
     
     originalSum += originalLuminance;
     processedSum += currentProcessedLuminance;

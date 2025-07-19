@@ -1,4 +1,5 @@
-- [ ] Remove the isProcessedDataNegative hack.
+- [x] Remove the isProcessedDataNegative hack.
+  **COMPLETED**: Removed the unnecessary `isProcessedDataNegative` parameter from `calculateLightnessFactor()` function and eliminated the duplicate image inversion loop in the grain processing pipeline. The original code had two identical inversion loops that cancelled each other out, making the `isProcessedDataNegative` parameter unnecessary. The fix maintains identical functionality (all existing tests pass) while cleaning up redundant code. The lightness preservation logic now works correctly without the hack.
 - [ ] Convert the algorithm to only be monochrome. Convert any color incoming images to grayscale.
   - [x] Add grayscale conversion function to convert input ImageData to grayscale
   - [x] Update GrainProcessor.processImage to convert input to grayscale at the start

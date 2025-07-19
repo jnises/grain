@@ -213,20 +213,6 @@ export class GrainProcessor {
     // End pixel processing benchmark
     this.performanceTracker.endBenchmark('Pixel Processing');
 
-    // Invert the image to go from a "negative" to a "positive"
-    for (let i = 0; i < resultFloatData.length; i+=4) {
-        resultFloatData[i] = 1.0 - resultFloatData[i];
-        resultFloatData[i+1] = 1.0 - resultFloatData[i+1];
-        resultFloatData[i+2] = 1.0 - resultFloatData[i+2];
-    }
-
-    // Invert the image to go from a "negative" to a "positive"
-    for (let i = 0; i < resultFloatData.length; i+=4) {
-        resultFloatData[i] = 1.0 - resultFloatData[i];
-        resultFloatData[i+1] = 1.0 - resultFloatData[i+1];
-        resultFloatData[i+2] = 1.0 - resultFloatData[i+2];
-    }
-
     // Calculate lightness correction factor to preserve overall image lightness
     // Now operates on linear RGB values for physically correct lightness calculation
     const lightnessFactor = calculateLightnessFactor(floatData, resultFloatData);
