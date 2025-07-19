@@ -2,6 +2,8 @@
 mode: agent
 model: GPT-4.1
 ---
-Commit the changes to git.
-First do a git diff to know what has changed for the commit message.
-Do not mention changes to TODO.md in the message.
+Commit all pending changes to git.
+
+Before composing the commit message, run `git diff` and `git diff --cached` to review both staged and unstaged changes. Base the commit message on the actual code and file changes about to be committed, not just the contents of this conversation.
+
+If `TODO.md` is among the changes, include it in the commit but do not mention it in the commit message.

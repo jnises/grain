@@ -14,6 +14,7 @@ import {
   applyBeerLambertCompositingFloat,
   calculateChromaticAberration
 } from './grain-math';
+import { convertImageDataToGrayscale } from './color-space';
 import type {
   GrainSettings,
   GrainPoint,
@@ -147,8 +148,11 @@ export class GrainProcessor {
       }
     );
 
+    // Convert input to grayscale at the start for monochrome processing
+    const grayscaleImageData = convertImageDataToGrayscale(imageData);
+
     // Convert input to linear floating-point for precision preservation and gamma correctness
-    const floatData = convertSrgbToLinearFloat(imageData.data);
+    const floatData = convertSrgbToLinearFloat(grayscaleImageData.data);
     
     // Create floating-point result buffer
     const resultFloatData = new Float32Array(floatData.length);

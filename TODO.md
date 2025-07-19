@@ -8,7 +8,7 @@
   **COMPLETED**: Modified GrainProcessor constructor to accept an optional RandomNumberGenerator parameter and updated all test files to use deterministic seeded RNG. Added a `createTestGrainProcessor` utility function that creates GrainProcessor instances with a SeededRandomNumberGenerator (seed=12345) for consistent, reproducible test results. Updated test files: grain-processor-integration.test.ts, grain-processor.test.ts, grain-two-phase-verification.test.ts, and exposure-lightness-preservation.test.ts. All tests now pass with deterministic behavior, as evidenced by consistent grain generation attempts (e.g., 400 grains in 928 attempts consistently).
 - [ ] Convert the algorithm to only be monochrome. Convert any color incoming images to grayscale.
   - [x] Add grayscale conversion function to convert input ImageData to grayscale
-  - [ ] Update GrainProcessor.processImage to convert input to grayscale at the start
+  - [x] Update GrainProcessor.processImage to convert input to grayscale at the start
   - [ ] Modify grain compositing logic to work with single grayscale channel instead of RGB
   - [ ] Remove color-specific film characteristics (channelSensitivity, colorShift, chromaticAberration)
   - [ ] Update grain density calculations to work with grayscale values
