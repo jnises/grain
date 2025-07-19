@@ -30,6 +30,14 @@ export class GrainDensityCalculator {
 
   /**
    * Pre-calculate intrinsic grain densities for all grains (Phase 1 optimization)
+   * FILM DEVELOPMENT PHASE (Phase 1 - Grain-dependent calculations)
+   * 
+   * This simulates the chemical development process where exposed grains become opaque.
+   * Grains that received sufficient light exposure become developed (high optical density).
+   * Grains below their development threshold remain undeveloped (transparent).
+   * 
+   * See ALGORITHM_DESIGN.md: "Film Development Phase"
+   * 
    * This computes grain-specific properties that don't depend on pixel position
    * and caches them for efficient pixel processing
    */
@@ -106,6 +114,14 @@ export class GrainDensityCalculator {
 
   /**
    * Calculate intrinsic grain density based on exposure and grain properties (Phase 1)
+   * FILM DEVELOPMENT PHASE - Individual grain development simulation
+   * 
+   * This simulates the chemical development of a single grain based on its exposure.
+   * The grain becomes opaque (dense) if it received sufficient light exposure above its threshold.
+   * Random sensitivity variation simulates the heterogeneous nature of film emulsion.
+   * 
+   * See ALGORITHM_DESIGN.md: "Film Development Phase"
+   * 
    * This method computes grain-specific properties that don't depend on pixel position
    */
   private calculateIntrinsicGrainDensity(exposure: number, grain: GrainPoint): number {
@@ -179,6 +195,14 @@ export class GrainDensityCalculator {
 
   /**
    * Calculate pixel-level grain effects (Phase 2)
+   * DARKROOM PRINTING PHASE - Position-dependent spatial effects
+   * 
+   * This simulates light passing through the developed film negative to create the final photograph.
+   * The spatial effect of each grain varies by distance from the grain center.
+   * Uses pre-calculated intrinsic grain density from the development phase.
+   * 
+   * See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"
+   * 
    * This method computes position-dependent visual effects that vary by pixel location
    */
   calculatePixelGrainEffect(intrinsicDensity: number, grain: GrainPoint, pixelX: number, pixelY: number): number {

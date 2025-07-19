@@ -8,6 +8,9 @@
   - Verified that ISO already controls fundamental grain properties (size, density, count) through direct calculations
   The grain simulation now relies solely on ISO settings for grain control, eliminating redundant parameters and simplifying the interface while maintaining all functionality. All tests pass and the build succeeds.
 - [x] What does `GrainSettings.upscaleFactor` do. Can it be removed? ✅ **COMPLETED**: Successfully removed - parameter was defined but never used in actual processing logic. Removed from GrainSettings interface, film presets, validation code, tests, and documentation.
+- [x] Add a document called ALGORITHM_DESIGN.md that contains some high level design goals for the desired algorithm implementation.
+  - [x] It should mention that the input image is only used to develop or expose the grains. The grains are then used to "print" a final photo. As if the input image was the light that the camera saw. Then the developed film is used in a darkroom to create a photo. Explain it using a analog film processing analogy.
+  - [x] All color operations should be done in linear space. srgb packing/unpacking is done on output/input from the pipeline.
 - [ ] processPixelEffects should return a new result image rather than writing to resultFloatData.
 - [ ] Create a page like public/grain-debug.html that replicates the testpatterns from grain-processor-integration.test.ts
 - [ ] Go through the code and apply the rules around constants from the instructions

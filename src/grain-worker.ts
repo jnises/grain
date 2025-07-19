@@ -91,8 +91,13 @@ export class GrainProcessor {
   
   /**
    * Calculates average exposure for all grains using kernel-based sampling
-   * This replaces point sampling with area-based exposure calculation
-   * Returns a Map for better functional design and testability
+   * LIGHT EXPOSURE PHASE - Sample how much light each grain received
+   * 
+   * This simulates how photons from the input image strike each grain in the film emulsion.
+   * The input image represents the light pattern that would have exposed the film.
+   * Each grain samples light from its local area using kernel-based area sampling.
+   * 
+   * See ALGORITHM_DESIGN.md: "Camera Exposure Phase"
    */
   private calculateGrainExposures(grains: GrainPoint[], imageData: Float32Array): Map<GrainPoint, number> {
     console.log(`Calculating kernel-based exposures for ${grains.length} grains...`);
@@ -116,12 +121,22 @@ export class GrainProcessor {
     return exposureMap;
   }
 
-  // Generate grain structure (single layer with varying sizes)
+  /**
+   * Generate grain structure (film emulsion simulation)
+   * PREPARATION PHASE - Create the film's grain structure
+   * 
+   * This simulates the physical distribution of photosensitive crystals (grains) in film emulsion.
+   * Each grain has individual properties: position, size, sensitivity, development threshold.
+   * This represents the film before any light exposure.
+   */
   private generateGrainStructure(): GrainPoint[] {
     return this.grainGenerator.generateGrainStructure();
   }
 
-  // Create spatial grid for grain acceleration (single layer)
+  /**
+   * Create spatial grid for grain acceleration
+   * OPTIMIZATION - Spatial indexing for efficient grain lookup during printing phase
+   */
   private createGrainGrid(grains: GrainPoint[]): Map<string, GrainPoint[]> {
     return this.grainGenerator.createGrainGrid(grains);
   }
@@ -140,6 +155,12 @@ export class GrainProcessor {
       }
     );
 
+    // ========================================================================
+    // LIGHT EXPOSURE PHASE - Camera Exposure Phase
+    // The input image represents the light that struck the film emulsion.
+    // See ALGORITHM_DESIGN.md: "Camera Exposure Phase"
+    // ========================================================================
+
     // Convert input to grayscale at the start for monochrome processing
     const grayscaleImageData = convertImageDataToGrayscale(imageData);
 
@@ -156,25 +177,33 @@ export class GrainProcessor {
     // Start overall benchmark
     this.performanceTracker.startBenchmark('Total Processing', totalImagePixels);
     
-    // Step 1: Generate grain structure
+    // Step 1: Generate grain structure (simulates film emulsion grain distribution)
     this.reportProgress(10, 'Generating grain structure...');
     this.performanceTracker.startBenchmark('Grain Generation');
     const grainStructure = this.generateGrainStructure();
     this.performanceTracker.endBenchmark('Grain Generation');
     
-    // Step 2: Create spatial acceleration grid
+    // Step 2: Create spatial acceleration grid for efficient grain lookup
     this.reportProgress(20, 'Creating spatial grid...');
     this.performanceTracker.startBenchmark('Spatial Grid Creation');
     const grainGrid = this.createGrainGrid(grainStructure);
     this.performanceTracker.endBenchmark('Spatial Grid Creation');
     
     // Step 3: Calculate grain exposures using kernel-based sampling
+    // This samples how much light each grain received from the input image
     this.reportProgress(25, 'Calculating kernel-based grain exposures...');
     this.performanceTracker.startBenchmark('Kernel Exposure Calculation');
     const grainExposureMap = this.calculateGrainExposures(grainStructure, floatData);
     this.performanceTracker.endBenchmark('Kernel Exposure Calculation');
+
+    // ========================================================================
+    // FILM DEVELOPMENT PHASE - Development Phase  
+    // Determine which grains are activated based on their exposure and thresholds.
+    // See ALGORITHM_DESIGN.md: "Film Development Phase"
+    // ========================================================================
     
-    // Step 3.5: Pre-calculate intrinsic grain densities (Phase 1)
+    // Step 3.5: Pre-calculate intrinsic grain densities (Phase 1 - grain-dependent only)
+    // This simulates the chemical development process where exposed grains become opaque
     this.reportProgress(27, 'Pre-calculating intrinsic grain densities...');
     this.performanceTracker.startBenchmark('Intrinsic Density Calculation');
     const grainIntrinsicDensityMap = this.grainDensityCalculator.calculateIntrinsicGrainDensities(grainStructure, grainExposureMap);
@@ -191,8 +220,16 @@ export class GrainProcessor {
     const MIN_GRID_SIZE = 8;
     const GRID_SIZE_FACTOR = 2;
     const gridSize = Math.max(MIN_GRID_SIZE, Math.floor(maxGrainSize * GRID_SIZE_FACTOR));
+
+    // ========================================================================
+    // DARKROOM PRINTING PHASE - Printing Phase
+    // Apply the developed film negative to create the final photograph.
+    // Light passes through developed grains (Phase 2 - position-dependent effects).
+    // See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"
+    // ========================================================================
     
-    // Step 4: Process each pixel
+    // Step 4: Process each pixel (Phase 2 - position-dependent grain effects)
+    // This simulates light passing through the developed film to create the final image
     this.reportProgress(30, 'Processing pixels...');
     this.performanceTracker.startBenchmark('Pixel Processing', this.width * this.height);
     
@@ -208,6 +245,12 @@ export class GrainProcessor {
     // End pixel processing benchmark
     this.performanceTracker.endBenchmark('Pixel Processing');
 
+    // ========================================================================
+    // FINAL OUTPUT PROCESSING
+    // Convert from linear space back to sRGB and preserve image lightness.
+    // All color operations are done in linear space as specified in ALGORITHM_DESIGN.md.
+    // ========================================================================
+
     // Calculate lightness correction factor to preserve overall image lightness
     // Now operates on linear RGB values for physically correct lightness calculation
     const lightnessFactor = calculateLightnessFactor(floatData, resultFloatData);
@@ -216,7 +259,7 @@ export class GrainProcessor {
     // Apply lightness scaling in linear space
     const lightnessAdjustedData = applyLightnessScaling(resultFloatData, lightnessFactor);
     
-    // Convert back to Uint8ClampedArray with gamma encoding
+    // Convert back to Uint8ClampedArray with gamma encoding (sRGB packing at pipeline boundary)
     const finalData = convertLinearFloatToSrgb(lightnessAdjustedData);
 
     
@@ -296,12 +339,19 @@ export class GrainProcessor {
 
   /**
    * Process pixel effects with grain compositing
-   * Pure function that applies grain effects to image data
+   * DARKROOM PRINTING PHASE (Phase 2 - Position-dependent effects)
+   * 
+   * This simulates light passing through the developed film negative to create the final photograph.
+   * Dense grains (heavily exposed) block more light, creating lighter areas in the final print.
+   * Transparent grains (unexposed) allow more light through, creating darker areas in the final print.
+   * 
+   * See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"
    */
   private processPixelEffects(
     grainStructure: GrainPoint[],
     grainGrid: Map<string, GrainPoint[]>,
-    grainIntrinsicDensityMap: Map<GrainPoint, number>,
+    grainIntrinsicDensityMap: Map<GrainPoint, number>, // Grain densities from development phase
+    // TODO: remove this argument. all information needed to "print" a photo should be contained in the grains that have already been "exposed" to the original image. Return the genreated image instead.
     resultFloatData: Float32Array,
     gridSize: number
   ): { grainEffectCount: number; processedPixels: number } {
@@ -366,6 +416,7 @@ export class GrainProcessor {
           }
         }
         
+        // TODO: this if makes no sense. all pixels must be written
         // Apply final compositing
         if (totalWeight > 0) {
           grainEffectCount++;
@@ -373,6 +424,7 @@ export class GrainProcessor {
           // Normalize by total weight for grayscale processing
           const normalizedDensity = totalGrainDensity / totalWeight;
           
+          // TODO: what does BeerLambert return actually? the amount of light absorbed by the grains? The grains should behave like the _negative_ in an analog film process. Do we need to invert the result or something?
           // Use Beer-Lambert law compositing for physically accurate grayscale results
           const finalGrayscale = applyBeerLambertCompositingGrayscale(normalizedDensity);
           
