@@ -6,7 +6,6 @@
 // Only truly shared constants should remain here. Function-specific and single-use constants are moved into their respective functions.
 
 import { FILM_CHARACTERISTICS } from './constants';
-import { noise } from './noise';
 import type { GrainSettings, GrainPoint } from './types';
 import { assertInRange, assert, assertArray, assertFiniteNumber } from './utils';
 
@@ -184,14 +183,7 @@ export class GrainDensityCalculator {
   calculatePixelGrainEffect(intrinsicDensity: number, grain: GrainPoint, pixelX: number, pixelY: number): number {
     // Function-specific constants
     const GRAIN_FALLOFF_RADIUS_MULTIPLIER = 2;
-    const NOISE_SCALE_FINE = 0.15;
-    const NOISE_SCALE_MEDIUM = 0.08;
-    const NOISE_SCALE_COARSE = 0.03;
-    const NOISE_WEIGHT_FINE = 0.3;
-    const NOISE_WEIGHT_MEDIUM = 0.2;
-    const NOISE_WEIGHT_COARSE = 0.1;
-    const NOISE_MODULATION_BASE = 0.7;
-    const NOISE_MODULATION_SCALE = 0.3;
+    
     // If grain not activated, return 0
     if (intrinsicDensity === 0) {
       return 0;
@@ -213,13 +205,8 @@ export class GrainDensityCalculator {
     // Apply distance-based falloff (exponential decay)
     const falloffFactor = Math.exp(-distance / grain.size);
     
-    // Add pixel-level noise texture using x,y coordinates
-    const noiseValue = noise(pixelX * NOISE_SCALE_FINE, pixelY * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
-                      noise(pixelX * NOISE_SCALE_MEDIUM, pixelY * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
-                      noise(pixelX * NOISE_SCALE_COARSE, pixelY * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
-    // Combine all effects: intrinsic density × distance falloff × noise modulation
-    const noiseModulation = NOISE_MODULATION_BASE + Math.abs(noiseValue) * NOISE_MODULATION_SCALE;
-    const pixelEffect = intrinsicDensity * falloffFactor * noiseModulation;
+    // Circular grains use clean exponential falloff without noise modulation
+    const pixelEffect = intrinsicDensity * falloffFactor;
     return pixelEffect;
   }
 }
