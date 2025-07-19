@@ -19,29 +19,21 @@ export function seededRandom(seed: number): number {
  * Calculates sample weight using enhanced weighting profiles
  * Pure function for calculating sample weights based on distance and grain properties
  */
-export function calculateSampleWeight(distance: number, grainRadius: number, grainShape: number): number {
+export function calculateSampleWeight(distance: number, grainRadius: number): number {
   // Validate input parameters
   assertFiniteNumber(distance, 'distance');
   assert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
-  assertInRange(grainShape, 0, 1, 'grainShape');
   
   // Constants for sample weight calculation
   const GAUSSIAN_SIGMA_FACTOR = 0.7; // Controls spread of Gaussian based on grain radius
-  const SHAPE_INFLUENCE_BASE = 0.5;  // Minimum shape influence
-  const SHAPE_INFLUENCE_RANGE = 0.5; // Range for shape influence (0.5 to 1.0)
   const MIN_SAMPLE_WEIGHT = 0.05;     // Minimum weight for edge samples
 
-  // Base Gaussian weighting
+  // Base Gaussian weighting for circular grains
   const gaussianSigma = grainRadius * GAUSSIAN_SIGMA_FACTOR;
   const gaussianWeight = Math.exp(-(distance * distance) / (2 * gaussianSigma * gaussianSigma));
 
-  // Shape-aware weight modification
-  // More angular grains (higher shape values) have sharper falloff
-  const shapeInfluence = SHAPE_INFLUENCE_BASE + grainShape * SHAPE_INFLUENCE_RANGE; // Range: 0.5 to 1.0
-  const shapedWeight = Math.pow(gaussianWeight, shapeInfluence);
-
-  // Ensure minimum weight for edge samples
-  return Math.max(shapedWeight, MIN_SAMPLE_WEIGHT);
+  // Circular grains use standard Gaussian weighting
+  return Math.max(gaussianWeight, MIN_SAMPLE_WEIGHT);
 }
 
 /**

@@ -10,6 +10,7 @@
 - Favor immutable data structures and transformations using map/filter/reduce where possible
 - Use functional composition to build complex logic from simple, reusable functions
 - Reserve mutation for performance-critical sections only, and document the rationale clearly
+- If you use out-arguments instead of just returning the data, have a good reason to do so, and name the argument accordingly.
 - Functional design improves testability, predictability, and maintainability
 
 ### Object Design and Lifecycle

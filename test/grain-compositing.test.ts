@@ -38,7 +38,6 @@ describe('Variable Grain Size Generation', () => {
       assert(typeof grain.y === 'number', 'Grain y must be a number', { grain });
       assert(typeof grain.size === 'number' && grain.size > 0, 'Grain size must be positive', { grain });
       assert(typeof grain.sensitivity === 'number' && grain.sensitivity > 0, 'Grain sensitivity must be positive', { grain });
-      assert(typeof grain.shape === 'number', 'Grain shape must be a number', { grain });
     }
     
     // Check that we have variable grain sizes
@@ -114,7 +113,6 @@ describe('Grain Structure Properties', () => {
       expect('y' in firstGrain).toBe(true);
       expect('size' in firstGrain).toBe(true);
       expect('sensitivity' in firstGrain).toBe(true);
-      expect('shape' in firstGrain).toBe(true);
       
       // Should not have layer-specific properties
       expect('layerType' in firstGrain).toBe(false);
@@ -125,7 +123,6 @@ describe('Grain Structure Properties', () => {
       assert(typeof firstGrain.y === 'number', 'Grain y must be a number', { firstGrain });
       assert(typeof firstGrain.size === 'number', 'Grain size must be a number', { firstGrain });
       assert(typeof firstGrain.sensitivity === 'number', 'Grain sensitivity must be a number', { firstGrain });
-      assert(typeof firstGrain.shape === 'number', 'Grain shape must be a number', { firstGrain });
     }
   });
 });

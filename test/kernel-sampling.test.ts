@@ -322,8 +322,6 @@ describe('Kernel Sampling Integration', () => {
       expect(grain.y).toBeLessThanOrEqual(height);
       expect(grain.size).toBeGreaterThan(0);
       expect(grain.sensitivity).toBeGreaterThan(0);
-      expect(grain.shape).toBeGreaterThanOrEqual(0);
-      expect(grain.shape).toBeLessThanOrEqual(1);
     });
     
     // Test grain grid creation
@@ -361,7 +359,6 @@ describe('Kernel Sampling Integration', () => {
       typeof grain.x === 'number' && 
       typeof grain.y === 'number' &&
       typeof grain.size === 'number' && 
-      typeof grain.shape === 'number' &&
       typeof grain.sensitivity === 'number'
     )).toBe(true);
     

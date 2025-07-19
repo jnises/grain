@@ -116,7 +116,6 @@ export class GrainDensityCalculator {
     assertFiniteNumber(grain.y, 'grain.y');
     assert(typeof grain.size === 'number' && grain.size > 0, 'grain.size must be a positive number', { size: grain.size });
     assertInRange(grain.sensitivity, 0, 10, 'grain.sensitivity');
-    assertInRange(grain.shape, 0, 1, 'grain.shape');
     // Development threshold can be outside [0,1] in some film simulation cases
     assertFiniteNumber(grain.developmentThreshold, 'grain.developmentThreshold');
     
@@ -127,8 +126,6 @@ export class GrainDensityCalculator {
     const GRAIN_RANDOM_SENSITIVITY_RANGE = 0.3;
     const GRAIN_RANDOM_SENSITIVITY_OFFSET = 0.15;
     const GRAIN_SIGMOID_STEEPNESS = 8.0;
-    const GRAIN_SHAPE_MODIFIER_BASE = 0.8;
-    const GRAIN_SHAPE_MODIFIER_SCALE = 0.4;
     const FILM_RESPONSE_VISIBILITY_MULTIPLIER = 1.2;
     // Validate exposure input
     if (!Number.isFinite(exposure)) {
@@ -165,10 +162,6 @@ export class GrainDensityCalculator {
     
     // Apply grain sensitivity for individual grain variation
     grainDensity *= grain.sensitivity;
-    
-    // Apply grain shape variation (intrinsic property)
-    const shapeModifier = GRAIN_SHAPE_MODIFIER_BASE + grain.shape * GRAIN_SHAPE_MODIFIER_SCALE;
-    grainDensity *= shapeModifier;
     
     // Ensure grainDensity is within [0,1] range before applying film curve
     grainDensity = Math.max(0, Math.min(1, grainDensity));
@@ -220,39 +213,13 @@ export class GrainDensityCalculator {
     // Apply distance-based falloff (exponential decay)
     const falloffFactor = Math.exp(-distance / grain.size);
     
-    // Add grain shape effects (elliptical distortion) based on pixel offset from grain center
-    const angle = Math.atan2(offsetY, offsetX);
-    const ellipticalDistortion = this.calculateEllipticalDistortion(grain, angle);
-    
     // Add pixel-level noise texture using x,y coordinates
     const noiseValue = noise(pixelX * NOISE_SCALE_FINE, pixelY * NOISE_SCALE_FINE) * NOISE_WEIGHT_FINE + 
                       noise(pixelX * NOISE_SCALE_MEDIUM, pixelY * NOISE_SCALE_MEDIUM) * NOISE_WEIGHT_MEDIUM + 
                       noise(pixelX * NOISE_SCALE_COARSE, pixelY * NOISE_SCALE_COARSE) * NOISE_WEIGHT_COARSE;
-    // Combine all effects: intrinsic density × distance falloff × shape distortion × noise modulation
+    // Combine all effects: intrinsic density × distance falloff × noise modulation
     const noiseModulation = NOISE_MODULATION_BASE + Math.abs(noiseValue) * NOISE_MODULATION_SCALE;
-    const pixelEffect = intrinsicDensity * falloffFactor * ellipticalDistortion * noiseModulation;
+    const pixelEffect = intrinsicDensity * falloffFactor * noiseModulation;
     return pixelEffect;
-  }
-
-  /**
-   * Calculate elliptical distortion for grain shape effects
-   */
-  private calculateEllipticalDistortion(grain: GrainPoint, angle: number): number {
-    // Function-specific constants
-    const ELLIPTICAL_RATIO_BASE = 0.7;
-    const ELLIPTICAL_RATIO_SCALE = 0.3;
-    const ORIENTATION_ANGLE_SCALE = 0.1;
-    // Elliptical grain shape with angle-dependent distortion
-    const ellipticalRatio = ELLIPTICAL_RATIO_BASE + grain.shape * ELLIPTICAL_RATIO_SCALE; // Varies from 0.7 to 1.0 based on grain shape
-    const orientationAngle = (grain.x + grain.y) * ORIENTATION_ANGLE_SCALE; // Grain orientation based on position
-    
-    // Calculate elliptical distance modifier
-    const relativeAngle = angle - orientationAngle;
-    const ellipticalFactor = Math.sqrt(
-      Math.pow(Math.cos(relativeAngle), 2) + 
-      Math.pow(Math.sin(relativeAngle) * ellipticalRatio, 2)
-    );
-    
-    return ellipticalFactor;
   }
 }

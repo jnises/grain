@@ -1,6 +1,16 @@
 - [x] Describe the current algorithm. Write it to CURRENT_ALGORITHM_DESIGN.md
   **COMPLETED**: Created comprehensive documentation of the current grain processing algorithm in `CURRENT_ALGORITHM_DESIGN.md`. The document covers the complete processing pipeline (8 stages from input conversion to output), detailed component breakdowns (GrainGenerator, GrainDensityCalculator, spatial optimization), algorithm parameters, performance characteristics, data structures, and implementation details. Includes coverage of the two-phase grain processing system, kernel-based exposure sampling, film physics models (Beer-Lambert compositing, film characteristic curves), and the monochrome processing pipeline. Also documents testing methods, known limitations, and debug tools. This provides a complete technical reference for the current algorithm implementation.
-- [ ] Remove the eliptical grain functionality, make them all circular
+- [x] Remove the eliptical grain functionality, make them all circular
+  **COMPLETED**: Successfully removed all elliptical grain functionality and made all grains circular. Changes included:
+  - Modified grain generation to always use shape=0.5 (circular) instead of random shape values
+  - Simplified elliptical distortion calculations to always return 1.0 (no distortion)
+  - Removed elliptical shape modulation from sampling kernel generation
+  - Updated sampling functions to remove grainShape parameter
+  - Fixed all test files to work with simplified circular-only grain system
+  - Removed unused constants and imports related to elliptical functionality
+  All tests pass and the grain system now only generates circular grains.
+- [ ] Remove the grain perlin noise. They should be circular.
+- [ ] Make sure the gaussian sample weighting used for the exposure calculation matches the weighting used in the pixel processing part of the pipeline. Grains should behave the same when developing as when they are printed to the output.
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] The grain shapes, are those only used when generating the final image, or are they also considered when doing grain development?

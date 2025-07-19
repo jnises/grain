@@ -109,7 +109,6 @@ export class GrainProcessor {
         grain.x, 
         grain.y, 
         grain.size, 
-        grain.shape,
         this.width,
         this.height,
         this.kernelGenerator

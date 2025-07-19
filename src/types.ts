@@ -58,7 +58,6 @@ export interface GrainPoint {
   y: number;
   size: number;
   sensitivity: number;
-  shape: number;
   developmentThreshold: number; // Per-grain development threshold for activation
 }
 

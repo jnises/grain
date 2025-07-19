@@ -60,7 +60,6 @@ const GRAIN_SIZE_DISTRIBUTION_BIAS = 0.6; // Bias towards smaller grains (0.5 = 
 
 // Grain variation seed multipliers (shared across methods)
 const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
-const SHAPE_VARIATION_SEED_MULTIPLIER = 345.678;
 const DEVELOPMENT_THRESHOLD_SEED_MULTIPLIER = 234.567;
 
 export class GrainGenerator {
@@ -451,7 +450,6 @@ export class GrainGenerator {
       // Convert fallback grains to variable-size grains
       return fallbackGrains.map((point, index) => {
         const sensitivityVariation = seededRandom(index * SENSITIVITY_VARIATION_SEED_MULTIPLIER);
-        const shapeVariation = seededRandom(index * SHAPE_VARIATION_SEED_MULTIPLIER);
         
         const grainSize = this.generateVariableGrainSize(params.baseGrainSize, index);
         const developmentThreshold = this.calculateDevelopmentThreshold(grainSize, index);
@@ -461,7 +459,6 @@ export class GrainGenerator {
           y: point.y,
           size: grainSize,
           sensitivity: 0.8 + sensitivityVariation * 0.4,
-          shape: shapeVariation,
           developmentThreshold
         };
       });
@@ -558,12 +555,10 @@ export class GrainGenerator {
       assert(typeof grain.y === 'number', 'grain.y must be a number', { grain });
       assert(typeof grain.size === 'number', 'grain.size must be a number', { grain });
       assert(typeof grain.sensitivity === 'number', 'grain.sensitivity must be a number', { grain });
-      assert(typeof grain.shape === 'number', 'grain.shape must be a number', { grain });
       assert(grain.x >= 0 && grain.x < this.width, 'grain.x must be within bounds', { grain, width: this.width });
       assert(grain.y >= 0 && grain.y < this.height, 'grain.y must be within bounds', { grain, height: this.height });
       assert(grain.size > 0, 'grain.size must be positive', { grain });
       assert(grain.sensitivity >= 0, 'grain.sensitivity must be non-negative', { grain });
-      assert(grain.shape >= 0, 'grain.shape must be non-negative', { grain });
     }
     
     const maxGrainSize = Math.max(...grains.map(g => g.size));
@@ -615,7 +610,6 @@ export class GrainGenerator {
       
       if (this.isValidGrainPosition(x, y, minDistance, grains)) {
         const sensitivityVariation = seededRandom(attempts * SENSITIVITY_VARIATION_SEED_MULTIPLIER);
-        const shapeVariation = seededRandom(attempts * SHAPE_VARIATION_SEED_MULTIPLIER);
         const developmentThreshold = this.calculateDevelopmentThreshold(grainSize, attempts);
         
         grains.push({
@@ -623,7 +617,6 @@ export class GrainGenerator {
           y,
           size: grainSize,
           sensitivity: 0.8 + sensitivityVariation * 0.4,
-          shape: shapeVariation,
           developmentThreshold
         });
         

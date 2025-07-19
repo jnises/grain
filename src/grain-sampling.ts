@@ -2,7 +2,7 @@
 // Provides adaptive sampling patterns for grain exposure calculation and rendering
 
 import { calculateSampleWeight, grayscaleToExposure } from './grain-math';
-import { assertPositiveNumber, assertInRange, assert } from './utils';
+import { assertPositiveNumber, assert } from './utils';
 
 // Sampling kernel constants
 export const KERNEL_SAMPLE_COUNT_SMALL = 4;   // For grains < 1.5px radius
@@ -25,7 +25,7 @@ export interface SamplingKernel {
 
 /**
  * Sampling kernel generator for grain area sampling
- * Provides cached, shape-aware sampling patterns for grain exposure calculation
+ * Provides cached sampling patterns for grain exposure calculation
  */
 export class KernelGenerator {
   private kernelCache: Map<string, SamplingKernel> = new Map();
@@ -47,15 +47,14 @@ export class KernelGenerator {
 
   /**
    * Generates a sampling kernel for grain area sampling
-   * Uses adaptive sampling count, enhanced distribution patterns, and shape awareness
+   * Uses adaptive sampling count and enhanced distribution patterns for circular grains
    * @param grainRadius - Radius of the grain
-   * @param grainShape - Shape parameter affecting elliptical distortion (0.5 = circular)
    * @returns Cached or newly generated sampling kernel
    */
-  generateSamplingKernel(grainRadius: number, grainShape: number = 0.5): SamplingKernel {
+  generateSamplingKernel(grainRadius: number): SamplingKernel {
     assertPositiveNumber(grainRadius, 'grainRadius');
-    assertInRange(grainShape, 0, 1, 'grainShape');
     
+    const grainShape = 0.5; // Always circular
     const sampleCount = this.determineSampleCount(grainRadius);
     
     // Create cache key based on radius and shape (rounded to 0.1 precision for caching efficiency)
@@ -81,11 +80,11 @@ export class KernelGenerator {
       const remainingSamples = sampleCount - 1;
       
       if (remainingSamples <= 6) {
-        // Single ring for small sample counts with shape-aware jittering
-        this.generateSingleRingSamples(points, remainingSamples, grainRadius, grainShape);
+        // Single ring for small sample counts with circular grains
+        this.generateSingleRingSamples(points, remainingSamples, grainRadius);
       } else {
         // Multi-ring distribution for larger sample counts
-        this.generateMultiRingSamples(points, remainingSamples, grainRadius, grainShape);
+        this.generateMultiRingSamples(points, remainingSamples, grainRadius);
       }
     }
     
@@ -104,17 +103,15 @@ export class KernelGenerator {
   }
 
   /**
-   * Generates sample points in a single ring with shape-aware distribution
+   * Generates sample points in a single ring for circular grains
    * @param points - Array to add generated points to
    * @param sampleCount - Number of points to generate
    * @param grainRadius - Radius of the grain
-   * @param grainShape - Shape parameter for elliptical distortion
    */
   private generateSingleRingSamples(
     points: SamplePoint[], 
     sampleCount: number, 
-    grainRadius: number, 
-    grainShape: number
+    grainRadius: number
   ): void {
     const baseRadius = grainRadius * 0.7; // 70% of grain radius for good coverage
     const angleStep = (2 * Math.PI) / sampleCount;
@@ -127,9 +124,8 @@ export class KernelGenerator {
       const jitterAngle = (Math.random() - 0.5) * jitterMagnitude;
       const angle = baseAngle + jitterAngle;
       
-      // Shape-aware radius modulation (elliptical distortion)
-      const shapeModulation = 1.0 + (grainShape - 0.5) * 0.3 * Math.cos(2 * angle);
-      const radius = baseRadius * shapeModulation;
+      // Circular grains - no shape modulation needed
+      const radius = baseRadius;
       
       // Small radial jitter for organic variation
       const radiusJitter = 1.0 + (Math.random() - 0.5) * 0.1; // ±5% radius variation
@@ -140,7 +136,7 @@ export class KernelGenerator {
       const distance = Math.sqrt(x * x + y * y);
       
       // Enhanced weighting with shape awareness
-      const weight = calculateSampleWeight(distance, grainRadius, grainShape);
+      const weight = calculateSampleWeight(distance, grainRadius);
       points.push({ x, y, weight });
     }
   }
@@ -150,25 +146,23 @@ export class KernelGenerator {
    * @param points - Array to add generated points to
    * @param totalSamples - Total number of samples to distribute
    * @param grainRadius - Radius of the grain
-   * @param grainShape - Shape parameter for elliptical distortion
    */
   private generateMultiRingSamples(
     points: SamplePoint[], 
     totalSamples: number, 
-    grainRadius: number, 
-    grainShape: number
+    grainRadius: number
   ): void {
     const innerSamples = Math.floor(totalSamples * 0.4);
     const outerSamples = totalSamples - innerSamples;
     
     // Inner ring at 40% radius
     const innerRadius = grainRadius * 0.4;
-    this.generateRingSamples(points, innerSamples, innerRadius, grainRadius, grainShape, 0);
+    this.generateRingSamples(points, innerSamples, innerRadius, grainRadius, 0);
     
     // Outer ring at 80% radius with offset
     const outerRadius = grainRadius * 0.8;
     const angleOffset = Math.PI / outerSamples; // Offset for better distribution
-    this.generateRingSamples(points, outerSamples, outerRadius, grainRadius, grainShape, angleOffset);
+    this.generateRingSamples(points, outerSamples, outerRadius, grainRadius, angleOffset);
   }
 
   /**
@@ -177,7 +171,6 @@ export class KernelGenerator {
    * @param sampleCount - Number of points to generate in this ring
    * @param baseRadius - Base radius of the ring
    * @param grainRadius - Overall grain radius for weight calculation
-   * @param grainShape - Shape parameter for elliptical distortion
    * @param angleOffset - Angular offset for ring positioning
    */
   private generateRingSamples(
@@ -185,7 +178,6 @@ export class KernelGenerator {
     sampleCount: number, 
     baseRadius: number, 
     grainRadius: number, 
-    grainShape: number,
     angleOffset: number
   ): void {
     const angleStep = (2 * Math.PI) / sampleCount;
@@ -198,9 +190,8 @@ export class KernelGenerator {
       const jitterAngle = (Math.random() - 0.5) * jitterMagnitude;
       const angle = baseAngle + jitterAngle;
       
-      // Shape-aware radius modulation
-      const shapeModulation = 1.0 + (grainShape - 0.5) * 0.2 * Math.cos(2 * angle);
-      const radius = baseRadius * shapeModulation;
+      // Circular grains - no shape modulation needed
+      const radius = baseRadius;
       
       // Radial jitter
       const radiusJitter = 1.0 + (Math.random() - 0.5) * 0.08; // ±4% for rings
@@ -210,7 +201,7 @@ export class KernelGenerator {
       const y = Math.sin(angle) * finalRadius;
       const distance = Math.sqrt(x * x + y * y);
       
-      const weight = calculateSampleWeight(distance, grainRadius, grainShape);
+      const weight = calculateSampleWeight(distance, grainRadius);
       points.push({ x, y, weight });
     }
   }
@@ -240,7 +231,6 @@ export class KernelGenerator {
  * @param grainX - X coordinate of grain center
  * @param grainY - Y coordinate of grain center  
  * @param grainRadius - Radius of the grain
- * @param grainShape - Shape parameter for elliptical distortion
  * @param width - Image width
  * @param height - Image height
  * @param kernelGenerator - Kernel generator instance
@@ -251,7 +241,6 @@ export function sampleGrainAreaExposure(
   grainX: number, 
   grainY: number, 
   grainRadius: number,
-  grainShape: number = 0.5,
   width: number,
   height: number,
   kernelGenerator: KernelGenerator
@@ -262,13 +251,12 @@ export function sampleGrainAreaExposure(
   assert(Number.isFinite(grainX), 'grainX must be a finite number', { grainX });
   assert(Number.isFinite(grainY), 'grainY must be a finite number', { grainY });
   assertPositiveNumber(grainRadius, 'grainRadius');
-  assertInRange(grainShape, 0, 1, 'grainShape');
   assertPositiveNumber(width, 'width');
   assertPositiveNumber(height, 'height');
   // KernelGenerator type is guaranteed by TypeScript, but we validate it provides expected methods
   assert(typeof kernelGenerator.generateSamplingKernel === 'function', 'kernelGenerator must have generateSamplingKernel method', { kernelGenerator });
   
-  const kernel = kernelGenerator.generateSamplingKernel(grainRadius, grainShape);
+  const kernel = kernelGenerator.generateSamplingKernel(grainRadius);
   
   let totalExposure = 0;
   let totalWeight = 0;

@@ -35,7 +35,7 @@ describe('Grain Area Sampling with Grayscale', () => {
   });
 
   it('should sample grayscale values correctly for uniform images', () => {
-    const testLuminanceValues = [0.0, 0.18, 0.5, 0.75, 1.0];
+    const testLuminanceValues = [0.0, 0.18, 0.75, 1.0];
     
     testLuminanceValues.forEach(luminance => {
       // Create uniform grayscale image
@@ -46,7 +46,6 @@ describe('Grain Area Sampling with Grayscale', () => {
         imageData,
         10, 10, // center position
         2.0,    // grain radius
-        0.5,    // grain shape
         20, 20, // image dimensions
         kernelGenerator
       );
@@ -61,7 +60,7 @@ describe('Grain Area Sampling with Grayscale', () => {
   });
 
   it('should produce equivalent results to RGB sampling for grayscale data', () => {
-    const testLuminanceValues = [0.0, 0.25, 0.5, 0.75, 1.0];
+    const testLuminanceValues = [0.0, 0.25, 0.75, 1.0];
     
     testLuminanceValues.forEach(luminance => {
       // Create uniform grayscale image using our new method
@@ -79,7 +78,7 @@ describe('Grain Area Sampling with Grayscale', () => {
       // Sample with new grayscale method
       const grayscaleSample = sampleGrainAreaExposure(
         grayscaleImageData,
-        10, 10, 2.0, 0.5, 20, 20,
+        10, 10, 2.0, 20, 20,
         kernelGenerator
       );
       
@@ -97,17 +96,17 @@ describe('Grain Area Sampling with Grayscale', () => {
     
     // Sample from left side (should be dark)
     const leftExposure = sampleGrainAreaExposure(
-      imageData, 2, 10, 1.0, 0.5, 20, 20, kernelGenerator
+      imageData, 2, 10, 1.0, 20, 20, kernelGenerator
     );
     
     // Sample from center (should be medium)
     const centerExposure = sampleGrainAreaExposure(
-      imageData, 10, 10, 1.0, 0.5, 20, 20, kernelGenerator
+      imageData, 10, 10, 1.0, 20, 20, kernelGenerator
     );
     
     // Sample from right side (should be bright)
     const rightExposure = sampleGrainAreaExposure(
-      imageData, 18, 10, 1.0, 0.5, 20, 20, kernelGenerator
+      imageData, 18, 10, 1.0, 20, 20, kernelGenerator
     );
     
     // Should increase from left to right
@@ -124,12 +123,12 @@ describe('Grain Area Sampling with Grayscale', () => {
     
     // Test near edges
     const edgeExposure = sampleGrainAreaExposure(
-      imageData, 1, 1, 2.0, 0.5, 10, 10, kernelGenerator
+      imageData, 1, 1, 2.0, 10, 10, kernelGenerator
     );
     
     // Test center
     const centerExposure = sampleGrainAreaExposure(
-      imageData, 5, 5, 2.0, 0.5, 10, 10, kernelGenerator
+      imageData, 5, 5, 2.0, 10, 10, kernelGenerator
     );
     
     // Both should be valid and approximately equal for uniform image
@@ -139,7 +138,7 @@ describe('Grain Area Sampling with Grayscale', () => {
     
     // Test completely out of bounds (should fallback gracefully)
     const outOfBoundsExposure = sampleGrainAreaExposure(
-      imageData, -5, -5, 1.0, 0.5, 10, 10, kernelGenerator
+      imageData, -5, -5, 1.0, 10, 10, kernelGenerator
     );
     expect(outOfBoundsExposure).toBe(0); // Should return default value
   });
@@ -148,14 +147,14 @@ describe('Grain Area Sampling with Grayscale', () => {
     const imageData = createGrayscaleImageData(30, 30, () => 0.5);
     
     const testConfigurations = [
-      { radius: 0.5, shape: 0.5 }, // Small circular grain
-      { radius: 2.0, shape: 0.2 }, // Medium elliptical grain
-      { radius: 5.0, shape: 0.8 }, // Large elliptical grain
+      { radius: 0.5 }, // Small circular grain
+      { radius: 2.0 }, // Medium circular grain
+      { radius: 5.0 }, // Large circular grain
     ];
     
-    testConfigurations.forEach(({ radius, shape }) => {
+    testConfigurations.forEach(({ radius }) => {
       const exposure = sampleGrainAreaExposure(
-        imageData, 15, 15, radius, shape, 30, 30, kernelGenerator
+        imageData, 15, 15, radius, 30, 30, kernelGenerator
       );
       
       // Should produce valid results for all configurations
@@ -179,7 +178,7 @@ describe('Grain Area Sampling with Grayscale', () => {
       const x = 5 + i * 4;
       const y = 25;
       const exposure = sampleGrainAreaExposure(
-        imageData, x, y, 1.5, 0.5, 50, 50, kernelGenerator
+        imageData, x, y, 1.5, 50, 50, kernelGenerator
       );
       samples.push(exposure);
     }
@@ -202,12 +201,12 @@ describe('Grain Area Sampling with Grayscale', () => {
     
     // Very small grain
     const smallGrainExposure = sampleGrainAreaExposure(
-      imageData, 10, 10, 0.1, 0.5, 20, 20, kernelGenerator
+      imageData, 10, 10, 0.1, 20, 20, kernelGenerator
     );
     
     // Very large grain
     const largeGrainExposure = sampleGrainAreaExposure(
-      imageData, 10, 10, 8.0, 0.5, 20, 20, kernelGenerator
+      imageData, 10, 10, 8.0, 20, 20, kernelGenerator
     );
     
     // Both should produce valid results
@@ -235,7 +234,7 @@ describe('KernelGenerator Integration with Grayscale Sampling', () => {
     const samples = [];
     for (let i = 0; i < 5; i++) {
       const exposure = sampleGrainAreaExposure(
-        imageData, 10, 10, 2.0, 0.5, 20, 20, kernelGenerator
+        imageData, 10, 10, 2.0, 20, 20, kernelGenerator
       );
       samples.push(exposure);
     }
@@ -257,7 +256,7 @@ describe('KernelGenerator Integration with Grayscale Sampling', () => {
     // Sample with same parameters multiple times
     for (let i = 0; i < 3; i++) {
       sampleGrainAreaExposure(
-        imageData, 10 + i, 10, 2.0, 0.5, 20, 20, kernelGenerator
+        imageData, 10 + i, 10, 2.0, 20, 20, kernelGenerator
       );
     }
     

@@ -194,7 +194,7 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
     console.log(`\n🔍 Sample Grain Properties (first 5):`);
     for (let i = 0; i < Math.min(5, grains.length); i++) {
       const grain = grains[i];
-      console.log(`  Grain ${i+1}: pos(${grain.x.toFixed(1)}, ${grain.y.toFixed(1)}) size=${grain.size.toFixed(2)} sensitivity=${grain.sensitivity.toFixed(2)} shape=${grain.shape}`);
+      console.log(`  Grain ${i+1}: pos(${grain.x.toFixed(1)}, ${grain.y.toFixed(1)}) size=${grain.size.toFixed(2)} sensitivity=${grain.sensitivity.toFixed(2)}`);
     }
   }, 15000);
 });

@@ -88,7 +88,7 @@ describe('GrainGenerator', () => {
     });
 
     it('should validate createGrainGrid parameters', () => {
-      const validGrains = [{ x: 10, y: 10, size: 2, sensitivity: 1.0, shape: 0.5, developmentThreshold: 0.5 }];
+      const validGrains = [{ x: 10, y: 10, size: 2, sensitivity: 1.0, developmentThreshold: 0.5 }];
       expect(() => generator.createGrainGrid(null as any)).toThrow(/grains.*array/);
       expect(() => generator.createGrainGrid('invalid' as any)).toThrow(/grains.*array/);
       expect(() => generator.createGrainGrid(validGrains)).not.toThrow();
@@ -98,21 +98,18 @@ describe('GrainGenerator', () => {
   describe('Method Precondition Validation', () => {
     it('should validate grain objects in arrays', () => {
       const invalidGrains = [
-        { x: 10, y: 10, size: 2, sensitivity: 1.0 }, // missing shape
-        { x: 10, y: 10, size: 2, shape: 0.5 }, // missing sensitivity
-        { x: 10, y: 10, sensitivity: 1.0, shape: 0.5 }, // missing size
-        { x: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // missing y
-        { y: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // missing x
-        { x: 'invalid', y: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // invalid x type
-        { x: 10, y: 'invalid', size: 2, sensitivity: 1.0, shape: 0.5 }, // invalid y type
-        { x: 10, y: 10, size: 'invalid', sensitivity: 1.0, shape: 0.5 }, // invalid size type
-        { x: 10, y: 10, size: 2, sensitivity: 'invalid', shape: 0.5 }, // invalid sensitivity type
-        { x: 10, y: 10, size: 2, sensitivity: 1.0, shape: 'invalid' }, // invalid shape type
-        { x: -10, y: 10, size: 2, sensitivity: 1.0, shape: 0.5 }, // negative x
-        { x: 10, y: -10, size: 2, sensitivity: 1.0, shape: 0.5 }, // negative y
-        { x: 10, y: 10, size: 0, sensitivity: 1.0, shape: 0.5 }, // zero size
-        { x: 10, y: 10, size: 2, sensitivity: -1.0, shape: 0.5 }, // negative sensitivity
-        { x: 10, y: 10, size: 2, sensitivity: 1.0, shape: -1.0 }, // negative shape
+        { x: 10, y: 10, size: 2 }, // missing sensitivity
+        { x: 10, y: 10, sensitivity: 1.0 }, // missing size
+        { x: 10, size: 2, sensitivity: 1.0 }, // missing y
+        { y: 10, size: 2, sensitivity: 1.0 }, // missing x
+        { x: 'invalid', y: 10, size: 2, sensitivity: 1.0 }, // invalid x type
+        { x: 10, y: 'invalid', size: 2, sensitivity: 1.0 }, // invalid y type
+        { x: 10, y: 10, size: 'invalid', sensitivity: 1.0 }, // invalid size type
+        { x: 10, y: 10, size: 2, sensitivity: 'invalid' }, // invalid sensitivity type
+        { x: -10, y: 10, size: 2, sensitivity: 1.0 }, // negative x
+        { x: 10, y: -10, size: 2, sensitivity: 1.0 }, // negative y
+        { x: 10, y: 10, size: 0, sensitivity: 1.0 }, // zero size
+        { x: 10, y: 10, size: 2, sensitivity: -1.0 }, // negative sensitivity
       ];
 
       for (const invalidGrain of invalidGrains) {
@@ -122,10 +119,10 @@ describe('GrainGenerator', () => {
 
     it('should validate grain coordinates are within bounds', () => {
       const outOfBoundsGrains = [
-        { x: 500, y: 10, size: 2, sensitivity: 1.0, shape: 0.5, developmentThreshold: 0.5 }, // x >= width
-        { x: 10, y: 400, size: 2, sensitivity: 1.0, shape: 0.5, developmentThreshold: 0.5 }, // y >= height
-        { x: -1, y: 10, size: 2, sensitivity: 1.0, shape: 0.5, developmentThreshold: 0.5 }, // x < 0
-        { x: 10, y: -1, size: 2, sensitivity: 1.0, shape: 0.5, developmentThreshold: 0.5 }, // y < 0
+        { x: 500, y: 10, size: 2, sensitivity: 1.0, developmentThreshold: 0.5 }, // x >= width
+        { x: 10, y: 400, size: 2, sensitivity: 1.0, developmentThreshold: 0.5 }, // y >= height
+        { x: -1, y: 10, size: 2, sensitivity: 1.0, developmentThreshold: 0.5 }, // x < 0
+        { x: 10, y: -1, size: 2, sensitivity: 1.0, developmentThreshold: 0.5 }, // y < 0
       ];
 
       for (const grain of outOfBoundsGrains) {
@@ -334,8 +331,6 @@ describe('GrainGenerator', () => {
         expect(grain.size).toBeGreaterThan(0);
         expect(grain.sensitivity).toBeGreaterThan(0);
         expect(grain.sensitivity).toBeLessThanOrEqual(1.2);
-        expect(grain.shape).toBeGreaterThanOrEqual(0);
-        expect(grain.shape).toBeLessThan(1);
       }
     });
 
