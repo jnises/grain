@@ -12,7 +12,12 @@ export class SpatialLookupGrid {
 
   constructor(imageWidth: number, imageHeight: number, grains: GrainPoint[]) {
     // Calculate optimal grid size based on grain sizes
-    const maxGrainSize = grains.length > 0 ? Math.max(...grains.map(g => g.size)) : 1;
+    let maxGrainSize = 1;
+    for (const grain of grains) {
+      if (grain.size > maxGrainSize) {
+        maxGrainSize = grain.size;
+      }
+    }
     this.gridSize = Math.max(16, Math.floor(maxGrainSize * 2));
     
     // Calculate grid dimensions
