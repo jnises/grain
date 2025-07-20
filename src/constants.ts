@@ -99,3 +99,10 @@ export const EXPOSURE_CONVERSION = {
   ISO_BASE: 100,                       // Base ISO for calculations
   ISO_LOG_FACTOR: Math.log(2) / Math.log(10) // ISO doubles = 1 stop = log base conversion
 } as const;
+
+// Iterative lightness compensation defaults
+export const DEFAULT_ITERATION_PARAMETERS = {
+  MAX_ITERATIONS: 5,                   // Maximum iterations for lightness convergence
+  CONVERGENCE_THRESHOLD: 0.05,         // 5% tolerance for lightness convergence
+  TARGET_LIGHTNESS: 1.0                // Preserve original lightness
+} as const;

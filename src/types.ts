@@ -9,6 +9,9 @@ export interface GrainSettings {
   iso: number;
   filmType: 'kodak' | 'fuji' | 'ilford';
   debugGrainCenters?: boolean; // Optional debug option to draw grain center points
+  // Iterative lightness compensation parameters
+  maxIterations?: number; // Maximum iterations for lightness convergence (default: 5)
+  convergenceThreshold?: number; // Lightness convergence tolerance as ratio (default: 0.05 for 5%)
 }
 
 export interface GrainProcessingResult {

@@ -60,6 +60,23 @@ export class GrainWorkerManager {
       { filmType: settings.filmType, validTypes: ['kodak', 'fuji', 'ilford'] }
     );
 
+    // Validate optional iteration parameters
+    if (settings.maxIterations !== undefined) {
+      assert(
+        typeof settings.maxIterations === 'number' && settings.maxIterations >= 1 && settings.maxIterations <= 20,
+        'settings.maxIterations must be a number between 1 and 20',
+        { maxIterations: settings.maxIterations }
+      );
+    }
+    
+    if (settings.convergenceThreshold !== undefined) {
+      assert(
+        typeof settings.convergenceThreshold === 'number' && settings.convergenceThreshold > 0 && settings.convergenceThreshold <= 1,
+        'settings.convergenceThreshold must be a number between 0 and 1',
+        { convergenceThreshold: settings.convergenceThreshold }
+      );
+    }
+
     // Log processing parameters for debugging
     console.log(`Processing image: ${imageData.width}x${imageData.height}, ISO: ${settings.iso}, filmType: ${settings.filmType}`);
 

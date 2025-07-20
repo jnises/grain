@@ -12,7 +12,7 @@ The lightness compensation should be done using an iterative approach. Currently
 - [x] Remove code duplication between estimation and main pipeline 
 - [x] Fix exposure adjustment bounds checking - uses logarithmic scaling with dampening and strict clamping to [0,1]
 - [x] Implement convergence logic that iterates the development phase until target lightness is achieved (with max iteration limit)
-- [ ] Add configuration for iteration parameters (max iterations, convergence threshold)
+- [x] Add configuration for iteration parameters (max iterations, convergence threshold)
 - [ ] Update performance tracking to account for multiple iterations
 - [ ] Test iterative vs single-pass approaches to ensure quality improvements
 - [ ] Update algorithm documentation to reflect iterative development process

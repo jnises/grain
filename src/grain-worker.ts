@@ -13,6 +13,7 @@ import {
   applyBeerLambertCompositingGrayscale
 } from './grain-math';
 import { convertImageDataToGrayscale } from './color-space';
+import { DEFAULT_ITERATION_PARAMETERS } from './constants';
 import type {
   GrainSettings,
   GrainPoint,
@@ -78,13 +79,32 @@ export class GrainProcessor {
 
   // Type guard for GrainSettings
   private isValidGrainSettings(settings: unknown): settings is GrainSettings {
-    return typeof settings === 'object' &&
+    const basicValidation = typeof settings === 'object' &&
            settings !== null &&
            'iso' in settings &&
            typeof (settings as GrainSettings).iso === 'number' && (settings as GrainSettings).iso > 0 &&
            'filmType' in settings &&
            typeof (settings as GrainSettings).filmType === 'string' &&
            ['kodak', 'fuji', 'ilford'].includes((settings as GrainSettings).filmType);
+
+    if (!basicValidation) return false;
+
+    const s = settings as GrainSettings;
+    
+    // Validate optional iteration parameters if provided
+    if (s.maxIterations !== undefined) {
+      if (typeof s.maxIterations !== 'number' || s.maxIterations < 1 || s.maxIterations > 20) {
+        return false;
+      }
+    }
+    
+    if (s.convergenceThreshold !== undefined) {
+      if (typeof s.convergenceThreshold !== 'number' || s.convergenceThreshold <= 0 || s.convergenceThreshold > 1) {
+        return false;
+      }
+    }
+    
+    return true;
   }
 
   // Kernel-based grain area sampling methods
@@ -216,9 +236,9 @@ export class GrainProcessor {
     const gridSize = Math.max(MIN_GRID_SIZE, Math.floor(maxGrainSize * GRID_SIZE_FACTOR));
     
     // Constants for iterative lightness compensation
-    const MAX_ITERATIONS = 5;
-    const CONVERGENCE_THRESHOLD = 0.05; // 5% tolerance
-    const TARGET_LIGHTNESS = 1.0; // Preserve original lightness
+    const MAX_ITERATIONS = this.settings.maxIterations ?? DEFAULT_ITERATION_PARAMETERS.MAX_ITERATIONS;
+    const CONVERGENCE_THRESHOLD = this.settings.convergenceThreshold ?? DEFAULT_ITERATION_PARAMETERS.CONVERGENCE_THRESHOLD;
+    const TARGET_LIGHTNESS = DEFAULT_ITERATION_PARAMETERS.TARGET_LIGHTNESS;
     
     this.reportProgress(27, 'Starting iterative film development...');
     this.performanceTracker.startBenchmark('Iterative Development');
