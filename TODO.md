@@ -6,10 +6,10 @@
 - [x] Run `npm run profile` to figure out hot codepaths and use devAssert there
 - [x] Make sure `npm run preview` optimizes out devAssert
 - [x] Go through the code and apply the rules around constants from the instructions
-- [x] Remove any constants from constants.ts that are not used anywhere or are only used in tests
-- [x] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
-- [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.
+- [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future. Also add eslint checks where applicable.
+- [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
+- [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
 - [ ] Implement sampling estimation for the iterative lightness compensation in processImage.
   - [ ] Share code with `processPixelEffects` for the estimation
   - [ ] Profile to make sure it improves performance
