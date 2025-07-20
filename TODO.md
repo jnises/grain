@@ -3,6 +3,7 @@
 - [x] Update agent instructions on how to use the asserts.
 - [x] Update hot code to use the dev assert. look for hot code using the profiling functionality as outlined in scripts/profiling/README.md
 - [x] Figure out why `npm run profile` prints an empty table for `🔥 Top CPU Hotspots (by self time):` and make it work
+- [ ] Run `npm run profile` to figure out hot codepaths and use devAssert there
 - [ ] Make sure `npm run preview` optimizes out devAssert
 - [ ] Go through all README.md files and clean them up. remove any coding agent droppings. looks for inconsistent or outdated information and update or remove that.
 - [ ] Go through the code and apply the rules around constants from the instructions
