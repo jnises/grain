@@ -60,7 +60,7 @@
       - [x] Ensure all physical behavior tests pass
       - [x] Verify grain size scaling still works correctly
       - [x] Check that visual output looks reasonable across ISO range
-  - [ ] Update existing grain behavior tests to reflect new physically accurate expectations
+  - [x] Update existing grain behavior tests to reflect new physically accurate expectations
   - [ ] Update any dependent code that assumes the old grain density behavior
 - [ ] If I try to add iso 50 grain to a 400x300 image I get this error:
   ```

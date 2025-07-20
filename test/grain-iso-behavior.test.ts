@@ -87,8 +87,8 @@ describe('Grain Generator ISO Behavior', () => {
       console.log(`Low ISO (100): ${lowIsoGrains.length} grains generated`);
       console.log(`High ISO (1600): ${highIsoGrains.length} grains generated`);
 
-      // Current implementation produces more grains at higher ISO
-      expect(highIsoGrains.length).toBeGreaterThanOrEqual(lowIsoGrains.length);
+      // Physically accurate: higher ISO produces fewer but larger grains
+      expect(highIsoGrains.length).toBeLessThan(lowIsoGrains.length);
     });
   });
 
@@ -103,8 +103,8 @@ describe('Grain Generator ISO Behavior', () => {
 
       const currentBehavior = {
         grainSize: 'Higher ISO produces larger grains ✓ (matches expectation)',
-        grainDensity: 'Higher ISO produces MORE grains ✗ (opposite of expectation)',
-        currentLogic: 'Both grain size and density increase with ISO'
+        grainDensity: 'Higher ISO produces FEWER grains ✓ (matches expectation)',
+        currentLogic: 'Physics-based grain density calculation with inverse relationship to ISO'
       };
 
       console.log('Expected physical behavior:', expectedBehavior);
