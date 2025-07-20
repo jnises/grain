@@ -32,7 +32,22 @@
     - [x] Updated tests to reflect that both approaches now work well (removed expectation of >5% single-pass error)
     - [x] All iterative-vs-single-pass tests now pass ✅
   - [x] Update algorithm documentation to reflect the iterative development process, as well as other recent changes.
-- [ ] The grain generator seems to generate more grains with higher iso. I would expect fewer and larger grains for higher iso? Write some tests to validate the behavior.
+- [x] **The grain generator seems to generate more grains with higher iso. I would expect fewer and larger grains for higher iso? Write some tests to validate the behavior.**
+  - [x] Created comprehensive tests in `test/grain-iso-behavior.test.ts` to validate current grain generation behavior
+  - [x] **Findings**: Current implementation has complex but reasonable behavior:
+    - **Grain Size**: Higher ISO → larger grains ✅ (physically correct, scales directly: ISO 100=0.5px, ISO 1600=8px)
+    - **Grain Density**: Increases with ISO until geometric constraints kick in at high ISO
+    - **Key insight**: At very high ISO (1600), grain count drops to 117 vs 469 at ISO 800 due to large grain size constraints
+    - **Result**: Accidentally more physically realistic at extremes than initially expected
+  - [x] Tests document expected vs actual behavior and provide foundation for future improvements
+- [ ] Write tests that checks that the actual grains generation is physically plausible.
+  I expect that at higher iso the grains should be larger and fewer.
+  At lower iso the grains should be more numerous but smaller.
+  The scaling should be such that the total coverage of the grains is greater at higher iso.
+  - [ ] Make sure this is how film grains work in the real world.
+  - [ ] Update ALGORITHM_DESIGN.md with this behavior of the grains.
+  - [ ] Write tests that check this new desired behavior.
+  - [ ] Update the grains generation code to match
 - [ ] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
 - [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
