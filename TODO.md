@@ -2,8 +2,20 @@
   - [x] It should mention that the input image is only used to develop or expose the grains. The grains are then used to "print" a final photo. As if the input image was the light that the camera saw. Then the developed film is used in a darkroom to create a photo. Explain it using a analog film processing analogy.
   - [x] All color operations should be done in linear space. srgb packing/unpacking is done on output/input from the pipeline.
 - [x] processPixelEffects should return a new result image rather than writing to resultFloatData.
-- [ ] The lightness compensation should be done using an iterative approach. Currently the compensation is only done at the end. A more physically plausible approach would be to adjust the exposure iteratively over a few iteration until the desired lightness is achieved.
-  A good way to do it would be to repeatedly do the "film development phase" up until calculateLightnessFactor in GrainProcessor.processImage until the lightness factor matches the desired lightness.
+- [ ] ### Iterative Lightness Compensation Implementation
+
+The lightness compensation should be done using an iterative approach. Currently the compensation is only done at the end. A more physically plausible approach would be to adjust the exposure iteratively over a few iteration until the desired lightness is achieved.
+
+**Progress:**
+- [x] Extract film development phase into reusable function
+- [x] Move lightness factor calculation after each iteration
+- [x] Remove code duplication between estimation and main pipeline 
+- [x] Fix exposure adjustment bounds checking - uses logarithmic scaling with dampening and strict clamping to [0,1]
+- [x] Implement convergence logic that iterates the development phase until target lightness is achieved (with max iteration limit)
+- [ ] Add configuration for iteration parameters (max iterations, convergence threshold)
+- [ ] Update performance tracking to account for multiple iterations
+- [ ] Test iterative vs single-pass approaches to ensure quality improvements
+- [ ] Update algorithm documentation to reflect iterative development process
 - [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
   - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"  

@@ -98,9 +98,11 @@
 ### Before Completing
 1. Clean up temporary files
 2. Update documentation if needed
-3. Ensure all tests pass
-4. Run `npm run check` to verify code quality and TypeScript errors
-5. Check that no unnecessary files were added to the repository
+3. Update `ALGORITHM_DESIGN.md` if any relevant changes to the main algorithm have been made
+4. Ensure all tests pass
+5. Run `npm run check` to verify code quality and TypeScript errors
+6. Check that no unnecessary files were added to the repository
+
 
 ## Project Structure and File Organization
 

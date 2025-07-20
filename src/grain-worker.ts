@@ -197,19 +197,13 @@ export class GrainProcessor {
     this.performanceTracker.endBenchmark('Kernel Exposure Calculation');
 
     // ========================================================================
-    // FILM DEVELOPMENT PHASE - Development Phase  
-    // Determine which grains are activated based on their exposure and thresholds.
+    // ITERATIVE FILM DEVELOPMENT PHASE - Development Phase with Lightness Convergence
+    // Iteratively adjust grain exposures until desired lightness is achieved.
+    // This is more physically plausible than applying lightness correction at the end.
     // See ALGORITHM_DESIGN.md: "Film Development Phase"
     // ========================================================================
     
-    // Step 3.5: Pre-calculate intrinsic grain densities (Phase 1 - grain-dependent only)
-    // This simulates the chemical development process where exposed grains become opaque
-    this.reportProgress(27, 'Pre-calculating intrinsic grain densities...');
-    this.performanceTracker.startBenchmark('Intrinsic Density Calculation');
-    const grainIntrinsicDensityMap = this.grainDensityCalculator.calculateIntrinsicGrainDensities(grainStructure, grainExposureMap);
-    this.performanceTracker.endBenchmark('Intrinsic Density Calculation');
-    
-    // Determine grid size for spatial lookup
+    // Determine grid size for spatial lookup (needed for lightness estimation)
     let maxGrainSize = 1;
     if (Array.isArray(grainStructure) && grainStructure.length > 0) {
       // Single layer with varying grain sizes
@@ -220,6 +214,69 @@ export class GrainProcessor {
     const MIN_GRID_SIZE = 8;
     const GRID_SIZE_FACTOR = 2;
     const gridSize = Math.max(MIN_GRID_SIZE, Math.floor(maxGrainSize * GRID_SIZE_FACTOR));
+    
+    // Constants for iterative lightness compensation
+    const MAX_ITERATIONS = 5;
+    const CONVERGENCE_THRESHOLD = 0.05; // 5% tolerance
+    const TARGET_LIGHTNESS = 1.0; // Preserve original lightness
+    
+    this.reportProgress(27, 'Starting iterative film development...');
+    this.performanceTracker.startBenchmark('Iterative Development');
+    
+    // Initialize exposure adjustment factor
+    let exposureAdjustmentFactor = 1.0;
+    let convergedGrainIntrinsicDensityMap: Map<GrainPoint, number> | null = null;
+    
+    for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+      console.log(`Development iteration ${iteration + 1}/${MAX_ITERATIONS}, exposure adjustment: ${exposureAdjustmentFactor.toFixed(4)}`);
+      
+      // Apply exposure adjustment to grain exposure map
+      const adjustedGrainExposureMap = this.adjustGrainExposures(grainExposureMap, exposureAdjustmentFactor);
+      
+      // Execute film development phase with adjusted exposures
+      this.performanceTracker.startBenchmark('Intrinsic Density Calculation');
+      const grainIntrinsicDensityMap = this.grainDensityCalculator.calculateIntrinsicGrainDensities(grainStructure, adjustedGrainExposureMap);
+      this.performanceTracker.endBenchmark('Intrinsic Density Calculation');
+      
+      // Calculate full lightness factor using complete pixel processing (no sampling estimation)
+      // This ensures consistency with the main pipeline and avoids code duplication
+      const { resultFloatData: iterationProcessedFloatData } = this.processPixelEffects(
+        grainStructure,
+        grainGrid,
+        grainIntrinsicDensityMap,
+        this.width,
+        this.height,
+        gridSize
+      );
+      
+      const estimatedLightnessFactor = calculateLightnessFactor(floatData, iterationProcessedFloatData);
+      
+      console.log(`Iteration ${iteration + 1}: estimated lightness factor = ${estimatedLightnessFactor.toFixed(4)}`);
+      
+      // Check convergence
+      if (Math.abs(estimatedLightnessFactor - TARGET_LIGHTNESS) < CONVERGENCE_THRESHOLD) {
+        console.log(`Lightness converged after ${iteration + 1} iterations`);
+        convergedGrainIntrinsicDensityMap = grainIntrinsicDensityMap;
+        break;
+      }
+      
+      // Adjust exposure for next iteration
+      // If lightness factor > 1, image is too dark → increase exposure
+      // If lightness factor < 1, image is too bright → decrease exposure
+      exposureAdjustmentFactor *= estimatedLightnessFactor;
+      
+      // Store the density map from this iteration
+      convergedGrainIntrinsicDensityMap = grainIntrinsicDensityMap;
+      
+      // Prevent extreme adjustments
+      exposureAdjustmentFactor = Math.max(0.1, Math.min(10.0, exposureAdjustmentFactor));
+    }
+    
+    // Use the final converged grain densities
+    const finalGrainIntrinsicDensityMap = convergedGrainIntrinsicDensityMap!;
+    
+    this.performanceTracker.endBenchmark('Iterative Development');
+    console.log(`Film development completed with exposure adjustment factor: ${exposureAdjustmentFactor.toFixed(4)}`);
 
     // ========================================================================
     // DARKROOM PRINTING PHASE - Printing Phase
@@ -237,7 +294,7 @@ export class GrainProcessor {
     const { resultFloatData: processedFloatData, grainEffectCount, processedPixels } = this.processPixelEffects(
       grainStructure,
       grainGrid,
-      grainIntrinsicDensityMap,
+      finalGrainIntrinsicDensityMap,
       this.width,
       this.height,
       gridSize
@@ -325,6 +382,36 @@ export class GrainProcessor {
     
     // Return the density response directly from film curve
     return densityResponse;
+  }
+
+  /**
+   * Adjust grain exposures by a factor for iterative lightness compensation
+   * Uses logarithmic scaling to stay within reasonable bounds while preserving relative differences
+   * 
+   * @param originalExposureMap - Original grain exposure map
+   * @param adjustmentFactor - Factor to adjust exposures by
+   * @returns New adjusted exposure map with values clamped to [0, 1]
+   */
+  private adjustGrainExposures(
+    originalExposureMap: Map<GrainPoint, number>, 
+    adjustmentFactor: number
+  ): Map<GrainPoint, number> {
+    const adjustedMap = new Map<GrainPoint, number>();
+    
+    // Use smaller, more conservative adjustment steps to avoid exceeding bounds
+    // Convert factor to logarithmic adjustment for more stable iteration
+    const logAdjustment = Math.log(adjustmentFactor);
+    const clampedLogAdjustment = Math.max(-2.0, Math.min(2.0, logAdjustment)); // Limit to reasonable range
+    const safeAdjustmentFactor = Math.exp(clampedLogAdjustment * 0.3); // Apply with dampening
+    
+    for (const [grain, exposure] of originalExposureMap.entries()) {
+      const adjustedExposure = exposure * safeAdjustmentFactor;
+      // Strictly clamp to [0, 1] range as required by grain density calculator
+      const clampedExposure = Math.max(0.0, Math.min(1.0, adjustedExposure));
+      adjustedMap.set(grain, clampedExposure);
+    }
+    
+    return adjustedMap;
   }
 
   /**

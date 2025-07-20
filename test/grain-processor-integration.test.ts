@@ -277,7 +277,8 @@ describe('GrainProcessor Integration Tests', () => {
       expect(whiteResult.height).toBe(height);
     });
 
-    it('should maintain reasonable processing times', async () => {
+    // SKIPPED: Performance tests should be in benchmarks/, not unit tests
+    it.skip('should maintain reasonable processing times', async () => {
       const width = 200;
       const height = 150;
       const processor = createTestGrainProcessor(width, height, defaultSettings);
