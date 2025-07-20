@@ -322,7 +322,7 @@ describe('Kernel Sampling Integration', () => {
     
     // Test grain grid creation
     const grainGrid = grainGenerator.createGrainGrid(grains);
-    expect(grainGrid.size).toBeGreaterThan(0);
+    expect(grainGrid.getTotalCells()).toBeGreaterThan(0);
     
     // Test calculation of grain parameters
     const grainParams = grainGenerator.calculateGrainParameters();

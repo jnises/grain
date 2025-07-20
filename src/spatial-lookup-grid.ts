@@ -132,4 +132,11 @@ export class SpatialLookupGrid {
       maxGrainsPerCell
     };
   }
+
+  /**
+   * Get the total number of grid cells
+   */
+  getTotalCells(): number {
+    return this.gridWidth * this.gridHeight;
+  }
 }
