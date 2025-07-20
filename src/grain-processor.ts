@@ -23,7 +23,8 @@ import type {
 import { 
   assertPositiveInteger, 
   assertObject, 
-  assert
+  assert,
+  devAssert
 } from './utils';
 
 // All operations should be done on linear colors. The incoming image is immediately converted from srgb to linear. Only convert back to srgb when writing the output image.
@@ -492,7 +493,7 @@ export class GrainProcessor {
             
             // Use pre-calculated intrinsic grain density
             const intrinsicDensity = grainIntrinsicDensityMap.get(grain);
-            assert(
+            devAssert(
               intrinsicDensity !== undefined,
               'Intrinsic grain density not found in calculated map - this indicates a logic error',
               { 

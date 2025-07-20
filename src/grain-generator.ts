@@ -10,11 +10,11 @@ import {
   assertObject, 
   assertPositiveNumber, 
   assertArray, 
-  assertPoint2D,
   assertNonNegativeNumber,
   assertInRange,
   assertFiniteNumber,
-  assert
+  assert,
+  devAssert
 } from './utils';
 
 // Default implementation using Math.random
@@ -279,10 +279,15 @@ export class GrainGenerator {
       { targetCount, isInteger: Number.isInteger(targetCount) }
     );
 
-    // Type guard for existing grains array
-    existingGrains.forEach((grain, index) => {
-      assertPoint2D(grain, `existingGrains[${index}]`);
-    });
+    // Type guard for existing grains array (dev-only for performance)
+    devAssert(
+      existingGrains.every((grain) => grain && typeof grain.x === 'number' && typeof grain.y === 'number'),
+      'All existing grains must be valid Point2D objects',
+      { 
+        existingGrainsLength: existingGrains.length,
+        invalidGrains: existingGrains.filter((grain) => !grain || typeof grain.x !== 'number' || typeof grain.y !== 'number').length
+      }
+    );
 
     console.log(`Generating fallback grains: ${existingGrains.length} existing, ${targetCount} target${minDistance ? `, minDistance=${minDistance.toFixed(2)}` : ''}`);
 

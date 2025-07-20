@@ -3,7 +3,7 @@
 
 import { SEEDED_RANDOM_MULTIPLIER, EXPOSURE_CONVERSION } from './constants';
 import { srgbToLinear, linearToSrgb } from './color-space';
-import { assertInRange, assert, assertFiniteNumber } from './utils';
+import { assertInRange, assert, devAssert, assertFiniteNumber } from './utils';
 
 /**
  * Generate pseudorandom number with seed
@@ -21,9 +21,9 @@ export function seededRandom(seed: number): number {
  * Pure function for calculating falloff based on distance and grain properties
  */
 export function calculateGrainFalloff(distance: number, grainRadius: number): number {
-  // Validate input parameters
-  assertFiniteNumber(distance, 'distance');
-  assert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
+  // Validate input parameters (dev-only for performance)
+  devAssert(Number.isFinite(distance), 'distance must be finite', { distance });
+  devAssert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
   
   // Constants for grain falloff calculation
   const GAUSSIAN_SIGMA_FACTOR = 0.7; // Controls spread of Gaussian based on grain radius
@@ -41,9 +41,9 @@ export function calculateGrainFalloff(distance: number, grainRadius: number): nu
  * Pure function for calculating sample weights based on distance and grain properties
  */
 export function calculateSampleWeight(distance: number, grainRadius: number): number {
-  // Validate input parameters
-  assertFiniteNumber(distance, 'distance');
-  assert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
+  // Validate input parameters (dev-only for performance)
+  devAssert(Number.isFinite(distance), 'distance must be finite', { distance });
+  devAssert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
   
   // Constants for sample weight calculation
   const MIN_SAMPLE_WEIGHT = 0.05;     // Minimum weight for edge samples
@@ -197,7 +197,7 @@ export function calculateLightnessFactor(originalData: Float32Array, processedDa
  * Pure function implementing Beer-Lambert law physics for monochrome film
  */
 export function applyBeerLambertCompositingGrayscale(density: number): number {
-  assertFiniteNumber(density, 'density');
+  devAssert(Number.isFinite(density), 'density must be finite', { density });
   
   // PHYSICAL CORRECTION: The input image was used to determine grain exposure during "photography".
   // When "viewing" the film, WHITE printing light passes through the developed grains.
@@ -218,10 +218,10 @@ export function applyBeerLambertCompositingGrayscale(density: number): number {
  * The Number.isFinite check at the end is defensive programming but mathematically unnecessary.
  */
 export function rgbToExposureFloat(r: number, g: number, b: number): number {
-  // Validate inputs - NaN/Infinity will be caught here
-  assertInRange(r, 0, 1, 'r');
-  assertInRange(g, 0, 1, 'g');
-  assertInRange(b, 0, 1, 'b');
+  // Validate inputs - NaN/Infinity will be caught here (dev-only for performance)
+  devAssert(r >= 0 && r <= 1, 'r must be in range [0,1]', { r });
+  devAssert(g >= 0 && g <= 1, 'g must be in range [0,1]', { g });
+  devAssert(b >= 0 && b <= 1, 'b must be in range [0,1]', { b });
   
   // Calculate weighted luminance using photographic weights
   // Note: Input values are already in linear space, so this is physically correct

@@ -8,7 +8,7 @@
 import { FILM_CHARACTERISTICS } from './constants';
 import { calculateGrainFalloff } from './grain-math';
 import type { GrainSettings, GrainPoint } from './types';
-import { assertInRange, assert, assertArray, assertFiniteNumber } from './utils';
+import { assertInRange, assert, devAssert, assertArray } from './utils';
 
 /**
  * Handles grain density calculations and film physics simulation
@@ -54,7 +54,7 @@ export class GrainDensityCalculator {
     
     for (const grain of grains) {
       const grainExposure = grainExposureMap.get(grain);
-      assert(
+      devAssert(
         grainExposure !== undefined,
         'Grain exposure not found in calculated map during intrinsic density calculation',
         { 
@@ -125,15 +125,15 @@ export class GrainDensityCalculator {
    * This method computes grain-specific properties that don't depend on pixel position
    */
   private calculateIntrinsicGrainDensity(exposure: number, grain: GrainPoint): number {
-    assertFiniteNumber(exposure, 'exposure');
-    assertInRange(exposure, 0, 1, 'exposure');
-    assert(grain && typeof grain === 'object', 'grain must be a valid grain object', { grain });
-    assertFiniteNumber(grain.x, 'grain.x');
-    assertFiniteNumber(grain.y, 'grain.y');
-    assert(typeof grain.size === 'number' && grain.size > 0, 'grain.size must be a positive number', { size: grain.size });
-    assertInRange(grain.sensitivity, 0, 10, 'grain.sensitivity');
+    devAssert(Number.isFinite(exposure), 'exposure must be finite', { exposure });
+    devAssert(exposure >= 0 && exposure <= 1, 'exposure must be in range [0,1]', { exposure });
+    devAssert(grain && typeof grain === 'object', 'grain must be a valid grain object', { grain });
+    devAssert(Number.isFinite(grain.x), 'grain.x must be finite', { x: grain.x });
+    devAssert(Number.isFinite(grain.y), 'grain.y must be finite', { y: grain.y });
+    devAssert(typeof grain.size === 'number' && grain.size > 0, 'grain.size must be a positive number', { size: grain.size });
+    devAssert(grain.sensitivity >= 0 && grain.sensitivity <= 10, 'grain.sensitivity must be in range [0,10]', { sensitivity: grain.sensitivity });
     // Development threshold can be outside [0,1] in some film simulation cases
-    assertFiniteNumber(grain.developmentThreshold, 'grain.developmentThreshold');
+    devAssert(Number.isFinite(grain.developmentThreshold), 'grain.developmentThreshold must be finite', { developmentThreshold: grain.developmentThreshold });
     
     // Function-specific constants
     const GRAIN_RANDOM_SEED_X = 12345;

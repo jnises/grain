@@ -2,7 +2,7 @@
 // Provides adaptive sampling patterns for grain exposure calculation and rendering
 
 import { calculateSampleWeight, grayscaleToExposure } from './grain-math';
-import { assertPositiveNumber, assert } from './utils';
+import { devAssert } from './utils';
 import type { RandomNumberGenerator } from './types';
 import { DefaultRandomNumberGenerator } from './grain-generator';
 
@@ -59,7 +59,7 @@ export class KernelGenerator {
    * @returns Cached or newly generated sampling kernel
    */
   generateSamplingKernel(grainRadius: number): SamplingKernel {
-    assertPositiveNumber(grainRadius, 'grainRadius');
+    devAssert(grainRadius > 0 && Number.isFinite(grainRadius), 'grainRadius must be a positive finite number', { grainRadius });
     
     const grainShape = 0.5; // Always circular
     const sampleCount = this.determineSampleCount(grainRadius);
@@ -252,16 +252,16 @@ export function sampleGrainAreaExposure(
   height: number,
   kernelGenerator: KernelGenerator
 ): number {
-  // Validate input parameters
-  assert(imageData.length > 0, 'imageData must not be empty', { length: imageData.length });
-  assert(imageData.length % 4 === 0, 'imageData length must be divisible by 4 (RGBA format)', { length: imageData.length });
-  assert(Number.isFinite(grainX), 'grainX must be a finite number', { grainX });
-  assert(Number.isFinite(grainY), 'grainY must be a finite number', { grainY });
-  assertPositiveNumber(grainRadius, 'grainRadius');
-  assertPositiveNumber(width, 'width');
-  assertPositiveNumber(height, 'height');
+  // Validate input parameters (dev-only for performance in hot path)
+  devAssert(imageData.length > 0, 'imageData must not be empty', { length: imageData.length });
+  devAssert(imageData.length % 4 === 0, 'imageData length must be divisible by 4 (RGBA format)', { length: imageData.length });
+  devAssert(Number.isFinite(grainX), 'grainX must be a finite number', { grainX });
+  devAssert(Number.isFinite(grainY), 'grainY must be a finite number', { grainY });
+  devAssert(grainRadius > 0 && Number.isFinite(grainRadius), 'grainRadius must be a positive finite number', { grainRadius });
+  devAssert(width > 0 && Number.isFinite(width), 'width must be a positive finite number', { width });
+  devAssert(height > 0 && Number.isFinite(height), 'height must be a positive finite number', { height });
   // KernelGenerator type is guaranteed by TypeScript, but we validate it provides expected methods
-  assert(typeof kernelGenerator.generateSamplingKernel === 'function', 'kernelGenerator must have generateSamplingKernel method', { kernelGenerator });
+  devAssert(typeof kernelGenerator.generateSamplingKernel === 'function', 'kernelGenerator must have generateSamplingKernel method', { kernelGenerator });
   
   const kernel = kernelGenerator.generateSamplingKernel(grainRadius);
   
