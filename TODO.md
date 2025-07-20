@@ -2,7 +2,7 @@
   - [x] It should mention that the input image is only used to develop or expose the grains. The grains are then used to "print" a final photo. As if the input image was the light that the camera saw. Then the developed film is used in a darkroom to create a photo. Explain it using a analog film processing analogy.
   - [x] All color operations should be done in linear space. srgb packing/unpacking is done on output/input from the pipeline.
 - [x] processPixelEffects should return a new result image rather than writing to resultFloatData.
-- [ ] ### Iterative Lightness Compensation Implementation
+- [x] ### Iterative Lightness Compensation Implementation
 
   The lightness compensation should be done using an iterative approach. Currently the compensation is only done at the end. A more physically plausible approach would be to adjust the exposure iteratively over a few iteration until the desired lightness is achieved.
 
@@ -31,7 +31,7 @@
       - **All gray levels**: Under 6% error instead of 100% black output
     - [x] Updated tests to reflect that both approaches now work well (removed expectation of >5% single-pass error)
     - [x] All iterative-vs-single-pass tests now pass ✅
-  - [ ] Update algorithm documentation to reflect the iterative development process, as well as other recent changes.
+  - [x] Update algorithm documentation to reflect the iterative development process, as well as other recent changes.
 - [ ] The grain generator seems to generate more grains with higher iso. I would expect fewer and larger grains for higher iso? Write some tests to validate the behavior.
 - [ ] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
 - [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
