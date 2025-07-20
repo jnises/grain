@@ -48,7 +48,9 @@ export class SeededRandomNumberGenerator implements RandomNumberGenerator {
 // File-level constants shared across multiple methods
 const ISO_TO_GRAIN_SIZE_DIVISOR = 200;
 const MIN_GRAIN_SIZE = 0.5;
-const ISO_TO_DENSITY_DIVISOR = 10000; // Increased to reduce density and make it more realistic
+// Physical grain density constants - higher ISO = fewer grains (inverse relationship)
+const BASE_DENSITY_FACTOR = 0.6; // Maximum density factor at very low ISO
+const ISO_NORMALIZATION_CONSTANT = 400; // Controls how quickly density decreases with ISO
 const MAX_DENSITY_FACTOR = 0.8; // Allow high coverage but respect geometric constraints
 const GRAIN_DISTANCE_MULTIPLIER = 1.2; // Increased from 0.3 to give more reasonable distances
 const MIN_GRAIN_DISTANCE = 0.5; // Reduced from 1 to allow smaller grains when appropriate
@@ -414,8 +416,9 @@ export class GrainGenerator {
     const grainArea = Math.PI * (minDistance / 2) ** 2;
     const maxPossibleGrains = Math.floor(imageArea / grainArea);
     
-    // Calculate desired density factor based on ISO
-    const desiredDensityFactor = Math.min(MAX_DENSITY_FACTOR, this.settings.iso / ISO_TO_DENSITY_DIVISOR);
+    // Calculate desired density factor with INVERSE ISO relationship (higher ISO = fewer grains)
+    // Keep it simple - let coverage naturally peak and fall due to geometric constraints
+    const desiredDensityFactor = Math.min(MAX_DENSITY_FACTOR, BASE_DENSITY_FACTOR / (1 + this.settings.iso / ISO_NORMALIZATION_CONSTANT));
     const desiredGrainCount = Math.floor(imageArea * desiredDensityFactor);
     
     // Respect geometric constraints - don't try to place more grains than can fit

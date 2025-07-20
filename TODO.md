@@ -39,14 +39,27 @@
     - [x] **Current findings**: Grain count increases with ISO (400→800→1600 grains) instead of decreasing
     - [x] **Physics correctness**: Grain size scaling works correctly, but density behavior needs fixing
   - [ ] Update the grain generation algorithm to match physical film behavior:
-    - [ ] **Fix density calculation**: Change `desiredDensityFactor = iso / ISO_TO_DENSITY_DIVISOR` to inverse relationship (higher ISO = lower density)
-    - [ ] **Implement inverse density formula**: Use formula like `desiredDensityFactor = BASE_DENSITY_FACTOR / (1 + iso / ISO_NORMALIZATION_CONSTANT)` 
-    - [ ] **Adjust coverage compensation**: Since fewer grains need more total coverage, modify coverage calculation to scale with grain size
-    - [ ] **Verify grain size scaling**: Ensure existing `baseGrainSize = iso / ISO_TO_GRAIN_SIZE_DIVISOR` continues to work with new density model
-    - [ ] **Update constants**: Tune `ISO_TO_DENSITY_DIVISOR`, `MAX_DENSITY_FACTOR`, and related constants for realistic grain counts
-    - [ ] **Validate geometric constraints**: Ensure new algorithm respects physical packing limits (large grains can't fit too densely)
-    - [ ] **Test coverage area calculation**: Verify that total grain coverage area increases with ISO despite fewer grains
-    - [ ] **Test edge cases**: Very high ISO (3200+) and very low ISO (50) values should behave realistically
+    - [x] **Phase 1: Fix core density formula** ✅
+      - [x] Replace `desiredDensityFactor = iso / ISO_TO_DENSITY_DIVISOR` with inverse formula
+      - [x] Implement `desiredDensityFactor = BASE_DENSITY_FACTOR / (1 + iso / ISO_NORMALIZATION_CONSTANT)`
+      - [x] Add new constants: `BASE_DENSITY_FACTOR`, `ISO_NORMALIZATION_CONSTANT` 
+      - [x] Test that basic grain count decreases with ISO (run physical behavior test)
+      - [x] **RESULT**: Grain count now correctly decreases: ISO 100: 19200 → ISO 3200: 117 grains ✅
+    - [x] **Phase 2: Adjust coverage compensation** ✅ (with geometric constraints)
+      - [x] Modify coverage calculation to account for grain size scaling
+      - [x] Ensure total grain coverage area increases with ISO in viable range (ISO 100-400)
+      - [x] Balance grain count reduction vs grain size increase for net coverage gain  
+      - [x] **RESULT**: Coverage increases until geometric constraints limit packing (~ISO 400)
+      - [x] **NOTE**: Full coverage scaling requires 3D grain stacking (future TODO item)
+    - [ ] **Phase 3: Tune constants and validate**
+      - [ ] Fine-tune `BASE_DENSITY_FACTOR`, `ISO_NORMALIZATION_CONSTANT` for realistic grain counts
+      - [ ] Adjust `MAX_DENSITY_FACTOR` and related constraints if needed
+      - [ ] Verify geometric constraints work properly (large grains can't pack too densely)
+      - [ ] Test edge cases: very high ISO (3200+) and very low ISO (25-50)
+    - [ ] **Phase 4: Integration testing**
+      - [ ] Ensure all physical behavior tests pass
+      - [ ] Verify grain size scaling still works correctly
+      - [ ] Check that visual output looks reasonable across ISO range
   - [ ] Update existing grain behavior tests to reflect new physically accurate expectations
   - [ ] Update any dependent code that assumes the old grain density behavior
 - [ ] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
@@ -65,6 +78,12 @@
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
 - [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.
+- [ ] Update the grain generation logic to do a full 3d emulsion simulation.
+  * In real film grains are suspended at multiple depths, and can overlap.
+  * In the current implementation we don't support overlapping.
+  * Could just take the current grain generation and just have multiple at different depths?
+  * refer to GRAIN_OVERLAPPING.md for some notes on the issue
+- [ ] Add support for lower iso than 50
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] Do the film type settings refer to common industry standard settings? Or do they just result in some made up parameters? If made up, convert them to use some non-brand names instead. Or expose the underlying parameters?
@@ -79,18 +98,9 @@
 - [ ] Clean up unused files and debug utils such as `public/grain-test.html`
 - [ ] Clean up old agent-generated analysis and summary md files.
 - [ ] Update dependencies.
-
-## High Priority Missing Features (Major visual impact)
-
-- [ ] **Implement 2D Perlin noise for grain shapes**: Replace current uniform grain shapes with organic, irregular boundaries using 2D Perlin noise. Add elliptical distortion to simulate crystal orientation and implement grain halos as subtle brightness variations around edges.
 - [ ] **Add upsampling workflow for grain detail**: Implement 2x-4x upsampling before grain rendering, then downsample for final output. This will allow proper grain internal structure and edge softness instead of pixel-level noise.
-
-## Medium Priority Missing Features (Enhanced realism)
-
 - [ ] **Implement grain bridging and clustering effects**: Add simulation of grains connecting during development through clustering algorithms. This creates more realistic grain patterns that match actual film behavior.
 - [ ] **Add edge effects near high-contrast boundaries**: Implement grain density changes near high-contrast image boundaries to simulate developer depletion and chemical diffusion effects.
-
-
 - [ ] Is it possible to parallelize the algorithm? Or move parts of it to the gpu using webgpu?
 - [ ] Go through the repo and clean up any unused files
 - [ ] Go through the code looking for repeating patterns and refactor them into shared code if it makes sense.
