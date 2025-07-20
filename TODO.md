@@ -1,8 +1,8 @@
-- [x] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
-- [x] Look through the code for issues such as calculating the max value of an array using `Math.max(...` and optimize them.
-- [x] Fix tests
-- [x] Add eslint checks to disallow things like `Math.max(...` (using spreading operator with to calculate the max value of an array).
 - [x] Use something like a flamegraph to find the hotspots in the code and optimize those
+- [ ] Create a separate assert util for slow checks that is only run when in dev mode.
+- [ ] Update agent instructions on how to use the asserts.
+- [ ] Update hot code to use the dev assert. look for hot code using the profiling functionality as outlined in scripts/profiling/README.md
+- [ ] Go through all README.md files and clean them up. remove any coding agent droppings. looks for inconsistent or outdated information and update or remove that.
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
 - [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.
@@ -31,9 +31,6 @@
 - [ ] Do the film type settings refer to common industry standard settings? Or do they just result in some made up parameters? If made up, convert them to use some non-brand names instead. Or expose the underlying parameters?
 - [ ] In the gui make the unprocessed image also show as grayscale. Apply the same rgb to grayscale operation as in the grain processing pipeline.
 - [ ] Enable all skipped tests again. If they fail check if they are outdated and should be removed. If they are still applicable determine if the code or the test is wrong.
-- [ ] Create a separate assert util for slow checks that is only run when in dev mode.
-- [ ] Update agent instructions on how to use the asserts.
-- [ ] Update hot code to use the dev assert.
 - [ ] Go through the testcases and make sure they are all enabled and makes sense
 - [ ] Optimize the algorithm
 - [ ] Clean up unused files and debug utils such as `public/grain-test.html`
