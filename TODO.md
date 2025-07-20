@@ -29,11 +29,15 @@
     - **Total coverage**: Higher ISO films have greater effective light-capturing area despite fewer grains
     - **Current issue**: Our implementation has the opposite behavior (more grains at higher ISO)
   - [x] Update ALGORITHM_DESIGN.md with this physically accurate grain behavior
-  - [ ] Write comprehensive tests that validate the physically correct grain behavior:
-    - [ ] Test that grain count DECREASES as ISO increases
-    - [ ] Test that average grain size INCREASES as ISO increases  
-    - [ ] Test that total grain coverage area INCREASES as ISO increases
-    - [ ] Test grain size distribution patterns match real film behavior
+  - [x] Write comprehensive tests that validate the physically correct grain behavior:
+    - [x] Test that grain count DECREASES as ISO increases
+    - [x] Test that average grain size INCREASES as ISO increases  
+    - [x] Test that total grain coverage area INCREASES as ISO increases
+    - [x] Test grain size distribution patterns match real film behavior
+    - [x] **Implementation completed**: Created comprehensive test suite in `test/grain-physical-behavior.test.ts`
+    - [x] **Test validation**: All tests properly fail, confirming current behavior is opposite of physics
+    - [x] **Current findings**: Grain count increases with ISO (400→800→1600 grains) instead of decreasing
+    - [x] **Physics correctness**: Grain size scaling works correctly, but density behavior needs fixing
   - [ ] Update the grain generation algorithm to match physical film behavior:
     - [ ] Modify density calculation to decrease grain count with higher ISO
     - [ ] Ensure grain size scaling works correctly with new density model
