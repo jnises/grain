@@ -2,6 +2,9 @@
 - [x] Look through the code for issues such as calculating the max value of an array using `Math.max(...` and optimize them.
 - [ ] Fix tests
 - [ ] Add eslint checks to disallow things like `Math.max(...` (using spreading operator with to calculate the max value of an array).
+- [ ] Go through the code and apply the rules around constants from the instructions
+- [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
+- [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.
 - [ ] Enable each test below one by one. Check if it passes. If not, determine if the code or the test is wrong (probably the test). If the test is wrong, determine if it is worth it to update the test or better to just remove it.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
   - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"  
@@ -16,9 +19,6 @@
   - [ ] `test/exposure-lightness-preservation.test.ts` > "should preserve overall lightness for black and white extremes"
   - [ ] `test/grain-two-phase-verification.test.ts` > "Performance Characteristics" (describe.skip)
 - [ ] Create a page like public/grain-debug.html that replicates the testpatterns from grain-processor-integration.test.ts
-- [ ] Go through the code and apply the rules around constants from the instructions
-- [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
-- [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.
 - [ ] Update the grain generation logic to do a full 3d emulsion simulation.
   * In real film grains are suspended at multiple depths, and can overlap.
   * In the current implementation we don't support overlapping.
@@ -43,6 +43,7 @@
 - [ ] **Implement grain bridging and clustering effects**: Add simulation of grains connecting during development through clustering algorithms. This creates more realistic grain patterns that match actual film behavior.
 - [ ] **Add edge effects near high-contrast boundaries**: Implement grain density changes near high-contrast image boundaries to simulate developer depletion and chemical diffusion effects.
 - [ ] Is it possible to parallelize the algorithm? Or move parts of it to the gpu using webgpu?
+- [ ] Look for TODO comments in the code, and list them as subitems here.
 - [ ] Go through the repo and clean up any unused files
 - [ ] Go through the code looking for repeating patterns and refactor them into shared code if it makes sense.
 - [ ] The html files in public shouldn't be included in the production build
