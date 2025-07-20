@@ -6,8 +6,12 @@ Commit all pending changes to git.
 
 Before composing the commit message, run `git diff HEAD` changes. Base the commit message on the actual code and file changes about to be committed, not just the contents of this conversation.
 
-Follow good git commit message style with a brief description on the first line. Followed by an empty line and more detailed description if needed.
-Make sure you quote the entire message, not just the first line.
-Make sure you escape characters like ` so that it results in a valid command.
+Write the commit message in good git style: a concise summary on the first line, then a blank line, then details if needed.
+
+Always wrap the entire commit message in quotes.
+
+Escape all special characters (such as backticks, quotes, dollar signs, etc.) so the commit command is valid and does not break.
+
+Double-check that no unescaped characters remain in the message.
 
 If `TODO.md` is among the changes, include it in the commit but do not mention it in the commit message.
