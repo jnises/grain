@@ -4,7 +4,7 @@
 import { describe, it, test, expect } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
-import { assert, assertObject } from '../src/utils';
+import { assert, assertObject, arrayMinMax } from '../src/utils';
 
 describe('Variable Grain Size Generation', () => {
   const settings: GrainSettings = {
@@ -40,8 +40,7 @@ describe('Variable Grain Size Generation', () => {
     
     // Check that we have variable grain sizes
     const sizes = grains.map(g => g.size);
-    const minSize = Math.min(...sizes);
-    const maxSize = Math.max(...sizes);
+    const { min: minSize, max: maxSize } = arrayMinMax(sizes);
     
     expect(maxSize).toBeGreaterThan(minSize);
   });
@@ -53,8 +52,7 @@ describe('Variable Grain Size Generation', () => {
     assert(Array.isArray(grains) && grains.length > 0, 'Need grains to analyze', { grains });
     
     const sizes = grains.map(g => g.size);
-    const minSize = Math.min(...sizes);
-    const maxSize = Math.max(...sizes);
+    const { min: minSize, max: maxSize } = arrayMinMax(sizes);
     const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
     
     // Check that size variation is reasonable

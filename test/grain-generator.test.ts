@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainGenerator, SeededRandomNumberGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
-import { assert } from '../src/utils';
+import { assert, arrayMax } from '../src/utils';
 
 describe('GrainGenerator', () => {
   let generator: GrainGenerator;
@@ -427,7 +427,7 @@ describe('GrainGenerator', () => {
       
       // Test a few specific grains
       const testGrain = grains[0];
-      const maxGrainSize = Math.max(...grains.map(g => g.size));
+      const maxGrainSize = arrayMax(grains.map(g => g.size));
       const gridSize = Math.max(8, Math.floor(maxGrainSize * 2));
       
       const expectedGridX = Math.floor(testGrain.x / gridSize);

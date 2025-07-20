@@ -288,6 +288,37 @@
     </div>
 
     <script type="module">
+        // Efficient array utilities to avoid spread operator performance issues
+        function arrayMax(array) {
+            if (array.length === 0) return -Infinity;
+            let max = array[0];
+            for (let i = 1; i < array.length; i++) {
+                if (array[i] > max) max = array[i];
+            }
+            return max;
+        }
+        
+        function arrayMin(array) {
+            if (array.length === 0) return Infinity;
+            let min = array[0];
+            for (let i = 1; i < array.length; i++) {
+                if (array[i] < min) min = array[i];
+            }
+            return min;
+        }
+        
+        function arrayMinMax(array) {
+            if (array.length === 0) return { min: Infinity, max: -Infinity };
+            let min = array[0];
+            let max = array[0];
+            for (let i = 1; i < array.length; i++) {
+                const value = array[i];
+                if (value < min) min = value;
+                else if (value > max) max = value;
+            }
+            return { min, max };
+        }
+
         // Check if we're in development mode
         const isDevelopment = import.meta.env?.DEV !== false; // Default to true for this debug page
         
@@ -625,8 +656,7 @@
                 
                 if (grains.length > 0) {
                     const categorySize = grains.map(g => g.size);
-                    const minSize = Math.min(...categorySize);
-                    const maxSize = Math.max(...categorySize);
+                    const { min: minSize, max: maxSize } = arrayMinMax(categorySize);
                     const avgCategorySize = categorySize.reduce((a, b) => a + b, 0) / categorySize.length;
                     log(`  Size range: ${minSize.toFixed(2)} - ${maxSize.toFixed(2)}px`, 'sizeCategoriesStats');
                     log(`  Avg size: ${avgCategorySize.toFixed(2)}px`, 'sizeCategoriesStats');
@@ -658,8 +688,7 @@
             
             const allGrains = layers.flatMap(layer => layer.grains);
             const sizes = allGrains.map(g => g.size);
-            const minSize = Math.min(...sizes);
-            const maxSize = Math.max(...sizes);
+            const { min: minSize, max: maxSize } = arrayMinMax(sizes);
             const sizeRange = maxSize - minSize;
             
             // Categorize grains by size
@@ -695,7 +724,7 @@
             const scaleY = canvas.height / currentSettings.height;
             
             const allGrains = layers.flatMap(layer => layer.grains);
-            const maxGrainSize = Math.max(...allGrains.map(g => g.size));
+            const maxGrainSize = arrayMax(allGrains.map(g => g.size));
             
             // Grid size should be based on original image space, then scaled
             const originalGridSize = Math.max(8, Math.floor(maxGrainSize * 2));
@@ -757,7 +786,7 @@
             log(`Total cells: ${gridCols * gridRows}`, 'gridStats');
             log(`Occupied cells: ${cellCounts.size}`, 'gridStats');
             log(`Occupancy rate: ${(cellCounts.size / (gridCols * gridRows) * 100).toFixed(1)}%`, 'gridStats');
-            log(`Max grains in cell: ${Math.max(...cellCounts.values())}`, 'gridStats');
+            log(`Max grains in cell: ${arrayMax(Array.from(cellCounts.values()))}`, 'gridStats');
             log(`Avg grains per occupied cell: ${(allGrains.length / cellCounts.size).toFixed(1)}`, 'gridStats');
         }
 

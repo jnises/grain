@@ -1,5 +1,7 @@
 - [x] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
-- [ ] Look through the code for common performance issues in typescript such as calculating the max value of an array using `Math.max(...` and optimize them.
+- [x] Look through the code for issues such as calculating the max value of an array using `Math.max(...` and optimize them.
+- [ ] Fix tests
+- [ ] Add eslint checks to disallow things like `Math.max(...` (using spreading operator with to calculate the max value of an array).
 - [ ] Enable each test below one by one. Check if it passes. If not, determine if the code or the test is wrong (probably the test). If the test is wrong, determine if it is worth it to update the test or better to just remove it.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
   - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"  

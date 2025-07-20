@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
+import { arrayMinMax, arrayMax } from '../src/utils';
 
 /**
  * Tests to validate physically correct film grain behavior.
@@ -99,12 +100,13 @@ describe('Grain Generator Physical Behavior Validation', () => {
         );
         const grains = generator.generateGrainStructure();
         const sizes = grains.map(g => g.size);
+        const { min: minSize, max: maxSize } = arrayMinMax(sizes);
         
         results.push({
           iso,
           averageSize: sizes.reduce((a, b) => a + b, 0) / sizes.length,
-          minSize: Math.min(...sizes),
-          maxSize: Math.max(...sizes)
+          minSize,
+          maxSize
         });
       }
 
@@ -207,7 +209,7 @@ describe('Grain Generator Physical Behavior Validation', () => {
 
       // Validate that grain size scaling compensates for count reduction in the viable range
       const lowIsoCoverage = results[0].coveragePercent;
-      const midIsoCoverage = Math.max(...results.slice(0, 4).map(r => r.coveragePercent)); // Find peak coverage in viable range
+      const midIsoCoverage = arrayMax(results.slice(0, 4).map(r => r.coveragePercent)); // Find peak coverage in viable range
       const coverageIncrease = midIsoCoverage / lowIsoCoverage;
       
       console.log(`  Coverage increase ratio (low to peak): ${coverageIncrease.toFixed(2)}x`);
@@ -327,7 +329,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const mean = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
         const stdDev = Math.sqrt(sizes.reduce((sum, size) => sum + (size - mean) ** 2, 0) / sizes.length);
         const coefficientOfVariation = stdDev / mean;
-        const range = Math.max(...sizes) - Math.min(...sizes);
+        const { min: minSize, max: maxSize } = arrayMinMax(sizes);
+        const range = maxSize - minSize;
         
         distributions.push({
           iso,

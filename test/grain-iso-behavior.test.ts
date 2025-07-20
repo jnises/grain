@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { GrainGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
+import { arrayMinMax } from '../src/utils';
 
 describe('Grain Generator ISO Behavior', () => {
   const createTestSettings = (iso: number): GrainSettings => ({
@@ -122,8 +123,7 @@ describe('Grain Generator ISO Behavior', () => {
 
       // Check that grains have varying sizes (not all the same)
       const grainSizes = grains.map(grain => grain.size);
-      const minSize = Math.min(...grainSizes);
-      const maxSize = Math.max(...grainSizes);
+      const { min: minSize, max: maxSize } = arrayMinMax(grainSizes);
 
       console.log(`Grain size variation at ISO 400: min=${minSize.toFixed(3)}, max=${maxSize.toFixed(3)}`);
       

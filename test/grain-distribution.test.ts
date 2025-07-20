@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainGenerator, SeededRandomNumberGenerator } from '../src/grain-generator';
 import type { GrainSettings, Point2D } from '../src/types';
-import { assert, assertObject } from '../src/utils';
+import { assert, assertObject, arrayMax, arrayMin } from '../src/utils';
 
 describe('Grain Distribution Bug Tests', () => {
   let settings: GrainSettings;
@@ -166,8 +166,8 @@ describe('Grain Distribution Bug Tests', () => {
       console.log('Densities by image size:', densities);
       
       // All densities should be similar (within 100% of each other - relaxed from 50%)
-      const maxDensity = Math.max(...densities);
-      const minDensity = Math.min(...densities);
+      const maxDensity = arrayMax(densities);
+      const minDensity = arrayMin(densities);
       
       expect(maxDensity / minDensity).toBeLessThan(2.0); // Relaxed from 1.5 to 2.0
     });

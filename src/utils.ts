@@ -201,3 +201,66 @@ export function assertFiniteNumber(
     { [name]: value, type: typeof value, isFinite: Number.isFinite(value), isNaN: Number.isNaN(value) }
   );
 }
+
+/**
+ * Find the maximum value in an array efficiently without using the spread operator.
+ * This is much more memory-efficient and won't cause stack overflow on large arrays.
+ * 
+ * @param array The array to find the maximum value in
+ * @returns The maximum value, or -Infinity if the array is empty
+ */
+export function arrayMax(array: readonly number[]): number {
+  if (array.length === 0) return -Infinity;
+  
+  let max = array[0];
+  for (let i = 1; i < array.length; i++) {
+    if (array[i] > max) {
+      max = array[i];
+    }
+  }
+  return max;
+}
+
+/**
+ * Find the minimum value in an array efficiently without using the spread operator.
+ * This is much more memory-efficient and won't cause stack overflow on large arrays.
+ * 
+ * @param array The array to find the minimum value in
+ * @returns The minimum value, or Infinity if the array is empty
+ */
+export function arrayMin(array: readonly number[]): number {
+  if (array.length === 0) return Infinity;
+  
+  let min = array[0];
+  for (let i = 1; i < array.length; i++) {
+    if (array[i] < min) {
+      min = array[i];
+    }
+  }
+  return min;
+}
+
+/**
+ * Find both the minimum and maximum values in an array efficiently in a single pass.
+ * This is more efficient than calling arrayMin and arrayMax separately.
+ * 
+ * @param array The array to find min/max values in
+ * @returns An object with min and max properties, or {min: Infinity, max: -Infinity} if empty
+ */
+export function arrayMinMax(array: readonly number[]): { min: number; max: number } {
+  if (array.length === 0) return { min: Infinity, max: -Infinity };
+  
+  let min = array[0];
+  let max = array[0];
+  
+  for (let i = 1; i < array.length; i++) {
+    const value = array[i];
+    if (value < min) {
+      min = value;
+    } else if (value > max) {
+      max = value;
+    }
+  }
+  
+  return { min, max };
+}

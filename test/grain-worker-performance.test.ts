@@ -4,6 +4,7 @@
 
 import { describe, it } from 'vitest';
 import type { GrainSettings } from '../src/types';
+import { arrayMinMax } from '../src/utils';
 
 // Mock Worker environment
 const mockPostMessage = (message: any) => {
@@ -152,8 +153,7 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
     
     // Analyze grain size distribution
     const sizes = grains.map(g => g.size);
-    const minSize = Math.min(...sizes);
-    const maxSize = Math.max(...sizes);
+    const { min: minSize, max: maxSize } = arrayMinMax(sizes);
     const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
     
     // Size distribution analysis
