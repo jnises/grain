@@ -59,7 +59,14 @@
 - Use type guards for runtime type checking when TypeScript types aren't sufficient
 - Don't use type guard asserts redundantly. If you do check something that is already guaranteed by typescript, write a comment why you think that is useful.
 - Log errors with sufficient context for debugging before throwing/asserting
-- Use the existing assertion utilities in `src/utils.ts`
+- Use the existing assertion utilities in `src/utils.ts`:
+  - **`assert()`**: Use for critical assertions that should always be checked, even in production
+  - **`devAssert()`**: Use for expensive assertions in hot code paths that should only run during development. This function is completely eliminated in production builds through dead code elimination
+  - **`assertPositiveInteger()`, `assertPositiveNumber()`, `assertNonNegativeNumber()`**: Use for common validation patterns
+- Choose `devAssert()` over `assert()` when:
+  - The assertion is in performance-critical code (hot paths identified through profiling)
+  - The check is expensive to perform (complex validation, deep object inspection)
+  - The assertion is primarily for development debugging rather than critical safety
 
 ### Doc comments
 - Document any function argument whose meaning isn't obvious.

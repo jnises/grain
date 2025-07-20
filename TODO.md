@@ -1,6 +1,6 @@
 - [x] Use something like a flamegraph to find the hotspots in the code and optimize those
 - [x] Create a separate assert util for slow checks that is only run when in dev mode.
-- [ ] Update agent instructions on how to use the asserts.
+- [x] Update agent instructions on how to use the asserts.
 - [ ] Update hot code to use the dev assert. look for hot code using the profiling functionality as outlined in scripts/profiling/README.md
 - [ ] Go through all README.md files and clean them up. remove any coding agent droppings. looks for inconsistent or outdated information and update or remove that.
 - [ ] Go through the code and apply the rules around constants from the instructions
