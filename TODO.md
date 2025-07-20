@@ -19,7 +19,7 @@
   - [x] **Improvements**: Removed verbose explanations, added concrete TypeScript snippets for key calculations
   - [x] **Focus**: Document now directly guides implementation decisions without redundant theory
   - [x] **Linear color space**: Clarified pipeline boundaries and conversion requirements
-- [ ] Write tests that checks that the actual grains generation is physically plausible.
+- [x] Write tests that checks that the actual grains generation is physically plausible.
   I expect that at higher iso the grains should be larger and fewer.
   At lower iso the grains should be more numerous but smaller.
   The scaling should be such that the total coverage of the grains is greater at higher iso.
