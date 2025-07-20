@@ -13,14 +13,12 @@
   - [x] **Solution**: Changed to `finalGrayscale = 1.0 - lightTransmission` to simulate paper darkening with light exposure
   - [x] **Verification**: Tested relative grain behavior - now correctly shows Dark < Medium < Bright output ordering ✓
   - [x] **Performance Impact**: Lightness correction factors improved from ~0.03 to ~0.65-2.7 (much more reasonable range)
-- [ ] Clean up ALGORITHM_DESIGN.md
-  The document is meant to explain the core pillars of the algorithm to the coding agent, to help it make the right choices when implementing.
-  Do not include uninteresting things.
-  Do not include redundant information.
-  Do not include things that wouldn't help the coding agent make choices.
-  Do not include information that the coding agent should already know.
-  The coding agent keeps misunderstanding the analog film processing simulation resulting in the grains being a "negative". It is important that this information is clear.
-  Also important is the usage of linear color in the pipeline.
+- [x] Clean up ALGORITHM_DESIGN.md
+  - [x] **Completed**: Streamlined document to focus on core implementation principles
+  - [x] **Key changes**: Emphasized critical "negative behavior" warning at top with code examples
+  - [x] **Improvements**: Removed verbose explanations, added concrete TypeScript snippets for key calculations
+  - [x] **Focus**: Document now directly guides implementation decisions without redundant theory
+  - [x] **Linear color space**: Clarified pipeline boundaries and conversion requirements
 - [ ] Write tests that checks that the actual grains generation is physically plausible.
   I expect that at higher iso the grains should be larger and fewer.
   At lower iso the grains should be more numerous but smaller.
