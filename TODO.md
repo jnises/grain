@@ -39,10 +39,14 @@
     - [x] **Current findings**: Grain count increases with ISO (400→800→1600 grains) instead of decreasing
     - [x] **Physics correctness**: Grain size scaling works correctly, but density behavior needs fixing
   - [ ] Update the grain generation algorithm to match physical film behavior:
-    - [ ] Modify density calculation to decrease grain count with higher ISO
-    - [ ] Ensure grain size scaling works correctly with new density model
-    - [ ] Verify total coverage area increases appropriately with ISO
-    - [ ] Test edge cases (very high/low ISO values)
+    - [ ] **Fix density calculation**: Change `desiredDensityFactor = iso / ISO_TO_DENSITY_DIVISOR` to inverse relationship (higher ISO = lower density)
+    - [ ] **Implement inverse density formula**: Use formula like `desiredDensityFactor = BASE_DENSITY_FACTOR / (1 + iso / ISO_NORMALIZATION_CONSTANT)` 
+    - [ ] **Adjust coverage compensation**: Since fewer grains need more total coverage, modify coverage calculation to scale with grain size
+    - [ ] **Verify grain size scaling**: Ensure existing `baseGrainSize = iso / ISO_TO_GRAIN_SIZE_DIVISOR` continues to work with new density model
+    - [ ] **Update constants**: Tune `ISO_TO_DENSITY_DIVISOR`, `MAX_DENSITY_FACTOR`, and related constants for realistic grain counts
+    - [ ] **Validate geometric constraints**: Ensure new algorithm respects physical packing limits (large grains can't fit too densely)
+    - [ ] **Test coverage area calculation**: Verify that total grain coverage area increases with ISO despite fewer grains
+    - [ ] **Test edge cases**: Very high ISO (3200+) and very low ISO (50) values should behave realistically
   - [ ] Update existing grain behavior tests to reflect new physically accurate expectations
   - [ ] Update any dependent code that assumes the old grain density behavior
 - [ ] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
