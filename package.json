@@ -15,7 +15,9 @@
     "test:watch": "vitest",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "benchmark": "vitest run --config vitest.benchmark.config.ts"
+    "benchmark": "vitest run --config vitest.benchmark.config.ts",
+    "profile": "npx tsx scripts/profiling/flamegraph_profiler.ts",
+    "profile:comprehensive": "scripts/profiling/profile_hotspots.sh"
   },
   "dependencies": {
     "react": "^19.1.0",

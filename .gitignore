@@ -30,3 +30,10 @@ test/temp/
 temp_*
 debug_*
 public/debug/
+
+# Profiling output files
+scripts/profiling/output/
+!scripts/profiling/output/README.md
+isolate-*.log
+scripts/profiling/output/v8-profile-*.txt
+isolate-*.log
