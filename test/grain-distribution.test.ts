@@ -499,14 +499,12 @@ describe('Grain Distribution Bug Tests', () => {
       expect(densityPercentage).toBeGreaterThan(0.001); // At least 0.1%
       expect(densityPercentage).toBeLessThan(0.2); // No more than 20% (increased from 10% to account for higher density)
       
-      // Should scale with ISO
+      // Higher ISO should produce FEWER grains (physically accurate behavior)
       const highIsoGenerator = new GrainGenerator(400, 300, { ...settings, iso: 800 });
       const highIsoParams = highIsoGenerator.calculateGrainParameters();
       
-      // Note: Due to the Math.min cap, very high ISO might not increase density
-      if (settings.iso < 1000) {
-        expect(highIsoParams.grainDensity).toBeGreaterThanOrEqual(params.grainDensity);
-      }
+      // Physical behavior: higher ISO = fewer but larger grains
+      expect(highIsoParams.grainDensity).toBeLessThan(params.grainDensity);
     });
   });
 });

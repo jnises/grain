@@ -38,7 +38,7 @@
     - [x] **Test validation**: All tests properly fail, confirming current behavior is opposite of physics
     - [x] **Current findings**: Grain count increases with ISO (400→800→1600 grains) instead of decreasing
     - [x] **Physics correctness**: Grain size scaling works correctly, but density behavior needs fixing
-  - [ ] Update the grain generation algorithm to match physical film behavior:
+  - [x] Update the grain generation algorithm to match physical film behavior:
     - [x] **Phase 1: Fix core density formula** ✅
       - [x] Replace `desiredDensityFactor = iso / ISO_TO_DENSITY_DIVISOR` with inverse formula
       - [x] Implement `desiredDensityFactor = BASE_DENSITY_FACTOR / (1 + iso / ISO_NORMALIZATION_CONSTANT)`
@@ -61,7 +61,10 @@
       - [x] Verify grain size scaling still works correctly
       - [x] Check that visual output looks reasonable across ISO range
   - [x] Update existing grain behavior tests to reflect new physically accurate expectations
-  - [ ] Update any dependent code that assumes the old grain density behavior
+  - [x] Update any dependent code that assumes the old grain density behavior
+    - [x] **Fixed test**: `test/grain-distribution.test.ts` - Updated assertion to expect fewer grains at higher ISO
+    - [x] **Fixed test**: `test/grain-processor-integration.test.ts` - Updated misleading test name and comments
+    - [x] **Result**: All tests now correctly expect physically accurate behavior
 - [ ] If I try to add iso 50 grain to a 400x300 image I get this error:
   ```
   grain-worker.ts:80 Worker error: Maximum call stack size exceeded RangeError: Maximum call stack size exceeded
