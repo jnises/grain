@@ -27,6 +27,7 @@
       - **All gray levels**: Under 6% error instead of 100% black output
     - [x] Updated tests to reflect that both approaches now work well (removed expectation of >5% single-pass error)
     - [x] All iterative-vs-single-pass tests now pass ✅
+    - [x] **Fixed iterative test assumption**: Updated test to handle cases where both approaches achieve excellent accuracy (under 0.02% error), allowing for measurement tolerance when both single-pass and iterative approaches perform extremely well
   - [x] Update algorithm documentation to reflect the iterative development process, as well as other recent changes.
 - [x] **The grain generator seems to generate more grains with higher iso. I would expect fewer and larger grains for higher iso? Write some tests to validate the behavior.**
   - [x] Created comprehensive tests in `test/grain-iso-behavior.test.ts` to validate current grain generation behavior
