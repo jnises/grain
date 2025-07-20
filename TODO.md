@@ -44,10 +44,24 @@
   I expect that at higher iso the grains should be larger and fewer.
   At lower iso the grains should be more numerous but smaller.
   The scaling should be such that the total coverage of the grains is greater at higher iso.
-  - [ ] Make sure this is how film grains work in the real world.
-  - [ ] Update ALGORITHM_DESIGN.md with this behavior of the grains.
-  - [ ] Write tests that check this new desired behavior.
-  - [ ] Update the grains generation code to match
+  - [x] **Research completed**: Confirmed how film grains work in the real world:
+    - **Higher ISO**: Larger silver halide crystals, more light-sensitive, but FEWER per unit area
+    - **Lower ISO**: Smaller crystals, less light-sensitive individually, but MORE densely packed
+    - **Total coverage**: Higher ISO films have greater effective light-capturing area despite fewer grains
+    - **Current issue**: Our implementation has the opposite behavior (more grains at higher ISO)
+  - [ ] Update ALGORITHM_DESIGN.md with this physically accurate grain behavior
+  - [ ] Write comprehensive tests that validate the physically correct grain behavior:
+    - [ ] Test that grain count DECREASES as ISO increases
+    - [ ] Test that average grain size INCREASES as ISO increases  
+    - [ ] Test that total grain coverage area INCREASES as ISO increases
+    - [ ] Test grain size distribution patterns match real film behavior
+  - [ ] Update the grain generation algorithm to match physical film behavior:
+    - [ ] Modify density calculation to decrease grain count with higher ISO
+    - [ ] Ensure grain size scaling works correctly with new density model
+    - [ ] Verify total coverage area increases appropriately with ISO
+    - [ ] Test edge cases (very high/low ISO values)
+  - [ ] Update existing grain behavior tests to reflect new physically accurate expectations
+  - [ ] Update any dependent code that assumes the old grain density behavior
 - [ ] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
 - [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"

@@ -548,6 +548,7 @@ export class GrainProcessor {
           // Normalize by total weight for grayscale processing
           const normalizedDensity = totalGrainDensity / totalWeight;
           
+          // TODO: this is wrong right? ALGORITHM_DESIGN.md describes the correct behavior.
           // Use Beer-Lambert law to calculate light transmission through developed grains
           // Dense grains (heavily exposed) block more light
           const lightTransmission = applyBeerLambertCompositingGrayscale(normalizedDensity);
