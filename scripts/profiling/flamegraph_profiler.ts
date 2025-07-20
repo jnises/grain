@@ -105,17 +105,40 @@ function analyzeProfile(profilePath: string): void {
   try {
     const profileData = JSON.parse(readFileSync(profilePath, 'utf8'));
     const nodes = profileData.nodes || [];
+    const samples = profileData.samples || [];
+    const timeDeltas = profileData.timeDeltas || [];
     
-    // Extract function timing information
+    // Create a map from node ID to node data
+    const nodeMap = new Map();
+    for (const node of nodes) {
+      nodeMap.set(node.id, node);
+    }
+    
+    // Calculate timing information from samples and timeDeltas
     const functionStats = new Map<string, { selfTime: number, totalTime: number, hitCount: number }>();
     
+    // Process samples to calculate self time for each node
+    const nodeSelfTimes = new Map<number, number>();
+    
+    for (let i = 0; i < samples.length; i++) {
+      const nodeId = samples[i];
+      const timeDelta = timeDeltas[i] || 0; // Time spent in this sample (microseconds)
+      
+      if (nodeSelfTimes.has(nodeId)) {
+        nodeSelfTimes.set(nodeId, nodeSelfTimes.get(nodeId)! + timeDelta);
+      } else {
+        nodeSelfTimes.set(nodeId, timeDelta);
+      }
+    }
+    
+    // Aggregate timing information by function name
     for (const node of nodes) {
       const functionName = node.callFrame?.functionName || '<anonymous>';
       const scriptName = node.callFrame?.url ? node.callFrame.url.split('/').pop() : '<unknown>';
       const key = `${functionName} (${scriptName})`;
       
-      const selfTime = node.selfTime || 0;
-      const totalTime = node.totalTime || selfTime;
+      const selfTime = nodeSelfTimes.get(node.id) || 0;
+      const totalTime = selfTime; // For now, use selfTime as totalTime
       const hitCount = node.hitCount || 0;
       
       if (functionStats.has(key)) {
