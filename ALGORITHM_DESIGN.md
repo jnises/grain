@@ -14,7 +14,7 @@ This grain simulation algorithm is designed around the fundamental principle tha
 When light enters a camera, it strikes photosensitive crystals (grains) distributed throughout the film emulsion. Each grain has:
 - **Individual sensitivity** - some grains are more responsive to light than others
 - **Development threshold** - the minimum exposure needed for the grain to become developable
-- **Physical properties** - size, shape, and position within the emulsion
+- **Physical properties** - size, and position within the emulsion
 
 The input image in our algorithm represents this incoming light - it's the pattern of photons that would have struck the film.
 
@@ -37,17 +37,6 @@ The algorithm performs development in multiple iterations to achieve target ligh
    - Adjust exposure compensation factor if lightness deviation exceeds threshold
    - Repeat until convergence (typically 1-2 iterations) or maximum iterations reached
 3. **Final Grain State**: Use converged grain densities for the printing phase
-
-This iterative approach provides significant accuracy improvements:
-- **Mid-tone images**: Achieves <0.01% lightness error vs 42% error with single-pass
-- **Dark images**: Properly handles low-exposure scenarios that previously failed
-- **Convergence**: Algorithm typically converges within 1-2 iterations for most cases
-
-#### Physical Accuracy Improvements
-Recent fixes ensure proper darkroom physics simulation:
-- **Correct Beer-Lambert Application**: `transmission = exp(-density)` for positive image simulation
-- **Proper "No Grains" Handling**: Transparent film areas result in bright output (not black)
-- **Logarithmic Exposure Adjustment**: Uses physically-based exposure scaling with dampening
 
 ### Darkroom Printing Phase
 The developed film negative is used in a darkroom to create the final photograph. Light passes through the film:
@@ -73,23 +62,8 @@ All processing operations should follow real-world physics:
 The iterative development process ensures:
 - Proper exposure compensation through multiple development cycles
 - Convergence to target lightness within 1-2 iterations typically
-- Accurate handling of both bright and dark image regions
-- Elimination of the 100% error cases that occurred with single-pass processing
 
-### 2. Multi-Stage Processing Architecture
-The algorithm separates grain-dependent from position-dependent calculations:
-- **Phase 1 (Iterative Development)**: Calculate intrinsic grain properties through iterative exposure adjustment
-  - Initial exposure sampling from input image
-  - Iterative lightness compensation with convergence testing
-  - Final grain density determination based on converged exposures
-- **Phase 2 (Printing)**: Apply grain effects to each pixel based on spatial relationships
-  - Beer-Lambert law application for light transmission simulation
-  - Spatial grain effect compositing
-  - Final image generation as if light passed through developed film
-
-This separation mirrors the physical process where development happens first, then printing, while the iterative approach ensures proper exposure compensation.
-
-### 3. Linear Color Space Operations
+### 2. Linear Color Space Operations
 **All color operations must be performed in linear space** because:
 - Light behaves linearly in the real world
 - Grain density effects follow physical laws that assume linear light values
@@ -100,61 +74,10 @@ This separation mirrors the physical process where development happens first, th
 - **Input**: Convert from sRGB to linear for processing
 - **Output**: Convert from linear back to sRGB for display
 
-### 4. Grain-Centric Processing
+### 3. Grain-Centric Processing
 The algorithm treats grains as the fundamental processing units:
 - Each grain is an independent entity with its own properties
 - Grain development is determined by local image exposure
 - Final image effects emerge from the collective behavior of many grains
 - This approach naturally handles grain overlap, clustering, and spatial variation
 
-### 5. Scalable Performance
-The design should handle various image sizes and grain densities efficiently:
-- Spatial optimization to avoid O(n²) grain-pixel calculations
-- Caching of expensive operations like kernel generation
-- Memory-efficient data structures for large grain populations
-- Progressive quality options for interactive editing
-
-## Implementation Principles
-
-### Iterative Processing and Convergence
-- **Multi-iteration development** simulates real-world darkroom exposure adjustments
-- **Convergence detection** stops iteration when lightness target is achieved within threshold
-- **Exposure adjustment factors** use logarithmic scaling with dampening for stability
-- **Maximum iteration limits** prevent infinite loops while ensuring reasonable processing time
-
-### Separation of Concerns
-- **Grain generation** handles spatial distribution and individual grain properties
-- **Exposure calculation** determines how much light each grain received
-- **Iterative development simulation** calculates grain activation and density through multiple cycles
-- **Optical compositing** combines grain effects into the final image using Beer-Lambert physics
-
-### Deterministic Results
-- Use seeded random number generation for reproducible results
-- Ensure consistent grain placement and properties across runs
-- Enable comparison of different algorithm versions and parameters
-
-### Extensibility
-- Modular design allows enhancement of individual processing stages
-- Support for different film types through parameterization
-- **Configurable iteration parameters**:
-  - `maxIterations`: Maximum development iterations (default: 5)
-  - `convergenceThreshold`: Lightness accuracy tolerance (default: 0.05 = 5%)
-  - Iteration parameters can be customized per processing session
-- Foundation for future features like color processing, grain bridging, etc.
-
-## Quality Metrics
-
-The algorithm should preserve the essential characteristics of the input while adding realistic grain:
-- **Lightness preservation** - overall image brightness should remain consistent through iterative compensation
-- **Detail retention** - important image features should remain visible
-- **Natural grain distribution** - avoid artificial patterns or clustering
-- **Appropriate grain scale** - grain size should match the selected film characteristics
-- **Convergence efficiency** - algorithm should reach target lightness within 1-2 iterations for most images
-- **Error elimination** - avoid the 100% error cases that occurred with previous single-pass approaches
-
-**Measured Performance Improvements:**
-- Mid-tone images (50% gray): Single-pass 42.16% error → Iterative 0.01% error
-- Dark images (18% gray): Single-pass 100% error (complete black) → Iterative 2.4% error
-- All tested gray levels: Now achieve <6% lightness error consistently
-
-This design creates a foundation for realistic film grain simulation that respects both the physics of analog photography and the practical requirements of digital image processing.
