@@ -1,7 +1,7 @@
 // Mathematical utility functions for grain processing
 // These are pure functions that don't depend on class state
 
-import { SEEDED_RANDOM_MULTIPLIER, EXPOSURE_CONVERSION } from './constants';
+import { SEEDED_RANDOM_MULTIPLIER, EXPOSURE_CONVERSION, RGB_COLOR_CONSTANTS } from './constants';
 import { srgbToLinear, linearToSrgb } from './color-space';
 import { assert, devAssert, assertFiniteNumber, devAssertInRange } from './utils';
 
@@ -67,10 +67,10 @@ export function convertSrgbToLinearFloat(uint8Data: Uint8ClampedArray): Float32A
   for (let i = 0; i < uint8Data.length; i++) {
     if (i % 4 === 3) {
       // Alpha channel doesn't need gamma correction
-      floatData[i] = uint8Data[i] / 255.0;
+      floatData[i] = uint8Data[i] * RGB_COLOR_CONSTANTS.BYTE_TO_NORMALIZED;
     } else {
       // RGB channels: convert to linear space
-      const srgbValue = uint8Data[i] / 255.0;
+      const srgbValue = uint8Data[i] * RGB_COLOR_CONSTANTS.BYTE_TO_NORMALIZED;
       floatData[i] = srgbToLinear(srgbValue);
     }
   }
@@ -124,14 +124,14 @@ export function convertLinearFloatToSrgb(floatData: Float32Array): Uint8ClampedA
     
     if (i % 4 === 3) {
       // Alpha channel doesn't need gamma correction
-      uint8Data[i] = Math.round(Math.max(0, Math.min(255, value * 255)));
+      uint8Data[i] = Math.round(Math.max(RGB_COLOR_CONSTANTS.MIN_COLOR_VALUE, Math.min(RGB_COLOR_CONSTANTS.MAX_COLOR_VALUE, value * RGB_COLOR_CONSTANTS.NORMALIZED_TO_BYTE)));
     } else {
       // RGB channels: clamp to valid linear range, then gamma encode
-      const clampedValue = Math.max(0, Math.min(1, value));
+      const clampedValue = Math.max(RGB_COLOR_CONSTANTS.MIN_NORMALIZED_COLOR, Math.min(RGB_COLOR_CONSTANTS.MAX_NORMALIZED_COLOR, value));
       
       // Convert from linear to sRGB and then to 8-bit
       const srgbValue = linearToSrgb(clampedValue);
-      uint8Data[i] = Math.round(Math.max(0, Math.min(255, srgbValue * 255)));
+      uint8Data[i] = Math.round(Math.max(RGB_COLOR_CONSTANTS.MIN_COLOR_VALUE, Math.min(RGB_COLOR_CONSTANTS.MAX_COLOR_VALUE, srgbValue * RGB_COLOR_CONSTANTS.NORMALIZED_TO_BYTE)));
     }
   }
   return uint8Data;

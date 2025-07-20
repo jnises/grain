@@ -14,7 +14,6 @@ import {
   applyBeerLambertCompositingGrayscale
 } from './grain-math';
 import { convertImageDataToGrayscale } from './color-space';
-import { DEFAULT_ITERATION_PARAMETERS } from './constants';
 import type {
   GrainSettings,
   GrainPoint,
@@ -26,6 +25,40 @@ import {
   assert,
   devAssert
 } from './utils';
+
+// Progress reporting constants - module-specific to grain-processor
+const PROGRESS_PERCENTAGES = {
+  INITIAL: 0,
+  GRAIN_GENERATION: 10,
+  GRAIN_PROCESSING_START: 15,
+  GRAIN_PROCESSING_END: 85,
+  FINAL_PROCESSING: 95,
+  COMPLETE: 100,
+  ITERATION_START: 20,
+  ITERATION_END: 80,
+  ITERATION_RANGE: 60,  // ITERATION_END - ITERATION_START
+  PIXEL_PROCESSING: 85,
+  DEBUG_DRAWING: 90
+} as const;
+
+// Validation limits for grain processor
+const VALIDATION_LIMITS = {
+  MAX_ITERATIONS: 100,
+  MIN_ITERATIONS: 1,
+  MAX_ITERATIONS_LIMIT: 100,
+  MIN_CONVERGENCE_THRESHOLD: 0.001,
+  MAX_CONVERGENCE_THRESHOLD: 0.5,
+  MIN_EXPOSURE_ADJUSTMENT: 0.1,
+  MAX_EXPOSURE_ADJUSTMENT: 10.0,
+  MAX_REASONABLE_DENSITY: 1000000  // Maximum reasonable grain density per unit area
+} as const;
+
+// Default iteration parameters for lightness convergence - only used in this module
+const DEFAULT_ITERATION_PARAMETERS = {
+  MAX_ITERATIONS: 5,                   // Maximum iterations for lightness convergence
+  CONVERGENCE_THRESHOLD: 0.05,         // 5% tolerance for lightness convergence
+  TARGET_LIGHTNESS: 1.0                // Preserve original lightness
+} as const;
 
 // All operations should be done on linear colors. The incoming image is immediately converted from srgb to linear. Only convert back to srgb when writing the output image.
 export class GrainProcessor {
@@ -77,13 +110,13 @@ export class GrainProcessor {
     
     // Validate optional iteration parameters if provided
     if (s.maxIterations !== undefined) {
-      if (typeof s.maxIterations !== 'number' || s.maxIterations < 1 || s.maxIterations > 20) {
+      if (typeof s.maxIterations !== 'number' || s.maxIterations < VALIDATION_LIMITS.MIN_ITERATIONS || s.maxIterations > VALIDATION_LIMITS.MAX_ITERATIONS_LIMIT) {
         return false;
       }
     }
     
     if (s.convergenceThreshold !== undefined) {
-      if (typeof s.convergenceThreshold !== 'number' || s.convergenceThreshold <= 0 || s.convergenceThreshold > 1) {
+      if (typeof s.convergenceThreshold !== 'number' || s.convergenceThreshold <= VALIDATION_LIMITS.MIN_CONVERGENCE_THRESHOLD || s.convergenceThreshold > VALIDATION_LIMITS.MAX_CONVERGENCE_THRESHOLD) {
         return false;
       }
     }
@@ -212,7 +245,7 @@ export class GrainProcessor {
     const CONVERGENCE_THRESHOLD = this.settings.convergenceThreshold ?? DEFAULT_ITERATION_PARAMETERS.CONVERGENCE_THRESHOLD;
     const TARGET_LIGHTNESS = DEFAULT_ITERATION_PARAMETERS.TARGET_LIGHTNESS;
     
-    this.reportProgress(10, 'Starting iterative film development...');
+    this.reportProgress(PROGRESS_PERCENTAGES.ITERATION_START, 'Starting iterative film development...');
     this.performanceTracker.startBenchmark('Iterative Development');
     
     // Initialize exposure adjustment factor
@@ -222,7 +255,7 @@ export class GrainProcessor {
     
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
       // Update progress for each iteration within the development phase (10% to 80%)
-      const iterationProgress = 10 + ((iteration / MAX_ITERATIONS) * 70);
+      const iterationProgress = PROGRESS_PERCENTAGES.ITERATION_START + ((iteration / MAX_ITERATIONS) * PROGRESS_PERCENTAGES.ITERATION_RANGE);
       this.reportProgress(iterationProgress, `Film development iteration ${iteration + 1}/${MAX_ITERATIONS}...`);
       
       console.log(`Development iteration ${iteration + 1}/${MAX_ITERATIONS}, exposure adjustment: ${exposureAdjustmentFactor.toFixed(4)}`);
@@ -275,7 +308,7 @@ export class GrainProcessor {
       convergedGrainIntrinsicDensityMap = grainIntrinsicDensityMap;
       
       // Prevent extreme adjustments
-      exposureAdjustmentFactor = Math.max(0.1, Math.min(10.0, exposureAdjustmentFactor));
+      exposureAdjustmentFactor = Math.max(VALIDATION_LIMITS.MIN_EXPOSURE_ADJUSTMENT, Math.min(VALIDATION_LIMITS.MAX_EXPOSURE_ADJUSTMENT, exposureAdjustmentFactor));
     }
     
     // If we completed max iterations without convergence, still count the final iteration
@@ -290,7 +323,7 @@ export class GrainProcessor {
     console.log(`Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'} with exposure adjustment factor: ${exposureAdjustmentFactor.toFixed(4)}`);
 
     // Report completion of iterative development phase
-    this.reportProgress(80, `Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'}`);
+    this.reportProgress(PROGRESS_PERCENTAGES.ITERATION_END, `Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'}`);
 
     // ========================================================================
     // DARKROOM PRINTING PHASE - Printing Phase
@@ -301,7 +334,7 @@ export class GrainProcessor {
     
     // Step 4: Process each pixel (Phase 2 - position-dependent grain effects)
     // This simulates light passing through the developed film to create the final image
-    this.reportProgress(85, 'Processing pixels...');
+    this.reportProgress(PROGRESS_PERCENTAGES.PIXEL_PROCESSING, 'Processing pixels...');
     this.performanceTracker.startBenchmark('Pixel Processing', this.width * this.height);
     
     // TODO: could we reuse the results from the processPixelEffects in the lightness iteration above?
@@ -374,12 +407,12 @@ export class GrainProcessor {
     
     // Debug: Draw grain center points if requested
     if (this.settings.debugGrainCenters) {
-      this.reportProgress(98, 'Drawing debug grain centers...');
+      this.reportProgress(PROGRESS_PERCENTAGES.DEBUG_DRAWING, 'Drawing debug grain centers...');
       console.log('Debug mode: Drawing grain center points');
       this.drawGrainCenters(result, grainStructure);
     }
     
-    this.reportProgress(100, 'Complete!');
+    this.reportProgress(PROGRESS_PERCENTAGES.COMPLETE, 'Complete!');
     return result;
   }
 
@@ -390,7 +423,7 @@ export class GrainProcessor {
     
     // Normalize density to [0, 1] range for film curve
     // Maximum reasonable density is around 3.0 (very dense grain)
-    const normalizedDensity = Math.min(baseDensity / 3.0, 1.0);
+    const normalizedDensity = Math.min(baseDensity / VALIDATION_LIMITS.MAX_REASONABLE_DENSITY, 1.0);
     
     // Apply film characteristic curve for density response
     const densityResponse = this.grainDensityCalculator.filmCurve(normalizedDensity);

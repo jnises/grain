@@ -4,6 +4,21 @@
 // Random number generation - shared between GrainGenerator and potentially other modules
 export const SEEDED_RANDOM_MULTIPLIER = 10000;
 
+// Color space and RGB conversion constants
+export const RGB_COLOR_CONSTANTS = {
+  // sRGB conversion values (normalized 0-1 range)
+  BYTE_TO_NORMALIZED: 1.0 / 255.0,     // Convert byte (0-255) to normalized (0-1)
+  NORMALIZED_TO_BYTE: 255.0,           // Convert normalized (0-1) to byte (0-255)
+  
+  // Color channel limits
+  MIN_COLOR_VALUE: 0,
+  MAX_COLOR_VALUE: 255,
+  
+  // Floating-point color limits
+  MIN_NORMALIZED_COLOR: 0.0,
+  MAX_NORMALIZED_COLOR: 1.0
+} as const;
+
 // Film type grain characteristics - could be shared across different grain processing modules
 // Based on real film characteristics research for monochrome grain processing:
 // - Kodak films traditionally have smooth tonal gradation and moderate grain structure
@@ -98,11 +113,4 @@ export const EXPOSURE_CONVERSION = {
   // Maps ISO values to exposure sensitivity
   ISO_BASE: 100,                       // Base ISO for calculations
   ISO_LOG_FACTOR: Math.log(2) / Math.log(10) // ISO doubles = 1 stop = log base conversion
-} as const;
-
-// Iterative lightness compensation defaults
-export const DEFAULT_ITERATION_PARAMETERS = {
-  MAX_ITERATIONS: 5,                   // Maximum iterations for lightness convergence
-  CONVERGENCE_THRESHOLD: 0.05,         // 5% tolerance for lightness convergence
-  TARGET_LIGHTNESS: 1.0                // Preserve original lightness
 } as const;

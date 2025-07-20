@@ -2,6 +2,7 @@
 // Pure functions for converting between different color spaces
 
 import { assertImageData, devAssertInRange } from './utils';
+import { EXPOSURE_CONVERSION, RGB_COLOR_CONSTANTS } from './constants';
 
 /**
  * Convert sRGB gamma-encoded value to linear RGB
@@ -19,8 +20,10 @@ export function srgbToLinear(value: number): number {
  * Pure function for gamma encoding
  */
 export function linearToSrgb(value: number): number {
+  const LINEAR_TO_SRGB_THRESHOLD = 0.0031308;
+  
   devAssertInRange(value, 0, 1, 'value');
-  return value <= 0.0031308 
+  return value <= LINEAR_TO_SRGB_THRESHOLD 
     ? value * RGB_GAMMA_LINEAR_DIVISOR
     : RGB_GAMMA_MULTIPLIER * Math.pow(value, 1.0 / RGB_GAMMA_POWER) - RGB_GAMMA_OFFSET;
 }
@@ -35,20 +38,13 @@ export function convertImageDataToGrayscale(imageData: ImageData): ImageData {
   const { width, height, data } = imageData;
   const grayscaleData = new Uint8ClampedArray(data.length);
   
-  // ITU-R BT.709 luminance weights for perceptually accurate grayscale conversion
-  const LUMINANCE_WEIGHTS = {
-    red: 0.2126,
-    green: 0.7152,
-    blue: 0.0722
-  } as const;
-  
   for (let i = 0; i < data.length; i += 4) {
     const alpha = data[i + 3];
     
     // Convert sRGB to linear space for physically correct luminance calculation
-    const rSrgb = data[i] / 255.0;
-    const gSrgb = data[i + 1] / 255.0;
-    const bSrgb = data[i + 2] / 255.0;
+    const rSrgb = data[i] * RGB_COLOR_CONSTANTS.BYTE_TO_NORMALIZED;
+    const gSrgb = data[i + 1] * RGB_COLOR_CONSTANTS.BYTE_TO_NORMALIZED;
+    const bSrgb = data[i + 2] * RGB_COLOR_CONSTANTS.BYTE_TO_NORMALIZED;
     
     const rLinear = srgbToLinear(rSrgb);
     const gLinear = srgbToLinear(gSrgb);
@@ -56,13 +52,13 @@ export function convertImageDataToGrayscale(imageData: ImageData): ImageData {
     
     // Calculate luminance in linear space using ITU-R BT.709 weights
     const linearLuminance = 
-      rLinear * LUMINANCE_WEIGHTS.red +
-      gLinear * LUMINANCE_WEIGHTS.green +
-      bLinear * LUMINANCE_WEIGHTS.blue;
+      rLinear * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.red +
+      gLinear * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.green +
+      bLinear * EXPOSURE_CONVERSION.LUMINANCE_WEIGHTS.blue;
     
     // Convert back to sRGB space and clamp to valid range
     const srgbLuminance = linearToSrgb(linearLuminance);
-    const luminance = Math.round(Math.max(0, Math.min(255, srgbLuminance * 255)));
+    const luminance = Math.round(Math.max(RGB_COLOR_CONSTANTS.MIN_COLOR_VALUE, Math.min(RGB_COLOR_CONSTANTS.MAX_COLOR_VALUE, srgbLuminance * RGB_COLOR_CONSTANTS.NORMALIZED_TO_BYTE)));
     
     // Set RGB channels to the same grayscale value
     grayscaleData[i] = luminance;     // Red

@@ -29,7 +29,7 @@ export class SeededRandomNumberGenerator implements RandomNumberGenerator {
   private seed: number;
   private current: number;
 
-  constructor(seed: number = 12345) {
+  constructor(seed: number = DEFAULT_SEED) {
     this.seed = seed;
     this.current = seed;
   }
@@ -47,21 +47,27 @@ export class SeededRandomNumberGenerator implements RandomNumberGenerator {
 }
 
 // File-level constants shared across multiple methods
-const ISO_TO_GRAIN_SIZE_DIVISOR = 200;
-const MIN_GRAIN_SIZE = 0.5;
-// Physical grain density constants - higher ISO = fewer grains (inverse relationship)
-const BASE_DENSITY_FACTOR = 0.6; // Maximum density factor at very low ISO
-const ISO_NORMALIZATION_CONSTANT = 400; // Controls how quickly density decreases with ISO
-const MAX_DENSITY_FACTOR = 0.8; // Allow high coverage but respect geometric constraints
-const GRAIN_DISTANCE_MULTIPLIER = 1.2; // Increased from 0.3 to give more reasonable distances
-const MIN_GRAIN_DISTANCE = 0.5; // Reduced from 1 to allow smaller grains when appropriate
+// Core grain size and density calculations
+const ISO_TO_GRAIN_SIZE_DIVISOR = 200;      // Controls grain size based on ISO
+const MIN_GRAIN_SIZE = 0.5;                 // Minimum grain size in pixels
 
-// Grain size variation constants for single layer with varying sizes
-const GRAIN_SIZE_VARIATION_RANGE = 2.0; // Size can vary from 0.5x to 2.5x base size
+// Grain density factors
+const BASE_DENSITY_FACTOR = 0.6;            // Maximum density factor at very low ISO
+const ISO_NORMALIZATION_CONSTANT = 400;     // Controls how quickly density decreases with ISO
+const MAX_DENSITY_FACTOR = 0.8;             // Allow high coverage but respect geometric constraints
+const GEOMETRIC_PACKING_EFFICIENCY = 0.85;  // Use 85% of max for realistic packing
+
+// Grain spacing
+const GRAIN_DISTANCE_MULTIPLIER = 1.2;      // Multiplier for grain minimum distance
+const MIN_GRAIN_DISTANCE = 0.5;             // Minimum distance between grain centers
+
+// Grain size variation (for realistic grain distribution)
+const GRAIN_SIZE_VARIATION_RANGE = 2.0;     // Size can vary from 0.5x to 2.5x base size
+const GRAIN_SIZE_DISTRIBUTION_BIAS = 0.6;   // Bias towards smaller grains (>0.5 = more small grains)
+
+// Random number generation seeds
+const DEFAULT_SEED = 12345;
 const GRAIN_SIZE_VARIATION_SEED_MULTIPLIER = 456.789;
-const GRAIN_SIZE_DISTRIBUTION_BIAS = 0.6; // Bias towards smaller grains (0.5 = uniform, >0.5 = more small grains)
-
-// Grain variation seed multipliers (shared across methods)
 const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
 const DEVELOPMENT_THRESHOLD_SEED_MULTIPLIER = 234.567;
 
@@ -428,7 +434,7 @@ export class GrainGenerator {
     const desiredGrainCount = Math.floor(imageArea * desiredDensityFactor);
     
     // Respect geometric constraints - don't try to place more grains than can fit
-    const geometricLimit = Math.floor(maxPossibleGrains * 0.85); // Use 85% of max for realistic packing
+    const geometricLimit = Math.floor(maxPossibleGrains * GEOMETRIC_PACKING_EFFICIENCY); // Use 85% of max for realistic packing
     const grainDensity = Math.min(desiredGrainCount, geometricLimit);
     const actualDensityFactor = grainDensity / imageArea;
 

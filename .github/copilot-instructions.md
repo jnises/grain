@@ -34,10 +34,11 @@
 
 ### Constants and Configuration
 - Avoid magic numbers for non-obvious values. Use constants to improve maintainability:
-  - Global constants: define in `src/constants.ts`
-  - Module-specific constants: define at the top of the file
-  - Function-specific constants: define at the start of the function
   - Single-use constants: define just before the line where used
+  - Function-specific constants: define at the start of the function
+  - Module-specific constants: define at the top of the file
+  - Global constants: define in `src/constants.ts`
+  Prefer single-use constants to keep the information as close to the place where it is used as possible.
 
 ### Static Methods and Free Functions
 - Prefer static methods for utility functions that don't depend on instance state
