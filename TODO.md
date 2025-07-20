@@ -51,17 +51,30 @@
       - [x] Balance grain count reduction vs grain size increase for net coverage gain  
       - [x] **RESULT**: Coverage increases until geometric constraints limit packing (~ISO 400)
       - [x] **NOTE**: Full coverage scaling requires 3D grain stacking (future TODO item)
-    - [ ] **Phase 3: Tune constants and validate**
-      - [ ] Fine-tune `BASE_DENSITY_FACTOR`, `ISO_NORMALIZATION_CONSTANT` for realistic grain counts
-      - [ ] Adjust `MAX_DENSITY_FACTOR` and related constraints if needed
-      - [ ] Verify geometric constraints work properly (large grains can't pack too densely)
-      - [ ] Test edge cases: very high ISO (3200+) and very low ISO (25-50)
-    - [ ] **Phase 4: Integration testing**
-      - [ ] Ensure all physical behavior tests pass
-      - [ ] Verify grain size scaling still works correctly
-      - [ ] Check that visual output looks reasonable across ISO range
+    - [x] **Phase 3: Tune constants and validate** ✅
+      - [x] Fine-tune `BASE_DENSITY_FACTOR`, `ISO_NORMALIZATION_CONSTANT` for realistic grain counts
+      - [x] Adjust `MAX_DENSITY_FACTOR` and related constraints if needed
+      - [x] Verify geometric constraints work properly (large grains can't pack too densely)
+      - [x] Test edge cases: very high ISO (3200+) and very low ISO (25-50)
+    - [x] **Phase 4: Integration testing** ✅
+      - [x] Ensure all physical behavior tests pass
+      - [x] Verify grain size scaling still works correctly
+      - [x] Check that visual output looks reasonable across ISO range
   - [ ] Update existing grain behavior tests to reflect new physically accurate expectations
   - [ ] Update any dependent code that assumes the old grain density behavior
+- [ ] If I try to add iso 50 grain to a 400x300 image I get this error:
+  ```
+  grain-worker.ts:80 Worker error: Maximum call stack size exceeded RangeError: Maximum call stack size exceeded
+  at GrainGenerator.createGrainGrid (http://localhost:5173/src/grain-generator.ts?t=1753016956836:389:31)
+  at WorkerGrainProcessor.createGrainGrid (http://localhost:5173/src/grain-processor.ts?t=1753016956836:107:32)
+  at WorkerGrainProcessor.processImage (http://localhost:5173/src/grain-processor.ts?t=1753016956836:133:28)
+  at self.onmessage (http://localhost:5173/src/grain-worker.ts?worker_file&type=module:40:36)
+
+grain-worker-manager.ts:158 Worker processing error: Maximum call stack size exceeded
+App.tsx:266 Grain processing failed: Maximum call stack size exceeded
+﻿
+  ```
+  Since the grains are quite dense, would it make more sense to use an array rather than a map to store the grid?
 - [ ] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
 - [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"

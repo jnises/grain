@@ -540,6 +540,7 @@ export class GrainGenerator {
     };
   }
 
+  // TODO: the grids are likely to be quite dense. does it make more sense to use a dense array rather than a sparse map?
   // Create spatial grid for grain acceleration
   public createGrainGrid(grains: GrainPoint[]): Map<string, GrainPoint[]> {
     // Validate input
@@ -573,6 +574,7 @@ export class GrainGenerator {
       const minGridY = Math.floor((grain.y - influenceRadius) / gridSize);
       const maxGridY = Math.floor((grain.y + influenceRadius) / gridSize);
       
+      // TODO: since we add the grain to multiple cells here, do we need the 3x3 neighboring cell check later when we do the lookup?
       // Add grain to all grid cells it can influence
       for (let gridX = minGridX; gridX <= maxGridX; gridX++) {
         for (let gridY = minGridY; gridY <= maxGridY; gridY++) {
