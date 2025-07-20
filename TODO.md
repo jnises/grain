@@ -53,7 +53,7 @@
     - **Lower ISO**: Smaller crystals, less light-sensitive individually, but MORE densely packed
     - **Total coverage**: Higher ISO films have greater effective light-capturing area despite fewer grains
     - **Current issue**: Our implementation has the opposite behavior (more grains at higher ISO)
-  - [ ] Update ALGORITHM_DESIGN.md with this physically accurate grain behavior
+  - [x] Update ALGORITHM_DESIGN.md with this physically accurate grain behavior
   - [ ] Write comprehensive tests that validate the physically correct grain behavior:
     - [ ] Test that grain count DECREASES as ISO increases
     - [ ] Test that average grain size INCREASES as ISO increases  

@@ -81,3 +81,27 @@ The algorithm treats grains as the fundamental processing units:
 - Final image effects emerge from the collective behavior of many grains
 - This approach naturally handles grain overlap, clustering, and spatial variation
 
+### 4. Physically Accurate Grain Behavior
+Grain generation must follow real-world film physics:
+
+**ISO and Grain Relationship:**
+- **Higher ISO films**: Use larger silver halide crystals that are more light-sensitive
+  - **Fewer grains per unit area** (less dense grain distribution)
+  - **Larger individual grain size** (bigger crystals)
+  - **Greater total coverage area** (more effective light capture despite fewer grains)
+- **Lower ISO films**: Use smaller, more numerous crystals
+  - **More grains per unit area** (denser grain distribution)
+  - **Smaller individual grain size** (finer crystals)
+  - **Less total coverage area** (less effective light capture despite more grains)
+
+**Physical Rationale:**
+- High ISO films trade grain structure for light sensitivity by using larger crystals
+- Low ISO films prioritize fine detail by using smaller, more densely packed crystals
+- The total light-capturing area increases with ISO because larger crystals capture more photons even though there are fewer of them
+
+**Implementation Requirements:**
+- Grain count must DECREASE as ISO increases
+- Average grain size must INCREASE as ISO increases  
+- Total grain coverage area must INCREASE as ISO increases
+- Grain size distribution should reflect real film characteristics
+
