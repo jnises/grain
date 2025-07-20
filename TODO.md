@@ -1,7 +1,7 @@
 - [x] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
 - [x] Look through the code for issues such as calculating the max value of an array using `Math.max(...` and optimize them.
 - [ ] Fix tests
-- [ ] Add eslint checks to disallow things like `Math.max(...` (using spreading operator with to calculate the max value of an array).
+- [x] Add eslint checks to disallow things like `Math.max(...` (using spreading operator with to calculate the max value of an array).
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
 - [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.

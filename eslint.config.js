@@ -40,6 +40,14 @@ export default [
     },
     rules: {
       ...tseslint.configs.recommended.rules,
+      // Custom rule to prevent inefficient array spreading with Math.max/min
+      "no-restricted-syntax": [
+        "error",
+        {
+          "selector": "CallExpression[callee.object.name='Math'][callee.property.name=/^(max|min)$/] > SpreadElement",
+          "message": "Avoid using Math.max(...array) or Math.min(...array) as it can cause stack overflow with large arrays. Use a more efficient approach like a for loop or reduce()."
+        }
+      ],
     },
   },
 ];
