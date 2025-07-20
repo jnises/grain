@@ -11,7 +11,7 @@ import {
   assertPositiveNumber, 
   assertArray, 
   assertNonNegativeNumber,
-  assertInRange,
+  devAssertInRange,
   assertFiniteNumber,
   assert,
   devAssert
@@ -387,9 +387,9 @@ export class GrainGenerator {
         const x = Math.max(0, Math.min(this.width - 1, baseX + offsetX));
         const y = Math.max(0, Math.min(this.height - 1, baseY + offsetY));
         
-        // Validate final coordinates with custom assertion
-        assertInRange(x, 0, this.width - 1, 'fallback grain x coordinate');
-        assertInRange(y, 0, this.height - 1, 'fallback grain y coordinate');
+        // Validate final coordinates with custom assertion - using devAssertInRange for performance
+        devAssertInRange(x, 0, this.width - 1, 'fallback grain x coordinate');
+        devAssertInRange(y, 0, this.height - 1, 'fallback grain y coordinate');
 
         const newPoint = { x, y };
         

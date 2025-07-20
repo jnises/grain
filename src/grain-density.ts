@@ -8,7 +8,7 @@
 import { FILM_CHARACTERISTICS } from './constants';
 import { calculateGrainFalloff } from './grain-math';
 import type { GrainSettings, GrainPoint } from './types';
-import { assertInRange, assert, devAssert, assertArray } from './utils';
+import { assert, devAssert, assertArray, devAssertInRange } from './utils';
 
 /**
  * Handles grain density calculations and film physics simulation
@@ -77,8 +77,8 @@ export class GrainDensityCalculator {
    * Implements proper photographic response with toe and shoulder compression
    */
   filmCurve(input: number): number {
-    // Validate input
-    assertInRange(input, 0, 1, 'input');
+    // Validate input - using devAssertInRange for performance in hot code path
+    devAssertInRange(input, 0, 1, 'input');
     
     // Get film-specific curve parameters
     const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];

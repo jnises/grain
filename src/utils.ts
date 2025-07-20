@@ -120,6 +120,31 @@ export function assertInRange(
 }
 
 /**
+ * Development-only assertion that a value is within a specific range.
+ * Use this for range checks in hot code paths that should not impact production performance.
+ */
+export const devAssertInRange: (
+  value: number,
+  min: number,
+  max: number,
+  name: string
+) => asserts value is number = (() => {
+  // Check both Vite's import.meta.env.DEV and Node.js NODE_ENV
+  const isDev = (typeof import.meta !== 'undefined' && import.meta.env?.DEV) || 
+                (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production');
+  
+  return isDev 
+    ? (value: number, min: number, max: number, name: string): asserts value is number => {
+        if (!(value >= min && value <= max)) {
+          console.error('Dev assertion failed:', `${name} must be between ${min} and ${max}`);
+          console.error('Context:', { [name]: value, min, max, inRange: value >= min && value <= max });
+          throw new Error(`Dev assertion failed: ${name} must be between ${min} and ${max}`);
+        }
+      }
+    : (() => {}) as (value: number, min: number, max: number, name: string) => asserts value is number;
+})();
+
+/**
  * Assert that a value is an array
  */
 export function assertArray<T>(

@@ -3,7 +3,7 @@
 
 import { SEEDED_RANDOM_MULTIPLIER, EXPOSURE_CONVERSION } from './constants';
 import { srgbToLinear, linearToSrgb } from './color-space';
-import { assertInRange, assert, devAssert, assertFiniteNumber } from './utils';
+import { assert, devAssert, assertFiniteNumber, devAssertInRange } from './utils';
 
 /**
  * Generate pseudorandom number with seed
@@ -261,8 +261,8 @@ export function rgbToExposureFloat(r: number, g: number, b: number): number {
  * @returns Normalized exposure value [0, 1]
  */
 export function grayscaleToExposure(luminance: number): number {
-  // Validate input
-  assertInRange(luminance, 0, 1, 'luminance');
+  // Validate input - using devAssertInRange for performance in hot code path
+  devAssertInRange(luminance, 0, 1, 'luminance');
 
   // Add small offset to prevent log(0) in pure black areas
   const safeLuminance = luminance + EXPOSURE_CONVERSION.LUMINANCE_OFFSET;

@@ -1,14 +1,14 @@
 // Color space conversion utilities
 // Pure functions for converting between different color spaces
 
-import { assertInRange, assertImageData } from './utils';
+import { assertImageData, devAssertInRange } from './utils';
 
 /**
  * Convert sRGB gamma-encoded value to linear RGB
  * Pure function for gamma correction
  */
 export function srgbToLinear(value: number): number {
-  assertInRange(value, 0, 1, 'value');
+  devAssertInRange(value, 0, 1, 'value');
   return value <= RGB_GAMMA_THRESHOLD 
     ? value / RGB_GAMMA_LINEAR_DIVISOR
     : Math.pow((value + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER, RGB_GAMMA_POWER);
@@ -19,7 +19,7 @@ export function srgbToLinear(value: number): number {
  * Pure function for gamma encoding
  */
 export function linearToSrgb(value: number): number {
-  assertInRange(value, 0, 1, 'value');
+  devAssertInRange(value, 0, 1, 'value');
   return value <= 0.0031308 
     ? value * RGB_GAMMA_LINEAR_DIVISOR
     : RGB_GAMMA_MULTIPLIER * Math.pow(value, 1.0 / RGB_GAMMA_POWER) - RGB_GAMMA_OFFSET;
