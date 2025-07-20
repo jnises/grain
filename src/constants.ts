@@ -24,7 +24,7 @@ export const FILM_CHARACTERISTICS = {
     },
     // Development threshold characteristics for grain activation
     developmentThreshold: {
-      baseSensitivity: 0.75,  // Base development threshold for Kodak (more sensitive)
+      baseSensitivity: 0.35,  // Much lower base threshold - was 0.75 (too high!)
       sizeModifier: 0.12,     // Moderate grain size effect
       exposureWeight: 0.35,   // Moderate exposure dependency
       randomVariation: 0.20   // Lower random variation for consistency
@@ -44,7 +44,7 @@ export const FILM_CHARACTERISTICS = {
     },
     // Development threshold characteristics for grain activation
     developmentThreshold: {
-      baseSensitivity: 0.80,  // Base development threshold for Fuji (medium sensitivity)
+      baseSensitivity: 0.40,  // Medium sensitivity - was 0.80 (too high!)
       sizeModifier: 0.10,     // Lower grain size effect (smoother response)
       exposureWeight: 0.30,   // Lower exposure dependency for gentler response
       randomVariation: 0.18   // Lower variation for smoother grain

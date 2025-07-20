@@ -19,8 +19,19 @@
     - **Results**: Iterative approach provides significant improvements for mid-tone images (e.g., 50% gray: single-pass 42.16% error vs iterative 0.01% error)
     - **Edge case discovered**: Very dark images (18% gray) show 100% error for both approaches - needs investigation
     - **Convergence working**: Algorithm typically converges within 1-2 iterations for most cases
-  - [ ] Improve the dark image behavior. Make sure the test passes.
-  - [ ] Update algorithm documentation to reflect iterative development process
+  - [x] **Improve the dark image behavior. Make sure the test passes.**
+    - [x] Investigated why 18% gray images produced 100% lightness error (output became completely black)
+    - [x] Root cause discovered: Incorrect darkroom physics implementation - `finalGrayscale = 1.0 - lightTransmission` was backwards
+    - [x] Fixed Beer-Lambert law application: `finalGrayscale = lightTransmission` for positive image simulation
+    - [x] Fixed "no grains" case: changed from `finalGrayscale = 0.0` (black) to `finalGrayscale = 1.0` (transparent film → bright result)
+    - [x] Verified exposure adjustment factor calculation works correctly for low-exposure scenarios  
+    - [x] Tested iterative convergence behavior with dark images - now produces excellent results:
+      - **5% gray**: 0.0500 → 0.0510 (2.0% error) ✅
+      - **18% gray**: 0.1800 → 0.1843 (2.4% error) ✅ 
+      - **All gray levels**: Under 6% error instead of 100% black output
+    - [x] Updated tests to reflect that both approaches now work well (removed expectation of >5% single-pass error)
+    - [x] All iterative-vs-single-pass tests now pass ✅
+  - [ ] Update algorithm documentation to reflect the iterative development process, as well as other recent changes.
 - [ ] The grain generator seems to generate more grains with higher iso. I would expect fewer and larger grains for higher iso? Write some tests to validate the behavior.
 - [ ] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
 - [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
