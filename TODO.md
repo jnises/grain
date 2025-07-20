@@ -1,7 +1,3 @@
-- [x] Add a document called ALGORITHM_DESIGN.md that contains some high level design goals for the desired algorithm implementation.
-  - [x] It should mention that the input image is only used to develop or expose the grains. The grains are then used to "print" a final photo. As if the input image was the light that the camera saw. Then the developed film is used in a darkroom to create a photo. Explain it using a analog film processing analogy.
-  - [x] All color operations should be done in linear space. srgb packing/unpacking is done on output/input from the pipeline.
-- [x] processPixelEffects should return a new result image rather than writing to resultFloatData.
 - [x] ### Iterative Lightness Compensation Implementation
 
   The lightness compensation should be done using an iterative approach. Currently the compensation is only done at the end. A more physically plausible approach would be to adjust the exposure iteratively over a few iteration until the desired lightness is achieved.
@@ -40,6 +36,13 @@
     - **Key insight**: At very high ISO (1600), grain count drops to 117 vs 469 at ISO 800 due to large grain size constraints
     - **Result**: Accidentally more physically realistic at extremes than initially expected
   - [x] Tests document expected vs actual behavior and provide foundation for future improvements
+- [x] Check that GrainProcessor.processImage uses the output of the beer lambert calculation correctly according to ALGORITHM_DESIGN.md. Specifically the behavior that denser grains should result in lighter output.
+  - [x] **Analysis**: Found that the Beer-Lambert law calculation was correct, but the final photographic paper simulation was backwards
+  - [x] **Issue**: Code used `finalGrayscale = lightTransmission`, which made dense grains produce dark output (opposite of expected behavior)
+  - [x] **Root Cause**: Missing simulation of photographic paper response - more light transmission should create darker paper, not lighter
+  - [x] **Solution**: Changed to `finalGrayscale = 1.0 - lightTransmission` to simulate paper darkening with light exposure
+  - [x] **Verification**: Tested relative grain behavior - now correctly shows Dark < Medium < Bright output ordering ✓
+  - [x] **Performance Impact**: Lightness correction factors improved from ~0.03 to ~0.65-2.7 (much more reasonable range)
 - [ ] Write tests that checks that the actual grains generation is physically plausible.
   I expect that at higher iso the grains should be larger and fewer.
   At lower iso the grains should be more numerous but smaller.

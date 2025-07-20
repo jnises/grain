@@ -548,17 +548,19 @@ export class GrainProcessor {
           // Normalize by total weight for grayscale processing
           const normalizedDensity = totalGrainDensity / totalWeight;
           
-          // TODO: this is wrong right? ALGORITHM_DESIGN.md describes the correct behavior.
-          // Use Beer-Lambert law to calculate light transmission through developed grains
-          // Dense grains (heavily exposed) block more light
+          // Apply Beer-Lambert law to calculate light transmission through developed grains
+          // Dense grains (heavily exposed) block more light during printing
           const lightTransmission = applyBeerLambertCompositingGrayscale(normalizedDensity);
           
-          // For positive image simulation: more grain density = darker areas
-          // Light transmission represents how much original light gets through
-          finalGrayscale = lightTransmission;
+          // Simulate photographic paper response: more light exposure = darker paper
+          // Dense grains → low transmission → less light hits paper → lighter final result
+          // Transparent grains → high transmission → more light hits paper → darker final result
+          // This matches ALGORITHM_DESIGN.md: "Dense grains create lighter areas in the print"
+          finalGrayscale = 1.0 - lightTransmission;
         } else {
-          // If no grains affect this pixel, film is transparent → full light transmission → bright result
-          finalGrayscale = 1.0; // Full transmission = bright pixel (was incorrectly 0.0)
+          // If no grains affect this pixel, film is completely transparent
+          // Maximum light transmission → maximum light hits paper → darkest result
+          finalGrayscale = 0.0; // Full transmission through clear film = maximum paper exposure = dark result
         }
         
         // Set the final pixel value (duplicate grayscale to RGB channels)
