@@ -15,7 +15,11 @@
   - [x] Add configuration for iteration parameters (max iterations, convergence threshold)
   - [x] Update performance tracking to account for multiple iterations
   - [x] Update progress reporting to account for multiple iterations
-  - [ ] Test iterative vs single-pass approaches to ensure quality improvements
+  - [x] Test iterative vs single-pass approaches to ensure quality improvements
+    - **Results**: Iterative approach provides significant improvements for mid-tone images (e.g., 50% gray: single-pass 42.16% error vs iterative 0.01% error)
+    - **Edge case discovered**: Very dark images (18% gray) show 100% error for both approaches - needs investigation
+    - **Convergence working**: Algorithm typically converges within 1-2 iterations for most cases
+  - [ ] Improve the dark image behavior. Make sure the test passes.
   - [ ] Update algorithm documentation to reflect iterative development process
 - [ ] The grain generator seems to generate more grains with higher iso. I would expect fewer and larger grains for higher iso? Write some tests to validate the behavior.
 - [ ] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
