@@ -249,6 +249,10 @@ export class GrainProcessor {
     let actualIterations = 0;
     
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+      // Update progress for each iteration within the development phase (27% to 30%)
+      const iterationProgress = 27 + ((iteration / MAX_ITERATIONS) * 3);
+      this.reportProgress(iterationProgress, `Film development iteration ${iteration + 1}/${MAX_ITERATIONS}...`);
+      
       console.log(`Development iteration ${iteration + 1}/${MAX_ITERATIONS}, exposure adjustment: ${exposureAdjustmentFactor.toFixed(4)}`);
       
       // Track per-iteration performance
@@ -313,6 +317,9 @@ export class GrainProcessor {
     this.performanceTracker.endBenchmark('Iterative Development');
     console.log(`Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'} with exposure adjustment factor: ${exposureAdjustmentFactor.toFixed(4)}`);
 
+    // Report completion of iterative development phase
+    this.reportProgress(30, `Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'}`);
+
     // ========================================================================
     // DARKROOM PRINTING PHASE - Printing Phase
     // Apply the developed film negative to create the final photograph.
@@ -322,9 +329,10 @@ export class GrainProcessor {
     
     // Step 4: Process each pixel (Phase 2 - position-dependent grain effects)
     // This simulates light passing through the developed film to create the final image
-    this.reportProgress(30, 'Processing pixels...');
+    this.reportProgress(32, 'Processing pixels...');
     this.performanceTracker.startBenchmark('Pixel Processing', this.width * this.height);
     
+    // TODO: could we reuse the results from the processPixelEffects in the lightness iteration above?
     // Process pixel effects through extracted pure function
     const { resultFloatData: processedFloatData, grainEffectCount, processedPixels } = this.processPixelEffects(
       grainStructure,
