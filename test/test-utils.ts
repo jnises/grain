@@ -2,7 +2,7 @@
  * Shared test utilities for the grain processing test suite
  */
 
-import { GrainProcessor } from '../src/grain-worker';
+import { GrainProcessor } from '../src/grain-processor';
 import { SeededRandomNumberGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
 

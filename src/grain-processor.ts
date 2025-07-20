@@ -181,20 +181,20 @@ export class GrainProcessor {
     this.performanceTracker.startBenchmark('Total Processing', totalImagePixels);
     
     // Step 1: Generate grain structure (simulates film emulsion grain distribution)
-    this.reportProgress(10, 'Generating grain structure...');
+    this.reportProgress(5, 'Generating grain structure...');
     this.performanceTracker.startBenchmark('Grain Generation');
     const grainStructure = this.generateGrainStructure();
     this.performanceTracker.endBenchmark('Grain Generation');
     
     // Step 2: Create spatial acceleration grid for efficient grain lookup
-    this.reportProgress(20, 'Creating spatial grid...');
+    this.reportProgress(6, 'Creating spatial grid...');
     this.performanceTracker.startBenchmark('Spatial Grid Creation');
     const grainGrid = this.createGrainGrid(grainStructure);
     this.performanceTracker.endBenchmark('Spatial Grid Creation');
     
     // Step 3: Calculate grain exposures using kernel-based sampling
     // This samples how much light each grain received from the input image
-    this.reportProgress(25, 'Calculating kernel-based grain exposures...');
+    this.reportProgress(7, 'Calculating kernel-based grain exposures...');
     this.performanceTracker.startBenchmark('Kernel Exposure Calculation');
     const grainExposureMap = this.calculateGrainExposures(grainStructure, floatData);
     this.performanceTracker.endBenchmark('Kernel Exposure Calculation');
@@ -211,7 +211,7 @@ export class GrainProcessor {
     const CONVERGENCE_THRESHOLD = this.settings.convergenceThreshold ?? DEFAULT_ITERATION_PARAMETERS.CONVERGENCE_THRESHOLD;
     const TARGET_LIGHTNESS = DEFAULT_ITERATION_PARAMETERS.TARGET_LIGHTNESS;
     
-    this.reportProgress(27, 'Starting iterative film development...');
+    this.reportProgress(10, 'Starting iterative film development...');
     this.performanceTracker.startBenchmark('Iterative Development');
     
     // Initialize exposure adjustment factor
@@ -220,8 +220,8 @@ export class GrainProcessor {
     let actualIterations = 0;
     
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
-      // Update progress for each iteration within the development phase (27% to 30%)
-      const iterationProgress = 27 + ((iteration / MAX_ITERATIONS) * 3);
+      // Update progress for each iteration within the development phase (10% to 80%)
+      const iterationProgress = 10 + ((iteration / MAX_ITERATIONS) * 70);
       this.reportProgress(iterationProgress, `Film development iteration ${iteration + 1}/${MAX_ITERATIONS}...`);
       
       console.log(`Development iteration ${iteration + 1}/${MAX_ITERATIONS}, exposure adjustment: ${exposureAdjustmentFactor.toFixed(4)}`);
@@ -289,7 +289,7 @@ export class GrainProcessor {
     console.log(`Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'} with exposure adjustment factor: ${exposureAdjustmentFactor.toFixed(4)}`);
 
     // Report completion of iterative development phase
-    this.reportProgress(30, `Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'}`);
+    this.reportProgress(80, `Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'}`);
 
     // ========================================================================
     // DARKROOM PRINTING PHASE - Printing Phase
@@ -300,7 +300,7 @@ export class GrainProcessor {
     
     // Step 4: Process each pixel (Phase 2 - position-dependent grain effects)
     // This simulates light passing through the developed film to create the final image
-    this.reportProgress(32, 'Processing pixels...');
+    this.reportProgress(85, 'Processing pixels...');
     this.performanceTracker.startBenchmark('Pixel Processing', this.width * this.height);
     
     // TODO: could we reuse the results from the processPixelEffects in the lightness iteration above?
@@ -373,7 +373,7 @@ export class GrainProcessor {
     
     // Debug: Draw grain center points if requested
     if (this.settings.debugGrainCenters) {
-      this.reportProgress(95, 'Drawing debug grain centers...');
+      this.reportProgress(98, 'Drawing debug grain centers...');
       console.log('Debug mode: Drawing grain center points');
       this.drawGrainCenters(result, grainStructure);
     }
