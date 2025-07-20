@@ -9,6 +9,9 @@
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
 - [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.
+- [ ] Implement sampling estimation for the iterative lightness compensation in processImage.
+  - [ ] Share code with `processPixelEffects` for the estimation
+  - [ ] Profile to make sure it improves performance
 - [ ] Enable each test below one by one. Check if it passes. If not, determine if the code or the test is wrong (probably the test). If the test is wrong, determine if it is worth it to update the test or better to just remove it.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
   - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"  
