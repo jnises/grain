@@ -1,34 +1,3 @@
-- [x] ### Iterative Lightness Compensation Implementation
-
-  The lightness compensation should be done using an iterative approach. Currently the compensation is only done at the end. A more physically plausible approach would be to adjust the exposure iteratively over a few iteration until the desired lightness is achieved.
-
-  **Progress:**
-  - [x] Extract film development phase into reusable function
-  - [x] Move lightness factor calculation after each iteration
-  - [x] Remove code duplication between estimation and main pipeline 
-  - [x] Fix exposure adjustment bounds checking - uses logarithmic scaling with dampening and strict clamping to [0,1]
-  - [x] Implement convergence logic that iterates the development phase until target lightness is achieved (with max iteration limit)
-  - [x] Add configuration for iteration parameters (max iterations, convergence threshold)
-  - [x] Update performance tracking to account for multiple iterations
-  - [x] Update progress reporting to account for multiple iterations
-  - [x] Test iterative vs single-pass approaches to ensure quality improvements
-    - **Results**: Iterative approach provides significant improvements for mid-tone images (e.g., 50% gray: single-pass 42.16% error vs iterative 0.01% error)
-    - **Edge case discovered**: Very dark images (18% gray) show 100% error for both approaches - needs investigation
-    - **Convergence working**: Algorithm typically converges within 1-2 iterations for most cases
-  - [x] **Improve the dark image behavior. Make sure the test passes.**
-    - [x] Investigated why 18% gray images produced 100% lightness error (output became completely black)
-    - [x] Root cause discovered: Incorrect darkroom physics implementation - `finalGrayscale = 1.0 - lightTransmission` was backwards
-    - [x] Fixed Beer-Lambert law application: `finalGrayscale = lightTransmission` for positive image simulation
-    - [x] Fixed "no grains" case: changed from `finalGrayscale = 0.0` (black) to `finalGrayscale = 1.0` (transparent film → bright result)
-    - [x] Verified exposure adjustment factor calculation works correctly for low-exposure scenarios  
-    - [x] Tested iterative convergence behavior with dark images - now produces excellent results:
-      - **5% gray**: 0.0500 → 0.0510 (2.0% error) ✅
-      - **18% gray**: 0.1800 → 0.1843 (2.4% error) ✅ 
-      - **All gray levels**: Under 6% error instead of 100% black output
-    - [x] Updated tests to reflect that both approaches now work well (removed expectation of >5% single-pass error)
-    - [x] All iterative-vs-single-pass tests now pass ✅
-    - [x] **Fixed iterative test assumption**: Updated test to handle cases where both approaches achieve excellent accuracy (under 0.02% error), allowing for measurement tolerance when both single-pass and iterative approaches perform extremely well
-  - [x] Update algorithm documentation to reflect the iterative development process, as well as other recent changes.
 - [x] **The grain generator seems to generate more grains with higher iso. I would expect fewer and larger grains for higher iso? Write some tests to validate the behavior.**
   - [x] Created comprehensive tests in `test/grain-iso-behavior.test.ts` to validate current grain generation behavior
   - [x] **Findings**: Current implementation has complex but reasonable behavior:
@@ -44,6 +13,14 @@
   - [x] **Solution**: Changed to `finalGrayscale = 1.0 - lightTransmission` to simulate paper darkening with light exposure
   - [x] **Verification**: Tested relative grain behavior - now correctly shows Dark < Medium < Bright output ordering ✓
   - [x] **Performance Impact**: Lightness correction factors improved from ~0.03 to ~0.65-2.7 (much more reasonable range)
+- [ ] Clean up ALGORITHM_DESIGN.md
+  The document is meant to explain the core pillars of the algorithm to the coding agent, to help it make the right choices when implementing.
+  Do not include uninteresting things.
+  Do not include redundant information.
+  Do not include things that wouldn't help the coding agent make choices.
+  Do not include information that the coding agent should already know.
+  The coding agent keeps misunderstanding the analog film processing simulation resulting in the grains being a "negative". It is important that this information is clear.
+  Also important is the usage of linear color in the pipeline.
 - [ ] Write tests that checks that the actual grains generation is physically plausible.
   I expect that at higher iso the grains should be larger and fewer.
   At lower iso the grains should be more numerous but smaller.
