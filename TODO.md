@@ -1,18 +1,9 @@
-- [x] Remove the grain intensity functionality. Iso should be enough to control the amount of grain applied.
-  **COMPLETED**: Successfully removed the redundant `grainIntensity` parameter from the grain processing pipeline. Changes included:
-  - Removed `grainIntensity` from the `GrainSettings` interface and all film presets
-  - Removed grain intensity validation from type guards and assertion functions
-  - Removed grain intensity UI controls (slider) from the web interface
-  - Removed the multiplication by `grainIntensity` in the grain density calculation, replacing it with a fixed multiplier
-  - Updated all test files to remove `grainIntensity` references and removed the dedicated grain intensity test section
-  - Verified that ISO already controls fundamental grain properties (size, density, count) through direct calculations
-  The grain simulation now relies solely on ISO settings for grain control, eliminating redundant parameters and simplifying the interface while maintaining all functionality. All tests pass and the build succeeds.
-- [x] What does `GrainSettings.upscaleFactor` do. Can it be removed? ✅ **COMPLETED**: Successfully removed - parameter was defined but never used in actual processing logic. Removed from GrainSettings interface, film presets, validation code, tests, and documentation.
 - [x] Add a document called ALGORITHM_DESIGN.md that contains some high level design goals for the desired algorithm implementation.
   - [x] It should mention that the input image is only used to develop or expose the grains. The grains are then used to "print" a final photo. As if the input image was the light that the camera saw. Then the developed film is used in a darkroom to create a photo. Explain it using a analog film processing analogy.
   - [x] All color operations should be done in linear space. srgb packing/unpacking is done on output/input from the pipeline.
 - [x] processPixelEffects should return a new result image rather than writing to resultFloatData.
-- [ ] It looks like only the large grains have an effect on the resulting image. Is the grain size behavior correct? Write some tests to make sure. Both when exposing using the incoming data and when printing to the output.
+- [ ] The lightness compensation should be done using an iterative approach. Currently the compensation is only done at the end. A more physically plausible approach would be to adjust the exposure iteratively over a few iteration until the desired lightness is achieved.
+  A good way to do it would be to repeatedly do the "film development phase" up until calculateLightnessFactor in GrainProcessor.processImage until the lightness factor matches the desired lightness.
 - [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
   - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"  
