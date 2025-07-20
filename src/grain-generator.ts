@@ -4,6 +4,7 @@
 import type { GrainSettings, Point2D, GrainPoint, RandomNumberGenerator } from './types';
 import { SEEDED_RANDOM_MULTIPLIER, FILM_CHARACTERISTICS } from './constants';
 import { seededRandom } from './grain-math';
+import { SpatialLookupGrid } from './spatial-lookup-grid';
 import { 
   assertPositiveInteger, 
   assertObject, 
@@ -422,7 +423,8 @@ export class GrainGenerator {
     const desiredGrainCount = Math.floor(imageArea * desiredDensityFactor);
     
     // Respect geometric constraints - don't try to place more grains than can fit
-    const grainDensity = Math.min(desiredGrainCount, Math.floor(maxPossibleGrains * 0.85)); // Use 85% of max for realistic packing
+    const geometricLimit = Math.floor(maxPossibleGrains * 0.85); // Use 85% of max for realistic packing
+    const grainDensity = Math.min(desiredGrainCount, geometricLimit);
     const actualDensityFactor = grainDensity / imageArea;
 
     return {
@@ -540,15 +542,10 @@ export class GrainGenerator {
     };
   }
 
-  // TODO: the grids are likely to be quite dense. does it make more sense to use a dense array rather than a sparse map?
-  // Create spatial grid for grain acceleration
-  public createGrainGrid(grains: GrainPoint[]): Map<string, GrainPoint[]> {
+  // Create spatial grid for grain acceleration using efficient 2D array structure
+  public createGrainGrid(grains: GrainPoint[]): SpatialLookupGrid {
     // Validate input
     assert(Array.isArray(grains), 'grains must be an array', { grains });
-    
-    if (grains.length === 0) {
-      return new Map<string, GrainPoint[]>();
-    }
     
     // Validate grain structure
     for (const grain of grains) {
@@ -563,31 +560,14 @@ export class GrainGenerator {
       assert(grain.sensitivity >= 0, 'grain.sensitivity must be non-negative', { grain });
     }
     
-    const maxGrainSize = Math.max(...grains.map(g => g.size));
-    const gridSize = Math.max(8, Math.floor(maxGrainSize * 2));
-    const grainGrid = new Map<string, GrainPoint[]>();
+    console.log(`Creating spatial lookup grid for ${grains.length} grains...`);
     
-    for (const grain of grains) {
-      const influenceRadius = grain.size * 2;
-      const minGridX = Math.floor((grain.x - influenceRadius) / gridSize);
-      const maxGridX = Math.floor((grain.x + influenceRadius) / gridSize);
-      const minGridY = Math.floor((grain.y - influenceRadius) / gridSize);
-      const maxGridY = Math.floor((grain.y + influenceRadius) / gridSize);
-      
-      // TODO: since we add the grain to multiple cells here, do we need the 3x3 neighboring cell check later when we do the lookup?
-      // Add grain to all grid cells it can influence
-      for (let gridX = minGridX; gridX <= maxGridX; gridX++) {
-        for (let gridY = minGridY; gridY <= maxGridY; gridY++) {
-          const key = `${gridX},${gridY}`;
-          if (!grainGrid.has(key)) {
-            grainGrid.set(key, []);
-          }
-          grainGrid.get(key)!.push(grain);
-        }
-      }
-    }
+    const grid = new SpatialLookupGrid(this.width, this.height, grains);
+    const stats = grid.getGridStats();
     
-    return grainGrid;
+    console.log(`Spatial grid created: ${stats.gridWidth}x${stats.gridHeight} (${stats.nonEmptyCells} non-empty cells, avg ${stats.averageGrainsPerCell.toFixed(1)} grains/cell)`);
+    
+    return grid;
   }
 
   // Generate grains with varying sizes using adaptive Poisson disk sampling

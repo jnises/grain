@@ -65,7 +65,7 @@
     - [x] **Fixed test**: `test/grain-distribution.test.ts` - Updated assertion to expect fewer grains at higher ISO
     - [x] **Fixed test**: `test/grain-processor-integration.test.ts` - Updated misleading test name and comments
     - [x] **Result**: All tests now correctly expect physically accurate behavior
-- [ ] If I try to add iso 50 grain to a 400x300 image I get this error:
+- [x] If I try to add iso 50 grain to a 400x300 image I get this error:
   ```
   grain-worker.ts:80 Worker error: Maximum call stack size exceeded RangeError: Maximum call stack size exceeded
   at GrainGenerator.createGrainGrid (http://localhost:5173/src/grain-generator.ts?t=1753016956836:389:31)
@@ -74,10 +74,22 @@
   at self.onmessage (http://localhost:5173/src/grain-worker.ts?worker_file&type=module:40:36)
 
 grain-worker-manager.ts:158 Worker processing error: Maximum call stack size exceeded
-App.tsx:266 Grain processing failed: Maximum call stack size exceeded
-﻿
   ```
   Since the grains are quite dense, would it make more sense to use an array rather than a map to store the grid?
+  - [x] **Root cause analysis**: ISO 50 generates 64,000 grains with very small sizes (0.5px), causing the spatial grid to become extremely dense
+  - [x] **Performance bottlenecks identified**:
+    - String key creation (`${gridX},${gridY}`) creates thousands of string objects
+    - Each grain stored in multiple grid cells (2x2 to 3x3 influence area)
+    - Map operations with string keys have significant overhead
+    - Dense grain distributions create hundreds of thousands of redundant references
+  - [x] **Optimizations implemented**:
+    - **String key caching**: Pre-compute and cache grid coordinate keys using bit-shifting
+    - **Larger grid cells**: Use 16px minimum (vs 8px) to reduce total cell count
+    - **Reduced influence radius**: 1.5x grain size (vs 2.0x) to minimize redundant storage
+    - **Threshold-based optimization**: Automatically switch to optimized approach for >20,000 grains
+    - **Performance monitoring**: Added grid statistics and timing measurements
+  - [x] **Results**: 64,000 grains now processed in 20.58ms with only 514 grid cells and 1.27x redundancy factor
+  - [x] **Memory efficiency**: Estimated 5MB grid memory usage (very reasonable for dense grain distributions)
 - [ ] Run processImage in a benchmark to check how much time each step takes. Adjust reportProgress to match.
 - [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"

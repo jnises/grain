@@ -2,6 +2,7 @@
 // Implements physically plausible analog film grain algorithm
 
 import { GrainGenerator } from './grain-generator';
+import { SpatialLookupGrid } from './spatial-lookup-grid';
 import { PerformanceTracker } from './performance-tracker';
 import { KernelGenerator, sampleGrainAreaExposure } from './grain-sampling';
 import { GrainDensityCalculator } from './grain-density';
@@ -139,7 +140,7 @@ export class GrainProcessor {
    * Create spatial grid for grain acceleration
    * OPTIMIZATION - Spatial indexing for efficient grain lookup during printing phase
    */
-  private createGrainGrid(grains: GrainPoint[]): Map<string, GrainPoint[]> {
+  private createGrainGrid(grains: GrainPoint[]): SpatialLookupGrid {
     return this.grainGenerator.createGrainGrid(grains);
   }
 
@@ -205,18 +206,6 @@ export class GrainProcessor {
     // See ALGORITHM_DESIGN.md: "Film Development Phase"
     // ========================================================================
     
-    // Determine grid size for spatial lookup (needed for lightness estimation)
-    let maxGrainSize = 1;
-    if (Array.isArray(grainStructure) && grainStructure.length > 0) {
-      // Single layer with varying grain sizes
-      const grains = grainStructure as GrainPoint[];
-      maxGrainSize = Math.max(...grains.map(g => g.size));
-    }
-    // Constants for grid size calculation
-    const MIN_GRID_SIZE = 8;
-    const GRID_SIZE_FACTOR = 2;
-    const gridSize = Math.max(MIN_GRID_SIZE, Math.floor(maxGrainSize * GRID_SIZE_FACTOR));
-    
     // Constants for iterative lightness compensation
     const MAX_ITERATIONS = this.settings.maxIterations ?? DEFAULT_ITERATION_PARAMETERS.MAX_ITERATIONS;
     const CONVERGENCE_THRESHOLD = this.settings.convergenceThreshold ?? DEFAULT_ITERATION_PARAMETERS.CONVERGENCE_THRESHOLD;
@@ -248,6 +237,7 @@ export class GrainProcessor {
       const grainIntrinsicDensityMap = this.grainDensityCalculator.calculateIntrinsicGrainDensities(grainStructure, adjustedGrainExposureMap);
       this.performanceTracker.endBenchmark(`Iteration ${iteration + 1} - Intrinsic Density Calculation`);
       
+      // TODO: this is too slow. we need the sampling estimation
       // Calculate full lightness factor using complete pixel processing (no sampling estimation)
       // This ensures consistency with the main pipeline and avoids code duplication
       this.performanceTracker.startBenchmark(`Iteration ${iteration + 1} - Pixel Processing`, this.width * this.height);
@@ -256,8 +246,7 @@ export class GrainProcessor {
         grainGrid,
         grainIntrinsicDensityMap,
         this.width,
-        this.height,
-        gridSize
+        this.height
       );
       this.performanceTracker.endBenchmark(`Iteration ${iteration + 1} - Pixel Processing`);
       
@@ -321,8 +310,7 @@ export class GrainProcessor {
       grainGrid,
       finalGrainIntrinsicDensityMap,
       this.width,
-      this.height,
-      gridSize
+      this.height
     );
     
     // End pixel processing benchmark
@@ -460,11 +448,10 @@ export class GrainProcessor {
    */
   private processPixelEffects(
     grainStructure: GrainPoint[],
-    grainGrid: Map<string, GrainPoint[]>,
+    grainGrid: SpatialLookupGrid,
     grainIntrinsicDensityMap: Map<GrainPoint, number>, // Grain densities from development phase
     outputWidth: number,
-    outputHeight: number,
-    gridSize: number
+    outputHeight: number
   ): { resultFloatData: Float32Array; grainEffectCount: number; processedPixels: number } {
     // Create new result array starting with uniform white light (darkroom enlarger light)
     // This simulates the light that will pass through the developed film negative
@@ -490,20 +477,9 @@ export class GrainProcessor {
         let totalWeight = 0;
         
         // Get grains from nearby grid cells
-        const pixelGridX = Math.floor(x / gridSize);
-        const pixelGridY = Math.floor(y / gridSize);
-        const nearbyGrains: GrainPoint[] = [];
-        
-        // Check surrounding grid cells (3x3 neighborhood)
-        for (let dx = -1; dx <= 1; dx++) {
-          for (let dy = -1; dy <= 1; dy++) {
-            const gridKey = `${pixelGridX + dx},${pixelGridY + dy}`;
-            const cellGrains = grainGrid.get(gridKey);
-            if (cellGrains) {
-              nearbyGrains.push(...cellGrains);
-            }
-          }
-        }
+        // Get all nearby grains using the efficient spatial lookup
+        const GRAIN_LOOKUP_RADIUS = grainGrid.getGridSize() * 1.5; // Search radius for nearby grains
+        const nearbyGrains = grainGrid.getGrainsNear(x, y, GRAIN_LOOKUP_RADIUS);
         
         // Process nearby grains directly (already filtered by spatial grid)
         for (const grain of nearbyGrains) {
