@@ -246,20 +246,25 @@ export class GrainProcessor {
     // Initialize exposure adjustment factor
     let exposureAdjustmentFactor = 1.0;
     let convergedGrainIntrinsicDensityMap: Map<GrainPoint, number> | null = null;
+    let actualIterations = 0;
     
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
       console.log(`Development iteration ${iteration + 1}/${MAX_ITERATIONS}, exposure adjustment: ${exposureAdjustmentFactor.toFixed(4)}`);
+      
+      // Track per-iteration performance
+      this.performanceTracker.startBenchmark(`Development Iteration ${iteration + 1}`);
       
       // Apply exposure adjustment to grain exposure map
       const adjustedGrainExposureMap = this.adjustGrainExposures(grainExposureMap, exposureAdjustmentFactor);
       
       // Execute film development phase with adjusted exposures
-      this.performanceTracker.startBenchmark('Intrinsic Density Calculation');
+      this.performanceTracker.startBenchmark(`Iteration ${iteration + 1} - Intrinsic Density Calculation`);
       const grainIntrinsicDensityMap = this.grainDensityCalculator.calculateIntrinsicGrainDensities(grainStructure, adjustedGrainExposureMap);
-      this.performanceTracker.endBenchmark('Intrinsic Density Calculation');
+      this.performanceTracker.endBenchmark(`Iteration ${iteration + 1} - Intrinsic Density Calculation`);
       
       // Calculate full lightness factor using complete pixel processing (no sampling estimation)
       // This ensures consistency with the main pipeline and avoids code duplication
+      this.performanceTracker.startBenchmark(`Iteration ${iteration + 1} - Pixel Processing`, this.width * this.height);
       const { resultFloatData: iterationProcessedFloatData } = this.processPixelEffects(
         grainStructure,
         grainGrid,
@@ -268,10 +273,15 @@ export class GrainProcessor {
         this.height,
         gridSize
       );
+      this.performanceTracker.endBenchmark(`Iteration ${iteration + 1} - Pixel Processing`);
       
       const estimatedLightnessFactor = calculateLightnessFactor(floatData, iterationProcessedFloatData);
       
       console.log(`Iteration ${iteration + 1}: estimated lightness factor = ${estimatedLightnessFactor.toFixed(4)}`);
+      
+      // End per-iteration benchmark
+      this.performanceTracker.endBenchmark(`Development Iteration ${iteration + 1}`);
+      actualIterations = iteration + 1;
       
       // Check convergence
       if (Math.abs(estimatedLightnessFactor - TARGET_LIGHTNESS) < CONVERGENCE_THRESHOLD) {
@@ -292,11 +302,16 @@ export class GrainProcessor {
       exposureAdjustmentFactor = Math.max(0.1, Math.min(10.0, exposureAdjustmentFactor));
     }
     
+    // If we completed max iterations without convergence, still count the final iteration
+    if (actualIterations === 0) {
+      actualIterations = MAX_ITERATIONS;
+    }
+    
     // Use the final converged grain densities
     const finalGrainIntrinsicDensityMap = convergedGrainIntrinsicDensityMap!;
     
     this.performanceTracker.endBenchmark('Iterative Development');
-    console.log(`Film development completed with exposure adjustment factor: ${exposureAdjustmentFactor.toFixed(4)}`);
+    console.log(`Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'} with exposure adjustment factor: ${exposureAdjustmentFactor.toFixed(4)}`);
 
     // ========================================================================
     // DARKROOM PRINTING PHASE - Printing Phase
@@ -356,8 +371,9 @@ export class GrainProcessor {
     console.log(`Grain effect coverage: ${(grainEffectCount / processedPixels * 100).toFixed(2)}%`);
     console.log(`Processing mode: Single Layer (Variable Sizes), Density Model`);
     
-    // Log performance benchmarks
+    // Log performance benchmarks including iteration breakdown
     this.performanceTracker.logSummary();
+    this.performanceTracker.logIterationSummary();
     
     // Calculate and log performance metrics for multiple layers optimization
     const totalBenchmark = this.performanceTracker.getBenchmark('Total Processing');

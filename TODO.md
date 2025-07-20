@@ -13,10 +13,11 @@
   - [x] Fix exposure adjustment bounds checking - uses logarithmic scaling with dampening and strict clamping to [0,1]
   - [x] Implement convergence logic that iterates the development phase until target lightness is achieved (with max iteration limit)
   - [x] Add configuration for iteration parameters (max iterations, convergence threshold)
-  - [ ] Update performance tracking to account for multiple iterations
+  - [x] Update performance tracking to account for multiple iterations
+  - [ ] Update progress reporting to account for multiple iterations
   - [ ] Test iterative vs single-pass approaches to ensure quality improvements
   - [ ] Update algorithm documentation to reflect iterative development process
-- [ ] The gran generator seems to generate more grains with higher iso. I would expect fewer and larger grains for higher iso? Write some tests to validate the behavior.
+- [ ] The grain generator seems to generate more grains with higher iso. I would expect fewer and larger grains for higher iso? Write some tests to validate the behavior.
 - [ ] Find all skipped tests and list them here as subtasks, so we can try enabling them again one by one.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
   - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"  

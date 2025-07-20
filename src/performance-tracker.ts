@@ -88,4 +88,56 @@ export class PerformanceTracker {
       }
     }
   }
+
+  /**
+   * Log a summary of iterative development benchmarks
+   * Groups iteration-specific benchmarks for easier analysis
+   */
+  logIterationSummary(): void {
+    const allBenchmarks = this.getAllBenchmarks();
+    const iterationBenchmarks = allBenchmarks.filter(b => b.operation.includes('Iteration'));
+    const totalDevelopment = allBenchmarks.find(b => b.operation === 'Iterative Development');
+    
+    if (iterationBenchmarks.length === 0) {
+      return;
+    }
+    
+    console.log('\n=== Iterative Development Performance ===');
+    
+    if (totalDevelopment?.duration) {
+      console.log(`Total Development Time: ${totalDevelopment.duration.toFixed(2)}ms`);
+    }
+    
+    // Group by iteration number
+    const iterationGroups = new Map<number, PerformanceBenchmark[]>();
+    
+    for (const benchmark of iterationBenchmarks) {
+      const match = benchmark.operation.match(/Iteration (\d+)/);
+      if (match) {
+        const iterNum = parseInt(match[1]);
+        if (!iterationGroups.has(iterNum)) {
+          iterationGroups.set(iterNum, []);
+        }
+        iterationGroups.get(iterNum)!.push(benchmark);
+      }
+    }
+    
+    // Log each iteration's breakdown
+    for (const [iterNum, benchmarks] of Array.from(iterationGroups.entries()).sort(([a], [b]) => a - b)) {
+      const iterationTotal = benchmarks.find(b => b.operation === `Development Iteration ${iterNum}`);
+      console.log(`\nIteration ${iterNum}:`);
+      
+      if (iterationTotal?.duration) {
+        console.log(`  Total: ${iterationTotal.duration.toFixed(2)}ms`);
+      }
+      
+      for (const benchmark of benchmarks) {
+        if (benchmark === iterationTotal) continue;
+        console.log(`  ${benchmark.operation.replace(`Iteration ${iterNum} - `, '')}: ${benchmark.duration?.toFixed(2)}ms`);
+        if (benchmark.pixelsPerSecond) {
+          console.log(`    - ${(benchmark.pixelsPerSecond / 1000000).toFixed(2)}M pixels/sec`);
+        }
+      }
+    }
+  }
 }
