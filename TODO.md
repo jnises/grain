@@ -2,8 +2,9 @@
 - [x] Create a separate assert util for slow checks that is only run when in dev mode.
 - [x] Update agent instructions on how to use the asserts.
 - [x] Update hot code to use the dev assert. look for hot code using the profiling functionality as outlined in scripts/profiling/README.md
-- [ ] Go through all README.md files and clean them up. remove any coding agent droppings. looks for inconsistent or outdated information and update or remove that.
 - [ ] Figure out why `npm run profile` prints an empty table for `🔥 Top CPU Hotspots (by self time):` and make it work
+- [ ] Make sure `npm run preview` optimizes out devAssert
+- [ ] Go through all README.md files and clean them up. remove any coding agent droppings. looks for inconsistent or outdated information and update or remove that.
 - [ ] Go through the code and apply the rules around constants from the instructions
 - [ ] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
 - [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future.
