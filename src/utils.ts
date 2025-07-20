@@ -40,26 +40,20 @@ export const devAssert: (
   condition: unknown,
   message: string,
   context?: Record<string, unknown>
-) => asserts condition = (() => {
-  // Check both Vite's import.meta.env.DEV and Node.js NODE_ENV
-  const isDev = (typeof import.meta !== 'undefined' && import.meta.env?.DEV) || 
-                (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production');
-  
-  return isDev 
-    ? (condition: unknown, message: string, context?: Record<string, unknown>): asserts condition => {
-        if (!condition) {
-          // Log error with context for debugging
-          console.error('Dev assertion failed:', message);
-          if (context) {
-            console.error('Context:', context);
-          }
-          
-          // Throw error to fail fast
-          throw new Error(`Dev assertion failed: ${message}`);
+) => asserts condition = import.meta.env?.DEV 
+  ? (condition: unknown, message: string, context?: Record<string, unknown>): asserts condition => {
+      if (!condition) {
+        // Log error with context for debugging
+        console.error('Dev assertion failed:', message);
+        if (context) {
+          console.error('Context:', context);
         }
+        
+        // Throw error to fail fast
+        throw new Error(`Dev assertion failed: ${message}`);
       }
-    : (() => {}) as (condition: unknown, message: string, context?: Record<string, unknown>) => asserts condition;
-})();
+    }
+  : (() => {}) as (condition: unknown, message: string, context?: Record<string, unknown>) => asserts condition;
 
 /**
  * Assert that a value is a positive integer
@@ -128,21 +122,15 @@ export const devAssertInRange: (
   min: number,
   max: number,
   name: string
-) => asserts value is number = (() => {
-  // Check both Vite's import.meta.env.DEV and Node.js NODE_ENV
-  const isDev = (typeof import.meta !== 'undefined' && import.meta.env?.DEV) || 
-                (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production');
-  
-  return isDev 
-    ? (value: number, min: number, max: number, name: string): asserts value is number => {
-        if (!(value >= min && value <= max)) {
-          console.error('Dev assertion failed:', `${name} must be between ${min} and ${max}`);
-          console.error('Context:', { [name]: value, min, max, inRange: value >= min && value <= max });
-          throw new Error(`Dev assertion failed: ${name} must be between ${min} and ${max}`);
-        }
+) => asserts value is number = import.meta.env?.DEV 
+  ? (value: number, min: number, max: number, name: string): asserts value is number => {
+      if (!(value >= min && value <= max)) {
+        console.error('Dev assertion failed:', `${name} must be between ${min} and ${max}`);
+        console.error('Context:', { [name]: value, min, max, inRange: value >= min && value <= max });
+        throw new Error(`Dev assertion failed: ${name} must be between ${min} and ${max}`);
       }
-    : (() => {}) as (value: number, min: number, max: number, name: string) => asserts value is number;
-})();
+    }
+  : (() => {}) as (value: number, min: number, max: number, name: string) => asserts value is number;
 
 /**
  * Assert that a value is an array
