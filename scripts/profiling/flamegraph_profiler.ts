@@ -6,13 +6,16 @@
  * that can identify specific function-level hotspots in the grain algorithm.
  * 
  * Usage:
- *   npx tsx scripts/temp/flamegraph_profiler.ts
+ *   npx tsx scripts/profiling/flamegraph_profiler.ts
  * 
  * This will generate CPU profile files that can be:
  * 1. Opened in Chrome DevTools (chrome://inspect -> Open dedicated DevTools for Node -> Profiler tab)
  * 2. Analyzed with clinic.js flamegraph tools
  * 3. Processed with speedscope.app for flamegraph visualization
  */
+
+// Set production mode to ensure devAssert calls are eliminated
+process.env.NODE_ENV = 'production';
 
 import { GrainProcessor } from '../../src/grain-processor';
 import { createMockImageData } from '../../test/test-utils';

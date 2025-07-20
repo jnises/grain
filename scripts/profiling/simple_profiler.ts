@@ -1,8 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * Simple profiler using Node  console.log('⚠️  Warning: This script should be run with --prof flag for profiling.');
-  console.log('Run: npm run profile:simple');
-  console.log('Continuing anyway for basic timing...'); --prof flag
+ * Simple profiler using Node.js --prof flag
  * 
  * This script runs grain processing with V8 profiling enabled to identify hotspots.
  * The --prof flag generates a v8.log file that can be processed to show function-level performance.
@@ -10,6 +8,9 @@
  * Usage:
  *   node --prof -r tsx/esm scripts/profiling/simple_profiler.ts
  */
+
+// Set production mode to ensure devAssert calls are eliminated
+process.env.NODE_ENV = 'production';
 
 // Import using TypeScript
 import { GrainProcessor } from '../../src/grain-processor';
@@ -55,10 +56,13 @@ async function runProfilingTest() {
 }
 
 async function main() {
+  console.log('🔍 Running grain processing performance test (PRODUCTION MODE)...');
+  console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+  
   if (!process.execArgv.some(arg => arg.includes('--prof'))) {
-    console.log('⚠️  Warning: This script should be run with --prof flag for profiling.');
-    console.log('Run: node --prof -r tsx/esm scripts/profiling/simple_profiler.mjs');
-    console.log('Continuing anyway for basic timing...\n');
+    console.log('ℹ️  Note: For V8 profiling, run with --prof flag:');
+    console.log('  node --prof --loader tsx/esm scripts/profiling/simple_profiler.ts');
+    console.log('Continuing with timing-only profiling...\n');
   }
   
   try {

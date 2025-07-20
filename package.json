@@ -16,8 +16,10 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "benchmark": "vitest run --config vitest.benchmark.config.ts",
-    "profile": "npx tsx scripts/profiling/flamegraph_profiler.ts",
-    "profile:comprehensive": "scripts/profiling/profile_hotspots.sh"
+    "profile:flamegraph": "NODE_ENV=production npx tsx scripts/profiling/flamegraph_profiler.ts",
+    "profile:simple": "NODE_ENV=production npx tsx scripts/profiling/simple_profiler.ts",
+    "profile:hotspots": "NODE_ENV=production scripts/profiling/profile_hotspots.sh",
+    "profile": "npm run profile:flamegraph"
   },
   "dependencies": {
     "react": "^19.1.0",

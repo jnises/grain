@@ -27,6 +27,41 @@ export function assert(
 }
 
 /**
+ * Development-only assertion function that provides type narrowing and error handling
+ * only in development mode. In production builds, this becomes a no-op that is completely
+ * eliminated by the bundler's dead code elimination and tree shaking.
+ * Use this for expensive assertions in hot code paths that should not impact production performance.
+ * 
+ * @param condition The condition to assert (only checked in development)
+ * @param message Error message to display if assertion fails
+ * @param context Optional context object to include in error logging
+ */
+export const devAssert: (
+  condition: unknown,
+  message: string,
+  context?: Record<string, unknown>
+) => asserts condition = (() => {
+  // Check both Vite's import.meta.env.DEV and Node.js NODE_ENV
+  const isDev = (typeof import.meta !== 'undefined' && import.meta.env?.DEV) || 
+                (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production');
+  
+  return isDev 
+    ? (condition: unknown, message: string, context?: Record<string, unknown>): asserts condition => {
+        if (!condition) {
+          // Log error with context for debugging
+          console.error('Dev assertion failed:', message);
+          if (context) {
+            console.error('Context:', context);
+          }
+          
+          // Throw error to fail fast
+          throw new Error(`Dev assertion failed: ${message}`);
+        }
+      }
+    : (() => {}) as (condition: unknown, message: string, context?: Record<string, unknown>) => asserts condition;
+})();
+
+/**
  * Assert that a value is a positive integer
  */
 export function assertPositiveInteger(

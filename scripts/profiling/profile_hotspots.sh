@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 # 
 # Comprehensive performance profiling script for grain processing
-# This script runs multiple profiling approaches to identify hotspots
+# This script runs multiple profiling approaches to identify hotspots in PRODUCTION MODE
+# to ensure devAssert calls are eliminated for accurate performance measurement
 #
 
 set -e  # Exit on any error
 
-echo "🚀 Starting comprehensive grain processing profiling..."
+# Set production mode for all profiling
+export NODE_ENV=production
+
+echo "🚀 Starting comprehensive grain processing profiling (PRODUCTION MODE)..."
+echo "📋 NODE_ENV: $NODE_ENV"
 echo ""
 
 # Create output directory for profiles
