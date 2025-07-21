@@ -21,7 +21,8 @@
   - [x] Add configuration options for sampling density/strategy
   - [x] Profile to make sure it improves performance
   - [x] Add tests to ensure sampling estimation provides reasonable accuracy vs full processing
-- [ ] Clean up comments like ```// See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"``` that are no longer valid with the updated ALGORITHM_DESIGN.md
+- [x] Clean up comments like ```// See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"``` that are no longer valid with the updated ALGORITHM_DESIGN.md
+- [ ] disable the test "should produce LARGER average grain sizes as ISO increases" and move "should provide significant performance improvement over full processing" to benchmarking
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  

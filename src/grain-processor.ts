@@ -165,7 +165,7 @@ export class GrainProcessor {
    * The input image represents the light pattern that would have exposed the film.
    * Each grain samples light from its local area using kernel-based area sampling.
    *
-   * See ALGORITHM_DESIGN.md: "Camera Exposure Phase"
+   * See ALGORITHM_DESIGN.md: "Core Design Principles" - light exposure and grain scaling
    */
   private calculateGrainExposures(
     grains: GrainPoint[],
@@ -233,7 +233,7 @@ export class GrainProcessor {
     // ========================================================================
     // LIGHT EXPOSURE PHASE - Camera Exposure Phase
     // The input image represents the light that struck the film emulsion.
-    // See ALGORITHM_DESIGN.md: "Camera Exposure Phase"
+    // See ALGORITHM_DESIGN.md: "Core Design Principles" - linear color space and grain scaling
     // ========================================================================
 
     // Convert input to grayscale at the start for monochrome processing
@@ -276,7 +276,7 @@ export class GrainProcessor {
     // ITERATIVE FILM DEVELOPMENT PHASE - Development Phase with Lightness Convergence
     // Iteratively adjust grain exposures until desired lightness is achieved.
     // This is more physically plausible than applying lightness correction at the end.
-    // See ALGORITHM_DESIGN.md: "Film Development Phase"
+    // See ALGORITHM_DESIGN.md: "2. Iterative Development Process"
     // ========================================================================
 
     // Constants for iterative lightness compensation
@@ -416,7 +416,7 @@ export class GrainProcessor {
     // DARKROOM PRINTING PHASE - Printing Phase
     // Apply the developed film negative to create the final photograph.
     // Light passes through developed grains (Phase 2 - position-dependent effects).
-    // See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"
+    // See ALGORITHM_DESIGN.md: "Critical Implementation Rule: Film Negative Behavior"
     // ========================================================================
 
     // Step 4: Process each pixel (Phase 2 - position-dependent grain effects)
@@ -649,7 +649,7 @@ export class GrainProcessor {
       // Simulate photographic paper response: more light exposure = darker paper
       // Dense grains → low transmission → less light hits paper → lighter final result
       // Transparent grains → high transmission → more light hits paper → darker final result
-      // This matches ALGORITHM_DESIGN.md: "Dense grains create lighter areas in the print"
+      // This matches ALGORITHM_DESIGN.md: "Critical Implementation Rule: Film Negative Behavior"
       finalGrayscale = 1.0 - lightTransmission;
     } else {
       // If no grains affect this pixel, film is completely transparent
@@ -757,7 +757,7 @@ export class GrainProcessor {
    * Dense grains (heavily exposed) block more light, creating lighter areas in the final print.
    * Transparent grains (unexposed) allow more light through, creating darker areas in the final print.
    *
-   * See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"
+   * See ALGORITHM_DESIGN.md: "Critical Implementation Rule: Film Negative Behavior"
    */
   private processPixelEffects(
     grainGrid: SpatialLookupGrid,

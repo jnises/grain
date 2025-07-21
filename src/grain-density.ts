@@ -56,7 +56,7 @@ export class GrainDensityCalculator {
    * Grains that received sufficient light exposure become developed (high optical density).
    * Grains below their development threshold remain undeveloped (transparent).
    *
-   * See ALGORITHM_DESIGN.md: "Film Development Phase"
+   * See ALGORITHM_DESIGN.md: "Core Design Principles" - grain development and scaling
    *
    * This computes grain-specific properties that don't depend on pixel position
    * and caches them for efficient pixel processing
@@ -265,7 +265,7 @@ export class GrainDensityCalculator {
    * The spatial effect of each grain varies by distance from the grain center.
    * Uses pre-calculated intrinsic grain density from the development phase.
    *
-   * See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"
+   * See ALGORITHM_DESIGN.md: "Critical Implementation Rule: Film Negative Behavior"
    *
    * This method computes position-dependent visual effects that vary by pixel location
    */
