@@ -28,6 +28,7 @@
 - [x] Do we have a test that checks the density of points generated using poisson disk sampling vs fallback? If not create one. The densities should be mostly the same.
 - [x] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
 - [x] Keep track of the largest grain in SpatialLookupGrid and use that radius in getGrainsNear instead of specifying a custom one. Also make sure getGrainsNear with that radius would be sure to pick up all grains that could affect the requested position.
+- [ ] Try disabling the kernel sampling and just use center sampling, to see if that affects the stripes.
 - [ ] Examine why the algorithm introduces striped patterns. Look at gray.png grain-processed-image.png
 - [ ] write an eslint rule to disallow raw Math.random  instead RandomNumberGenerator should be dependency injected. The only allowed Math.random is in DefaultRandomNumberGenerator, and in test code.
 - [ ] Write test of processImage with a testpattern with the left side fully white and the right side fully black. Use a low iso. The output image should be almost completely white on the left side and almost completely black on the right side
