@@ -15,4 +15,4 @@ Escape all special characters (such as backticks, quotes, dollar signs, etc.) so
 
 Double-check that no unescaped characters remain in the message.
 
-If `TODO.md` is among the changes, include it in the commit but do not mention it in the commit message. Also don't mention that you shouldn't mention TODO.md
+If `TODO.md` is among the changes, include it in the commit but do not mention it in the commit message. Also don't mention that you shouldn't mention TODO.md. In fact you must not say the word TODO.md at all!
