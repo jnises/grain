@@ -9,7 +9,6 @@ import { GrainDensityCalculator } from './grain-density';
 import {
   convertSrgbToLinearFloat,
   convertLinearFloatToSrgb,
-  calculateLightnessFactor,
   applyBeerLambertCompositingGrayscale,
 } from './grain-math';
 import { convertImageDataToGrayscale } from './color-space';
@@ -26,6 +25,7 @@ import {
   assertObject,
   assert,
   devAssert,
+  assertFiniteNumber,
 } from './utils';
 
 // Progress reporting constants - module-specific to grain-processor
@@ -137,6 +137,16 @@ export class GrainProcessor {
         typeof s.convergenceThreshold !== 'number' ||
         s.convergenceThreshold <= VALIDATION_LIMITS.MIN_CONVERGENCE_THRESHOLD ||
         s.convergenceThreshold > VALIDATION_LIMITS.MAX_CONVERGENCE_THRESHOLD
+      ) {
+        return false;
+      }
+    }
+
+    if (s.lightnessEstimationSamplingDensity !== undefined) {
+      if (
+        typeof s.lightnessEstimationSamplingDensity !== 'number' ||
+        s.lightnessEstimationSamplingDensity <= 0 ||
+        s.lightnessEstimationSamplingDensity > 1.0
       ) {
         return false;
       }
@@ -328,28 +338,21 @@ export class GrainProcessor {
         `Iteration ${iteration + 1} - Intrinsic Density Calculation`
       );
 
-      // TODO: this is too slow. we need the sampling estimation
-      // Calculate full lightness factor using complete pixel processing (no sampling estimation)
-      // This ensures consistency with the main pipeline and avoids code duplication
+      // Use sampling estimation for fast lightness factor calculation during iterations
+      // This replaces the expensive full pixel processing with representative sampling
       this.performanceTracker.startBenchmark(
-        `Iteration ${iteration + 1} - Pixel Processing`,
-        this.width * this.height
+        `Iteration ${iteration + 1} - Lightness Sampling`
       );
-      const { resultFloatData: iterationProcessedFloatData } =
-        this.processPixelEffects(
-          grainStructure,
-          grainGrid,
-          grainIntrinsicDensityMap,
-          this.width,
-          this.height
-        );
-      this.performanceTracker.endBenchmark(
-        `Iteration ${iteration + 1} - Pixel Processing`
-      );
-
-      const lightnessDeviationFactor = calculateLightnessFactor(
+      const lightnessDeviationFactor = this.estimateLightnessBySampling(
         incomingImageLinear,
-        iterationProcessedFloatData
+        grainGrid,
+        grainIntrinsicDensityMap,
+        this.width,
+        this.height,
+        this.settings.lightnessEstimationSamplingDensity ?? 0.1
+      );
+      this.performanceTracker.endBenchmark(
+        `Iteration ${iteration + 1} - Lightness Sampling`
       );
 
       console.log(
@@ -434,7 +437,6 @@ export class GrainProcessor {
       grainEffectCount,
       processedPixels,
     } = this.processPixelEffects(
-      grainStructure,
       grainGrid,
       finalGrainIntrinsicDensityMap,
       this.width,
@@ -565,6 +567,189 @@ export class GrainProcessor {
   }
 
   /**
+   * Calculate the grain effect for a single pixel at the given coordinates.
+   * This is the core pixel processing logic extracted into a pure function
+   * for reuse in both full processing and sampling estimation.
+   * 
+   * @param x - Pixel x coordinate
+   * @param y - Pixel y coordinate  
+   * @param grainGrid - Spatial lookup grid for efficient grain queries
+   * @param grainIntrinsicDensityMap - Pre-calculated grain densities from development phase
+   * @returns Object with finalGrayscale value and whether grains affected this pixel
+   */
+  private calculatePixelGrainEffect(
+    x: number,
+    y: number,
+    grainGrid: SpatialLookupGrid,
+    grainIntrinsicDensityMap: GrainIntrinsicDensityMap
+  ): { finalGrayscale: number; hasGrainEffect: boolean } {
+    // Initialize grain density for monochrome processing
+    let totalGrainDensity = 0;
+    let totalWeight = 0;
+
+    // Get grains from nearby grid cells
+    // Get all nearby grains using the efficient spatial lookup
+    const GRAIN_LOOKUP_RADIUS = grainGrid.getGridSize() * 1.5; // Search radius for nearby grains
+    const nearbyGrains = grainGrid.getGrainsNear(x, y, GRAIN_LOOKUP_RADIUS);
+
+    // Process nearby grains directly (already filtered by spatial grid)
+    for (const grain of nearbyGrains) {
+      const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
+
+      // Constant for grain influence radius
+      const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
+      if (distance < grain.size * GRAIN_INFLUENCE_RADIUS_FACTOR) {
+        const weight = Math.exp(-distance / grain.size);
+
+        // Use pre-calculated intrinsic grain density
+        const intrinsicDensity = grainIntrinsicDensityMap.get(grain);
+        devAssert(
+          intrinsicDensity !== undefined,
+          'Intrinsic grain density not found in calculated map - this indicates a logic error',
+          {
+            grain: { x: grain.x, y: grain.y, size: grain.size },
+            mapSize: grainIntrinsicDensityMap.size,
+          }
+        );
+
+        // Calculate pixel-level grain effects using pre-calculated intrinsic density
+        const pixelGrainEffect =
+          this.grainDensityCalculator.calculatePixelGrainEffect(
+            intrinsicDensity,
+            grain,
+            x,
+            y
+          );
+
+        // For monochrome processing, use simple grayscale density accumulation
+        // Skip color-specific effects (channel sensitivity, color shifts, chromatic aberration)
+        // pixelGrainEffect is already the final optical density contribution
+        totalGrainDensity += pixelGrainEffect * weight;
+
+        totalWeight += weight;
+      }
+    }
+
+    // Apply grain effects using proper darkroom printing physics
+    // Start with uniform white enlarger light, apply grain density to simulate light passing through developed film
+    let finalGrayscale = 1.0; // Start with maximum brightness (white enlarger light)
+    let hasGrainEffect = false;
+
+    if (totalWeight > 0) {
+      hasGrainEffect = true;
+
+      // Normalize by total weight for grayscale processing
+      const normalizedDensity = totalGrainDensity / totalWeight;
+
+      // Apply Beer-Lambert law to calculate light transmission through developed grains
+      // Dense grains (heavily exposed) block more light during printing
+      const lightTransmission =
+        applyBeerLambertCompositingGrayscale(normalizedDensity);
+
+      // Simulate photographic paper response: more light exposure = darker paper
+      // Dense grains → low transmission → less light hits paper → lighter final result
+      // Transparent grains → high transmission → more light hits paper → darker final result
+      // This matches ALGORITHM_DESIGN.md: "Dense grains create lighter areas in the print"
+      finalGrayscale = 1.0 - lightTransmission;
+    } else {
+      // If no grains affect this pixel, film is completely transparent
+      // Maximum light transmission → maximum light hits paper → darkest result
+      finalGrayscale = 0.0; // Full transmission through clear film = maximum paper exposure = dark result
+    }
+
+    return { finalGrayscale, hasGrainEffect };
+  }
+
+  /**
+   * Estimate lightness factor by sampling a subset of pixels instead of processing the entire image.
+   * This provides a significant performance improvement during iterative lightness compensation.
+   * 
+   * @param originalImageData - Original image data in linear RGB format
+   * @param grainGrid - Spatial lookup grid for efficient grain queries
+   * @param grainIntrinsicDensityMap - Pre-calculated grain densities from development phase
+   * @param outputWidth - Width of the output image
+   * @param outputHeight - Height of the output image
+   * @param samplingDensity - Fraction of pixels to sample (0.0 to 1.0), defaults to 0.1 (10%)
+   * @returns Estimated lightness factor based on sampled pixels
+   */
+  private estimateLightnessBySampling(
+    originalImageData: Float32Array,
+    grainGrid: SpatialLookupGrid,
+    grainIntrinsicDensityMap: GrainIntrinsicDensityMap,
+    outputWidth: number,
+    outputHeight: number,
+    samplingDensity: number = 0.1
+  ): number {
+    assertFiniteNumber(samplingDensity, 'samplingDensity');
+    assert(
+      samplingDensity > 0 && samplingDensity <= 1.0,
+      'samplingDensity must be between 0 and 1',
+      { samplingDensity }
+    );
+
+    const totalPixels = outputWidth * outputHeight;
+    const sampleCount = Math.max(1, Math.floor(totalPixels * samplingDensity));
+
+    // Use grid-based sampling for better spatial distribution
+    const gridSize = Math.ceil(Math.sqrt(sampleCount));
+    const stepX = outputWidth / gridSize;
+    const stepY = outputHeight / gridSize;
+
+    let originalSum = 0;
+    let processedSum = 0;
+    let actualSampleCount = 0;
+
+    // Sample pixels in a regular grid pattern for representative coverage
+    for (let gridY = 0; gridY < gridSize; gridY++) {
+      for (let gridX = 0; gridX < gridSize; gridX++) {
+        if (actualSampleCount >= sampleCount) break;
+
+        // Calculate pixel coordinates with some jitter to avoid aliasing
+        const x = Math.floor(gridX * stepX + stepX * 0.5);
+        const y = Math.floor(gridY * stepY + stepY * 0.5);
+
+        // Ensure coordinates are within bounds
+        if (x >= 0 && x < outputWidth && y >= 0 && y < outputHeight) {
+          const pixelIndex = (y * outputWidth + x) * 4;
+
+          // Get original pixel value (using red channel since image is grayscale)
+          const originalLuminance = originalImageData[pixelIndex];
+
+          // Calculate processed pixel value using the extracted logic
+          const { finalGrayscale } = this.calculatePixelGrainEffect(
+            x,
+            y,
+            grainGrid,
+            grainIntrinsicDensityMap
+          );
+
+          originalSum += originalLuminance;
+          processedSum += finalGrayscale;
+          actualSampleCount++;
+        }
+      }
+    }
+
+    // Calculate lightness factor based on sampled pixels
+    if (actualSampleCount === 0 || processedSum === 0) {
+      return 1.0; // Fallback to no adjustment if no valid samples
+    }
+
+    const originalAverage = originalSum / actualSampleCount;
+    const processedAverage = processedSum / actualSampleCount;
+
+    // Apply the same logic as calculateLightnessFactor for consistency
+    if (originalAverage <= 0.01) {
+      // For very dark images, clamp correction factor to avoid amplifying noise
+      return Math.min(originalAverage / Math.max(processedAverage, 0.001), 1.0);
+    }
+
+    // For normal images, calculate correction factor with reasonable bounds
+    const lightnessDeviationFactor = originalAverage / Math.max(processedAverage, 0.001);
+    return Math.max(0.01, Math.min(100.0, lightnessDeviationFactor));
+  }
+
+  /**
    * Process pixel effects with grain compositing
    * DARKROOM PRINTING PHASE (Phase 2 - Position-dependent effects)
    *
@@ -575,7 +760,6 @@ export class GrainProcessor {
    * See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"
    */
   private processPixelEffects(
-    grainStructure: GrainPoint[],
     grainGrid: SpatialLookupGrid,
     grainIntrinsicDensityMap: GrainIntrinsicDensityMap, // Grain densities from development phase
     outputWidth: number,
@@ -604,78 +788,16 @@ export class GrainProcessor {
         const pixelIndex = (y * outputWidth + x) * 4;
         processedPixels++;
 
-        // Initialize grain density for monochrome processing
-        let totalGrainDensity = 0;
-        let totalWeight = 0;
+        // Use the extracted pixel processing logic
+        const { finalGrayscale, hasGrainEffect } = this.calculatePixelGrainEffect(
+          x,
+          y,
+          grainGrid,
+          grainIntrinsicDensityMap
+        );
 
-        // Get grains from nearby grid cells
-        // Get all nearby grains using the efficient spatial lookup
-        const GRAIN_LOOKUP_RADIUS = grainGrid.getGridSize() * 1.5; // Search radius for nearby grains
-        const nearbyGrains = grainGrid.getGrainsNear(x, y, GRAIN_LOOKUP_RADIUS);
-
-        // Process nearby grains directly (already filtered by spatial grid)
-        for (const grain of nearbyGrains) {
-          const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
-
-          // Constant for grain influence radius
-          const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
-          if (distance < grain.size * GRAIN_INFLUENCE_RADIUS_FACTOR) {
-            const weight = Math.exp(-distance / grain.size);
-
-            // Use pre-calculated intrinsic grain density
-            const intrinsicDensity = grainIntrinsicDensityMap.get(grain);
-            devAssert(
-              intrinsicDensity !== undefined,
-              'Intrinsic grain density not found in calculated map - this indicates a logic error',
-              {
-                grain: { x: grain.x, y: grain.y, size: grain.size },
-                mapSize: grainIntrinsicDensityMap.size,
-                grainStructureLength: grainStructure.length,
-              }
-            );
-
-            // Calculate pixel-level grain effects using pre-calculated intrinsic density
-            const pixelGrainEffect =
-              this.grainDensityCalculator.calculatePixelGrainEffect(
-                intrinsicDensity,
-                grain,
-                x,
-                y
-              );
-
-            // For monochrome processing, use simple grayscale density accumulation
-            // Skip color-specific effects (channel sensitivity, color shifts, chromatic aberration)
-            // pixelGrainEffect is already the final optical density contribution
-            totalGrainDensity += pixelGrainEffect * weight;
-
-            totalWeight += weight;
-          }
-        }
-
-        // Apply grain effects using proper darkroom printing physics
-        // Start with uniform white enlarger light, apply grain density to simulate light passing through developed film
-        let finalGrayscale = 1.0; // Start with maximum brightness (white enlarger light)
-
-        if (totalWeight > 0) {
+        if (hasGrainEffect) {
           grainEffectCount++;
-
-          // Normalize by total weight for grayscale processing
-          const normalizedDensity = totalGrainDensity / totalWeight;
-
-          // Apply Beer-Lambert law to calculate light transmission through developed grains
-          // Dense grains (heavily exposed) block more light during printing
-          const lightTransmission =
-            applyBeerLambertCompositingGrayscale(normalizedDensity);
-
-          // Simulate photographic paper response: more light exposure = darker paper
-          // Dense grains → low transmission → less light hits paper → lighter final result
-          // Transparent grains → high transmission → more light hits paper → darker final result
-          // This matches ALGORITHM_DESIGN.md: "Dense grains create lighter areas in the print"
-          finalGrayscale = 1.0 - lightTransmission;
-        } else {
-          // If no grains affect this pixel, film is completely transparent
-          // Maximum light transmission → maximum light hits paper → darkest result
-          finalGrayscale = 0.0; // Full transmission through clear film = maximum paper exposure = dark result
         }
 
         // Set the final pixel value (duplicate grayscale to RGB channels)

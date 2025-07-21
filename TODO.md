@@ -13,15 +13,21 @@
 - [x] Write test that ensures that the lightness iteration converges. Specifically that the individual components behave.
  - [x] Make sure the value returned by calculateLightnessFactor behaves correctly when applied by adjustGrainExposures
 - [x] Apply the instructions from the "Descriptive Types and Type Aliases" section on the types in types.ts
-- [ ] Implement sampling estimation for the iterative lightness compensation in processImage.
-  - [ ] Share code with `processPixelEffects` for the estimation
-  - [ ] Profile to make sure it improves performance
+- [x] Implement sampling estimation for the iterative lightness compensation in processImage.
+  - [x] Extract core pixel processing logic from `processPixelEffects` into a reusable function
+  - [x] Create a sampling-based estimation function that processes a subset of pixels
+  - [x] Implement grid-based or random sampling strategy for representative pixel selection
+  - [x] Replace the full `processPixelEffects` call in the iteration loop with the sampling estimation
+  - [x] Add configuration options for sampling density/strategy
+  - [x] Profile to make sure it improves performance
+  - [x] Add tests to ensure sampling estimation provides reasonable accuracy vs full processing
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
   - [ ] `test/grain-processor-integration.test.ts` > "should produce different results for different film types" (algorithm outputs black)
   - [ ] `test/iterative-vs-single-pass.test.ts` > "should demonstrate improved lightness preservation with iterative approach" (algorithm outputs black)
   - [ ] `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" (test times out due to expensive computation)
+- [ ] Clean up comments like ```// See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"``` that are no longer valid with the updated ALGORITHM_DESIGN.md
 - [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
 - [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
 - [ ] Enable each test below one by one. Check if it passes. If not, determine if the code or the test is wrong (probably the test). If the test is wrong, determine if it is worth it to update the test or better to just remove it.

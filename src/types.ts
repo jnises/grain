@@ -16,6 +16,8 @@ export interface GrainSettings {
   // Iterative lightness compensation parameters
   maxIterations?: number; // Maximum iterations for lightness convergence (default: 5)
   convergenceThreshold?: number; // Lightness convergence tolerance as ratio (default: 0.05 for 5%)
+  /** Sampling density for lightness estimation during iterations (0.0 to 1.0, default: 0.1) */
+  lightnessEstimationSamplingDensity?: number;
 }
 
 export interface GrainProcessingResult {
