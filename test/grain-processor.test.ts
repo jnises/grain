@@ -64,9 +64,9 @@ describe('GrainProcessor', () => {
 
           // Calculate per-pixel difference (using Euclidean distance)
           const pixelDifference = Math.sqrt(
-            Math.pow(processedR - originalR, 2) +
-              Math.pow(processedG - originalG, 2) +
-              Math.pow(processedB - originalB, 2)
+            (processedR - originalR) ** 2 +
+              (processedG - originalG) ** 2 +
+              (processedB - originalB) ** 2
           );
 
           totalDifference += pixelDifference;

@@ -12,10 +12,7 @@ export function srgbToLinear(value: number): number {
   devAssertInRange(value, 0, 1, 'value');
   return value <= RGB_GAMMA_THRESHOLD
     ? value / RGB_GAMMA_LINEAR_DIVISOR
-    : Math.pow(
-        (value + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER,
-        RGB_GAMMA_POWER
-      );
+    : ((value + RGB_GAMMA_OFFSET) / RGB_GAMMA_MULTIPLIER) ** RGB_GAMMA_POWER;
 }
 
 /**
@@ -28,8 +25,7 @@ export function linearToSrgb(value: number): number {
   devAssertInRange(value, 0, 1, 'value');
   return value <= LINEAR_TO_SRGB_THRESHOLD
     ? value * RGB_GAMMA_LINEAR_DIVISOR
-    : RGB_GAMMA_MULTIPLIER * Math.pow(value, 1.0 / RGB_GAMMA_POWER) -
-        RGB_GAMMA_OFFSET;
+    : RGB_GAMMA_MULTIPLIER * value ** (1.0 / RGB_GAMMA_POWER) - RGB_GAMMA_OFFSET;
 }
 
 /**

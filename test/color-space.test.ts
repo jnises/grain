@@ -117,7 +117,7 @@ describe('Color Space Conversions', () => {
 
       it('should use power function above threshold', () => {
         const highValue = 0.5; // Above 0.04045 threshold
-        const expected = Math.pow((highValue + 0.055) / 1.055, 2.4);
+        const expected = ((highValue + 0.055) / 1.055) ** 2.4;
         expect(srgbToLinear(highValue)).toBeCloseTo(expected, 10);
       });
     });
@@ -148,7 +148,7 @@ describe('Color Space Conversions', () => {
 
       it('should use power function above threshold', () => {
         const highValue = 0.1; // Above 0.0031308 threshold
-        const expected = 1.055 * Math.pow(highValue, 1.0 / 2.4) - 0.055;
+        const expected = 1.055 * highValue ** (1.0 / 2.4) - 0.055;
         expect(linearToSrgb(highValue)).toBeCloseTo(expected, 10);
       });
     });

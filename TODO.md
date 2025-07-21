@@ -3,6 +3,11 @@
 - [x] Add section about using descriptive types or aliases where it makes sense to your instructions.
 - [x] Add a code formatting configuration to the project. And apply it to all source code.
 - [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use \*\* instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future. Also add eslint checks where applicable. Start by running a test to make sure your changes does not add new ones. Keep going until the tests and `npm run check` passes.
+  - [x] Replace all instances of `Math.pow(a, b)` with `a ** b`.
+  - [x] Research and apply other modern idiomatic TypeScript features where applicable.
+  - [x] Update GEMINI.md to instruct the use of modern idiomatic TypeScript, including the `**` operator.
+  - [ ] Research and add new ESLint rules to enforce modern TypeScript idioms.
+  - [ ] Run tests and `npm run check` to ensure all changes are safe.
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
