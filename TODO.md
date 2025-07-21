@@ -7,7 +7,7 @@
 - [x] Make sure `npm run preview` optimizes out devAssert
 - [x] Go through the code and apply the rules around constants from the instructions
 - [x] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
-- [ ] Add section about using descriptive types or aliases where it makes sense to your instructions.
+- [x] Add section about using descriptive types or aliases where it makes sense to your instructions.
 - [ ] Add a code formatting configuration to the project. And apply it to all source code.
 - [ ] Fix the test that fails. the algorithm currently just outputs black when I test it. could the tests failing have something to do with this?
 - [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future. Also add eslint checks where applicable.

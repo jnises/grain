@@ -72,6 +72,21 @@
 ### Doc comments
 - Document any function argument whose meaning isn't obvious.
 
+### Descriptive Types and Type Aliases
+- Use descriptive type aliases and custom types to make code more self-documenting and type-safe
+- Replace generic types like `Map<GrainPoint, number>` with more specific types that clarify intent:
+  - Create type aliases: `type GrainDensityMap = Map<GrainPoint, GrainDensity>`
+  - Use branded types for different number types: `type LinearLightness = number & { __brand: 'linear' }`
+  - Create interfaces for complex objects instead of inline types
+- When using non-bespoke types (like `number`, `string`, `array`), document what they represent in doc comments:
+  - Example: `/** Color value in sRGB color space (0-255) */ r: number`
+  - Example: `/** Exposure compensation in stops */ exposureOffset: number`
+- Prefer meaningful type names over generic ones:
+  - Good: `GrainDensity`, `ExposureStops`, `SrgbColor`
+  - Avoid: `number`, `any`, `object` without context
+- Use union types to constrain values: `type FilmType = 'kodak-gold' | 'fuji-400h' | 'tri-x'`
+- This improves code readability, helps catch type errors, and makes the codebase more maintainable
+
 ### Code Reuse and Testing
 - Import and use actual production classes in tests (e.g., `GrainGenerator`)
 - **NEVER reimplement production functions in test files** - always import and test the actual production code
