@@ -6,8 +6,7 @@
   - [x] Replace all instances of `Math.pow(a, b)` with `a ** b`.
   - [x] Research and apply other modern idiomatic TypeScript features where applicable.
   - [x] Update GEMINI.md to instruct the use of modern idiomatic TypeScript, including the `**` operator.
-  - [ ] Research and add new ESLint rules to enforce modern TypeScript idioms.
-  - [ ] Run tests and `npm run check` to ensure all changes are safe.
+  - [x] Run tests and `npm run check` to ensure all changes are safe.
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
