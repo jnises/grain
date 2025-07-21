@@ -26,7 +26,7 @@
 - [x] Refactor GrainProcessor to allow us to specify the exact grains to use for processImage. Write a test that generates uniform grains on a dense grid and use those along with a middle gray test image for processImage. Test that the output is mostly uniform gray without much structure.
 - [x] Change the grain debug drawing to show the size of the grains using color.
 - [x] Do we have a test that checks the density of points generated using poisson disk sampling vs fallback? If not create one. The densities should be mostly the same.
-- [ ] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
+- [x] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
 - [ ] Reenable these tests and make sure they pass
   - [ ] Reenable `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" and investigate why it outputs black.
   - [ ] Reenable `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" and investigate why it outputs black.

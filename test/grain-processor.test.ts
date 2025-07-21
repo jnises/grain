@@ -573,5 +573,30 @@ describe('GrainProcessor', () => {
       // With grain processing, at least some pixels should be affected
       expect(differenceCount).toBeGreaterThan(0);
     });
+
+    it('should produce a completely black image when customGrains is an empty array', async () => {
+      const width = 32;
+      const height = 32;
+      const settings: GrainSettings = {
+        iso: 200,
+        filmType: 'kodak',
+      };
+
+      const customGrains: GrainPoint[] = []; // Empty array of grains
+      const testImage = createMockImageData(width, height, 100); // Mid-gray image
+
+      const processor = createTestGrainProcessor(width, height, settings);
+
+      // Process with an empty array of custom grains
+      const result = await processor.processImage(testImage, customGrains);
+
+      // Verify that all pixels in the output image are black (0,0,0,255)
+      for (let i = 0; i < result.data.length; i += 4) {
+        expect(result.data[i]).toBe(0);     // R
+        expect(result.data[i + 1]).toBe(0); // G
+        expect(result.data[i + 2]).toBe(0); // B
+        expect(result.data[i + 3]).toBe(255); // A (alpha should remain opaque)
+      }
+    });
   });
 });
