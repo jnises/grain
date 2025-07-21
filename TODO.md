@@ -2,11 +2,13 @@
 - [x] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
 - [x] Add section about using descriptive types or aliases where it makes sense to your instructions.
 - [x] Add a code formatting configuration to the project. And apply it to all source code.
-- [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use \*\* instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future. Also add eslint checks where applicable. Start by running a test to make sure your changes does not add new ones. Keep going until the tests and `npm run check` passes.
+- [x] Go through the code and make sure we are using idiomatic modern typescript. For example use \*\* instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future. Also add eslint checks where applicable. Start by running a test to make sure your changes does not add new ones. Keep going until the tests and `npm run check` passes.
   - [x] Replace all instances of `Math.pow(a, b)` with `a ** b`.
   - [x] Research and apply other modern idiomatic TypeScript features where applicable.
   - [x] Update GEMINI.md to instruct the use of modern idiomatic TypeScript, including the `**` operator.
   - [x] Run tests and `npm run check` to ensure all changes are safe.
+- [x] Apply the rules from "Static Methods and Free Functions" from your instructions to grain-processor.ts
+- [ ] Write testcases for GrainProcessor.adjustGrainExposures
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  

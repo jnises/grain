@@ -309,7 +309,7 @@ export class GrainProcessor {
       );
 
       // Apply exposure compensation to grain exposure map
-      const adjustedGrainExposureMap = this.adjustGrainExposures(
+      const adjustedGrainExposureMap = GrainProcessor.adjustGrainExposures(
         grainExposureMap,
         lightnessCompensationFactor
       );
@@ -518,34 +518,11 @@ export class GrainProcessor {
         'Drawing debug grain centers...'
       );
       console.log('Debug mode: Drawing grain center points');
-      this.drawGrainCenters(result, grainStructure);
+      GrainProcessor.drawGrainCenters(result, grainStructure, this.width, this.height);
     }
 
     this.reportProgress(PROGRESS_PERCENTAGES.COMPLETE, 'Complete!');
     return result;
-  }
-
-  // Calculate grain density for density-based compositing
-  private calculateGrainDensity(
-    grainStrength: number,
-    grain: GrainPoint
-  ): number {
-    // Convert grain strength to optical density
-    const baseDensity = grainStrength * grain.sensitivity;
-
-    // Normalize density to [0, 1] range for film curve
-    // Maximum reasonable density is around 3.0 (very dense grain)
-    const normalizedDensity = Math.min(
-      baseDensity / VALIDATION_LIMITS.MAX_REASONABLE_DENSITY,
-      1.0
-    );
-
-    // Apply film characteristic curve for density response
-    const densityResponse =
-      this.grainDensityCalculator.filmCurve(normalizedDensity);
-
-    // Return the density response directly from film curve
-    return densityResponse;
   }
 
   /**
@@ -556,7 +533,7 @@ export class GrainProcessor {
    * @param adjustmentFactor - Factor to adjust exposures by
    * @returns New adjusted exposure map with values clamped to [0, 1]
    */
-  private adjustGrainExposures(
+  private static adjustGrainExposures(
     originalExposureMap: GrainExposureMap,
     adjustmentFactor: number
   ): GrainExposureMap {
@@ -664,7 +641,7 @@ export class GrainProcessor {
                 x,
                 y
               );
-            const grainDensity = this.calculateGrainDensity(
+            const grainDensity = this.grainDensityCalculator.calculateGrainDensity(
               pixelGrainEffect,
               grain
             );
@@ -717,9 +694,11 @@ export class GrainProcessor {
    * Debug function to draw grain center points on the image
    * Only available in development mode for debugging grain placement
    */
-  private drawGrainCenters(
+  private static drawGrainCenters(
     imageData: ImageData,
-    grainStructure: GrainPoint[]
+    grainStructure: GrainPoint[],
+    imageWidth: number,
+    imageHeight: number
   ): void {
     console.log(`Drawing grain centers for ${grainStructure.length} grains`);
 
@@ -735,8 +714,8 @@ export class GrainProcessor {
       // Draw horizontal line
       for (let dx = -crossSize; dx <= crossSize; dx++) {
         const x = centerX + dx;
-        if (x >= 0 && x < this.width && centerY >= 0 && centerY < this.height) {
-          const pixelIndex = (centerY * this.width + x) * 4;
+        if (x >= 0 && x < imageWidth && centerY >= 0 && centerY < imageHeight) {
+          const pixelIndex = (centerY * imageWidth + x) * 4;
           imageData.data[pixelIndex] = color.r;
           imageData.data[pixelIndex + 1] = color.g;
           imageData.data[pixelIndex + 2] = color.b;
@@ -747,8 +726,8 @@ export class GrainProcessor {
       // Draw vertical line
       for (let dy = -crossSize; dy <= crossSize; dy++) {
         const y = centerY + dy;
-        if (centerX >= 0 && centerX < this.width && y >= 0 && y < this.height) {
-          const pixelIndex = (y * this.width + centerX) * 4;
+        if (centerX >= 0 && centerX < imageWidth && y >= 0 && y < imageHeight) {
+          const pixelIndex = (y * imageWidth + centerX) * 4;
           imageData.data[pixelIndex] = color.r;
           imageData.data[pixelIndex + 1] = color.g;
           imageData.data[pixelIndex + 2] = color.b;
