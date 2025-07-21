@@ -9,6 +9,7 @@ export default defineConfig({
     include: [
       '**/performance-benchmark.test.ts',
       '**/grain-worker-performance.test.ts',
+      '**/benchmarks/lightness-sampling-performance.benchmark.ts',
     ],
   },
 });
