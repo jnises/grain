@@ -27,11 +27,12 @@
 - [x] Change the grain debug drawing to show the size of the grains using color.
 - [x] Do we have a test that checks the density of points generated using poisson disk sampling vs fallback? If not create one. The densities should be mostly the same.
 - [ ] Reenable these tests and make sure they pass
-  - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
-  - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
-  - [ ] `test/grain-processor-integration.test.ts` > "should produce different results for different film types" (algorithm outputs black)
-  - [ ] `test/iterative-vs-single-pass.test.ts` > "should demonstrate improved lightness preservation with iterative approach" (algorithm outputs black)
-  - [ ] `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" (test times out due to expensive computation)  update the test to work with a smaller image to make it faster
+  - [ ] Reenable `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" and investigate why it outputs black.
+  - [ ] Reenable `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" and investigate why it outputs black.
+  - [ ] Reenable `test/grain-processor-integration.test.ts` > "should produce different results for different film types" and investigate why it outputs black.
+  - [ ] Reenable `test/iterative-vs-single-pass.test.ts` > "should demonstrate improved lightness preservation with iterative approach" and investigate why it outputs black.
+  - [ ] Reenable `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" and update the test to work with a smaller image to make it faster.
+- [ ] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
 - [ ] I'm getting diagonal stripes in the processed image. Looks like the grains are uniform though. What could be causing this? It looks as if grain exposure is modulated with a mostly diagonal sawtooth pattern.
 - [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
 - [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
@@ -72,7 +73,6 @@
 - [ ] Clean up unused files and debug utils such as `public/grain-test.html`
 - [ ] Clean up old agent-generated analysis and summary md files.
 - [ ] Update dependencies.
-- [ ] **Add upsampling workflow for grain detail**: Implement 2x-4x upsampling before grain rendering, then downsample for final output. This will allow proper grain internal structure and edge softness instead of pixel-level noise.
 - [ ] **Implement grain bridging and clustering effects**: Add simulation of grains connecting during development through clustering algorithms. This creates more realistic grain patterns that match actual film behavior.
 - [ ] **Add edge effects near high-contrast boundaries**: Implement grain density changes near high-contrast image boundaries to simulate developer depletion and chemical diffusion effects.
 - [ ] Is it possible to parallelize the algorithm? Or move parts of it to the gpu using webgpu?
