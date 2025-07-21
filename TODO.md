@@ -26,13 +26,13 @@
 - [x] Refactor GrainProcessor to allow us to specify the exact grains to use for processImage. Write a test that generates uniform grains on a dense grid and use those along with a middle gray test image for processImage. Test that the output is mostly uniform gray without much structure.
 - [x] Change the grain debug drawing to show the size of the grains using color.
 - [x] Do we have a test that checks the density of points generated using poisson disk sampling vs fallback? If not create one. The densities should be mostly the same.
+- [ ] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
 - [ ] Reenable these tests and make sure they pass
   - [ ] Reenable `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" and investigate why it outputs black.
   - [ ] Reenable `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" and investigate why it outputs black.
   - [ ] Reenable `test/grain-processor-integration.test.ts` > "should produce different results for different film types" and investigate why it outputs black.
   - [ ] Reenable `test/iterative-vs-single-pass.test.ts` > "should demonstrate improved lightness preservation with iterative approach" and investigate why it outputs black.
   - [ ] Reenable `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" and update the test to work with a smaller image to make it faster.
-- [ ] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
 - [ ] I'm getting diagonal stripes in the processed image. Looks like the grains are uniform though. What could be causing this? It looks as if grain exposure is modulated with a mostly diagonal sawtooth pattern.
 - [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
 - [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
