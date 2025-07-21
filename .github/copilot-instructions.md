@@ -84,9 +84,10 @@
 
 - Prefer newtype patterns (e.g., branded types or opaque types) over type aliases to ensure type safety and prevent accidental assignment between types with the same underlying representation
 - Avoid type aliases for primitives (e.g., `type GrainDensity = number`) as they do not provide compile-time safety
-- Use branded types for distinct number/string types:  
-  - Example: `type LinearLightness = number & { __brand: 'LinearLightness' }`
-  - Example: `type GrainDensity = number & { __brand: 'GrainDensity' }`
+- Use branded interfaces for distinct number/string types to prevent accidental mixing:
+  - Example: `interface LinearLightness { readonly __brand: 'LinearLightness'; readonly value: number; }`
+  - Example: `interface GrainDensity { readonly __brand: 'GrainDensity'; readonly value: number; }`
+  - This prevents compilation errors like multiplying a branded number with a raw number
 - Use interfaces for complex objects instead of inline types
 - When using non-bespoke types (like `number`, `string`, `array`), document what they represent in doc comments:
   - Example: `/** Color value in sRGB color space (0-255) */ r: number`
