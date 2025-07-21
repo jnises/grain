@@ -9,7 +9,6 @@ import { GrainDensityCalculator } from './grain-density';
 import {
   convertSrgbToLinearFloat,
   convertLinearFloatToSrgb,
-  applyLightnessScaling,
   calculateLightnessFactor,
   applyBeerLambertCompositingGrayscale,
 } from './grain-math';
@@ -289,8 +288,8 @@ export class GrainProcessor {
     );
     this.performanceTracker.startBenchmark('Iterative Development');
 
-    // Initialize exposure adjustment factor
-    let exposureAdjustmentFactor = 1.0;
+    // Initialize exposure compensation factor
+    let lightnessCompensationFactor = 1.0;
     let convergedGrainIntrinsicDensityMap: GrainIntrinsicDensityMap | null =
       null;
     let actualIterations = 0;
@@ -306,7 +305,7 @@ export class GrainProcessor {
       );
 
       console.log(
-        `Development iteration ${iteration + 1}/${MAX_ITERATIONS}, exposure adjustment: ${exposureAdjustmentFactor.toFixed(4)}`
+        `Development iteration ${iteration + 1}/${MAX_ITERATIONS}, lightness compensation: ${lightnessCompensationFactor.toFixed(4)}`
       );
 
       // Track per-iteration performance
@@ -314,10 +313,10 @@ export class GrainProcessor {
         `Development Iteration ${iteration + 1}`
       );
 
-      // Apply exposure adjustment to grain exposure map
+      // Apply exposure compensation to grain exposure map
       const adjustedGrainExposureMap = this.adjustGrainExposures(
         grainExposureMap,
-        exposureAdjustmentFactor
+        lightnessCompensationFactor
       );
 
       // Execute film development phase with adjusted exposures
@@ -352,13 +351,13 @@ export class GrainProcessor {
         `Iteration ${iteration + 1} - Pixel Processing`
       );
 
-      const estimatedLightnessFactor = calculateLightnessFactor(
+      const lightnessDeviationFactor = calculateLightnessFactor(
         floatData,
         iterationProcessedFloatData
       );
 
       console.log(
-        `Iteration ${iteration + 1}: estimated lightness factor = ${estimatedLightnessFactor.toFixed(4)}`
+        `Iteration ${iteration + 1}: lightness deviation factor = ${lightnessDeviationFactor.toFixed(4)}`
       );
 
       // End per-iteration benchmark
@@ -369,7 +368,7 @@ export class GrainProcessor {
 
       // Check convergence
       if (
-        Math.abs(estimatedLightnessFactor - TARGET_LIGHTNESS) <
+        Math.abs(lightnessDeviationFactor - TARGET_LIGHTNESS) <
         CONVERGENCE_THRESHOLD
       ) {
         console.log(`Lightness converged after ${iteration + 1} iterations`);
@@ -378,19 +377,19 @@ export class GrainProcessor {
       }
 
       // Adjust exposure for next iteration
-      // If lightness factor > 1, image is too dark → increase exposure
-      // If lightness factor < 1, image is too bright → decrease exposure
-      exposureAdjustmentFactor *= estimatedLightnessFactor;
+      // If lightness factor > 1, image is too dark → increase exposure to make final print lighter
+      // If lightness factor < 1, image is too bright → decrease exposure to make final print darker
+      lightnessCompensationFactor *= lightnessDeviationFactor;
 
       // Store the density map from this iteration
       convergedGrainIntrinsicDensityMap = grainIntrinsicDensityMap;
 
       // Prevent extreme adjustments
-      exposureAdjustmentFactor = Math.max(
+      lightnessCompensationFactor = Math.max(
         VALIDATION_LIMITS.MIN_EXPOSURE_ADJUSTMENT,
         Math.min(
           VALIDATION_LIMITS.MAX_EXPOSURE_ADJUSTMENT,
-          exposureAdjustmentFactor
+          lightnessCompensationFactor
         )
       );
     }
@@ -405,7 +404,7 @@ export class GrainProcessor {
 
     this.performanceTracker.endBenchmark('Iterative Development');
     console.log(
-      `Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'} with exposure adjustment factor: ${exposureAdjustmentFactor.toFixed(4)}`
+      `Film development completed after ${actualIterations} iteration${actualIterations === 1 ? '' : 's'} with lightness compensation factor: ${lightnessCompensationFactor.toFixed(4)}`
     );
 
     // Report completion of iterative development phase
@@ -451,26 +450,12 @@ export class GrainProcessor {
 
     // ========================================================================
     // FINAL OUTPUT PROCESSING
-    // Convert from linear space back to sRGB and preserve image lightness.
+    // Convert from linear space back to sRGB.
     // All color operations are done in linear space as specified in ALGORITHM_DESIGN.md.
     // ========================================================================
 
-    // Calculate lightness correction factor to preserve overall image lightness
-    // Now operates on linear RGB values for physically correct lightness calculation
-    const lightnessFactor = calculateLightnessFactor(
-      floatData,
-      processedFloatData
-    );
-    console.log(`Lightness correction factor: ${lightnessFactor.toFixed(4)}`);
-
-    // Apply lightness scaling in linear space
-    const lightnessAdjustedData = applyLightnessScaling(
-      processedFloatData,
-      lightnessFactor
-    );
-
     // Convert back to Uint8ClampedArray with gamma encoding (sRGB packing at pipeline boundary)
-    const finalData = convertLinearFloatToSrgb(lightnessAdjustedData);
+    const finalData = convertLinearFloatToSrgb(processedFloatData);
 
     // Create ImageData result - handle both browser and Node.js environments
     const result =

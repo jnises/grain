@@ -30,7 +30,9 @@ Never use `finalGrayscale = lightTransmission` - this creates inverted results.
 
 ### 2. Iterative Development Process
 
-Use iterative lightness compensation to match target image brightness:
+Use iterative lightness compensation to match original image brightness.
+We want the output image to roughly have the same lightness as the input image.
+The iterative approach would simulate a photographer iteratively taking new photos with different exposure times until the lightness of the resulting image looks pleasing.
 
 1. Generate grains and calculate initial development
 2. Measure resulting lightness vs target
