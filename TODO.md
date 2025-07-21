@@ -9,6 +9,7 @@
   - [x] Run tests and `npm run check` to ensure all changes are safe.
 - [x] Apply the rules from "Static Methods and Free Functions" from your instructions to grain-processor.ts
 - [x] Write testcases for GrainProcessor.adjustGrainExposures
+- [x] Write unit tests for calculateLightnessFactor
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  

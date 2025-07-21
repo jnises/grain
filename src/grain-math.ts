@@ -205,6 +205,15 @@ export function convertLinearFloatToSrgb(
  * Calculate average lightness ratio between original and processed image
  * for lightness preservation using grayscale luminance calculation
  * Operates on linear grayscale values for physically correct lightness calculation
+ * 
+ * @param originalData - Original image data in linear RGB format (Float32Array, RGBA)
+ * @param processedData - Processed image data in linear RGB format (Float32Array, RGBA)
+ * @returns Lightness correction factor:
+ *   - Factor > 1.0: Processed image is darker than original, needs brightening
+ *   - Factor = 1.0: Processed and original have same average lightness
+ *   - Factor < 1.0: Processed image is brighter than original, needs darkening
+ *   - Special handling for very dark images (< 0.01): clamped to ≤ 1.0 to avoid amplifying noise
+ *   - Clamped to range [0.01, 100.0] for non-dark images to prevent extreme corrections
  */
 export function calculateLightnessFactor(
   originalData: Float32Array,

@@ -229,7 +229,7 @@ export class GrainProcessor {
     const grayscaleImageData = convertImageDataToGrayscale(imageData);
 
     // Convert input to linear floating-point for precision preservation and gamma correctness
-    const floatData = convertSrgbToLinearFloat(grayscaleImageData.data);
+    const incomingImageLinear = convertSrgbToLinearFloat(grayscaleImageData.data);
 
     const totalImagePixels = this.width * this.height;
 
@@ -257,7 +257,7 @@ export class GrainProcessor {
     this.performanceTracker.startBenchmark('Kernel Exposure Calculation');
     const grainExposureMap = this.calculateGrainExposures(
       grainStructure,
-      floatData
+      incomingImageLinear
     );
     this.performanceTracker.endBenchmark('Kernel Exposure Calculation');
 
@@ -347,7 +347,7 @@ export class GrainProcessor {
       );
 
       const lightnessDeviationFactor = calculateLightnessFactor(
-        floatData,
+        incomingImageLinear,
         iterationProcessedFloatData
       );
 
