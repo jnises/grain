@@ -29,7 +29,7 @@
 - [x] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
 - [ ] Keep track of the largest grain in SpatialLookupGrid and use that radius in getGrainsNear instead of specifying a custom one. Also make sure getGrainsNear with that radius would be sure to pick up all grains that could affect the requested position.
 - [ ] Is GRAIN_LOOKUP_RADIUS too small? is it incorrectly calculated? shouldn't it be based on the size of the largest grain? and why is it in all caps anyway?
-- [x] Examine why the algorithm introduces striped patterns. Look at gray.png grain-processed-image.png
+- [ ] Examine why the algorithm introduces striped patterns. Look at gray.png grain-processed-image.png
 - [ ] write an eslint rule to disallow raw Math.random  instead RandomNumberGenerator should be dependency injected. The only allowed Math.random is in DefaultRandomNumberGenerator, and in test code.
 - [ ] Write test of processImage with a testpattern with the left side fully white and the right side fully black. Use a low iso. The output image should be almost completely white on the left side and almost completely black on the right side
 - [ ] Reenable these tests and make sure they pass
