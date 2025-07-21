@@ -592,8 +592,7 @@ export class GrainProcessor {
 
     // Get grains from nearby grid cells
     // Get all nearby grains using the efficient spatial lookup
-    const GRAIN_LOOKUP_RADIUS = grainGrid.getGridSize() * 1.5; // Search radius for nearby grains
-    const nearbyGrains = grainGrid.getGrainsNear(x, y, GRAIN_LOOKUP_RADIUS);
+    const nearbyGrains = grainGrid.getGrainsNear(x, y, grainGrid.getGrainLookupRadius());
 
     // Process nearby grains directly (already filtered by spatial grid)
     for (const grain of nearbyGrains) {

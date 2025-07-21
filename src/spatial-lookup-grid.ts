@@ -9,6 +9,7 @@ export class SpatialLookupGrid {
   private readonly gridWidth: number;
   private readonly gridHeight: number;
   private readonly gridSize: number;
+  private readonly maxGrainSize: number;
 
   constructor(imageWidth: number, imageHeight: number, grains: GrainPoint[]) {
     // Calculate optimal grid size based on grain sizes
@@ -18,6 +19,7 @@ export class SpatialLookupGrid {
         maxGrainSize = grain.size;
       }
     }
+    this.maxGrainSize = maxGrainSize;
     this.gridSize = Math.max(16, Math.floor(maxGrainSize * 2));
 
     // Calculate grid dimensions
@@ -65,6 +67,24 @@ export class SpatialLookupGrid {
    */
   getGridSize(): number {
     return this.gridSize;
+  }
+
+  /**
+   * Get the maximum grain size in this grid
+   */
+  getMaxGrainSize(): number {
+    return this.maxGrainSize;
+  }
+
+  /**
+   * Get the appropriate lookup radius that ensures all grains that could affect
+   * a position are found. Based on the largest grain size and its influence radius.
+   * This accounts for the grain influence radius factor used in grain processing.
+   */
+  getGrainLookupRadius(): number {
+    // Grain influence radius factor of 2 is used in calculatePixelGrainEffect
+    const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
+    return this.maxGrainSize * GRAIN_INFLUENCE_RADIUS_FACTOR;
   }
 
   /**
