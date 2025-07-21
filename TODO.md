@@ -27,13 +27,13 @@
 - [x] Change the grain debug drawing to show the size of the grains using color.
 - [x] Do we have a test that checks the density of points generated using poisson disk sampling vs fallback? If not create one. The densities should be mostly the same.
 - [x] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
+- [ ] Write test of processImage with a testpattern with the left side fully white and the right side fully black. Use a low iso. The output image should be almost completely white on the left side and almost completely black on the right side
 - [ ] Reenable these tests and make sure they pass
   - [ ] Reenable `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" and investigate why it outputs black.
   - [ ] Reenable `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" and investigate why it outputs black.
   - [ ] Reenable `test/grain-processor-integration.test.ts` > "should produce different results for different film types" and investigate why it outputs black.
   - [ ] Reenable `test/iterative-vs-single-pass.test.ts` > "should demonstrate improved lightness preservation with iterative approach" and investigate why it outputs black.
   - [ ] Reenable `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" and update the test to work with a smaller image to make it faster.
-- [ ] I'm getting diagonal stripes in the processed image. Looks like the grains are uniform though. What could be causing this? It looks as if grain exposure is modulated with a mostly diagonal sawtooth pattern.
 - [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
 - [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
 - [ ] Enable each test below one by one. Check if it passes. If not, determine if the code or the test is wrong (probably the test). If the test is wrong, determine if it is worth it to update the test or better to just remove it.
