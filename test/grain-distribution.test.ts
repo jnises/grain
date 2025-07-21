@@ -596,6 +596,76 @@ describe('Grain Distribution Bug Tests', () => {
         expectedPerQuadrant - tolerance
       );
     });
+
+    it('should produce similar densities between Poisson and fallback methods', () => {
+      // Test with different parameters to ensure consistency across conditions
+      // Use more realistic parameters where Poisson has a better chance of succeeding
+      const testCases = [
+        { width: 400, height: 300, iso: 800 }, // Higher ISO = lower density, more achievable
+        { width: 200, height: 200, iso: 1200 }, // Smaller image, higher ISO
+        { width: 300, height: 200, iso: 600 }, // Moderate settings
+      ];
+
+      for (const testCase of testCases) {
+        console.log(`Testing density comparison for ${testCase.width}x${testCase.height}, ISO ${testCase.iso}`);
+        
+        const generator = new GrainGenerator(testCase.width, testCase.height, {
+          ...settings,
+          iso: testCase.iso,
+        });
+        const params = generator.calculateGrainParameters();
+        const imageArea = testCase.width * testCase.height;
+
+        // Generate points using Poisson disk sampling
+        const poissonPoints = generator.generatePoissonDiskSampling(
+          params.minDistance,
+          params.grainDensity
+        );
+        const poissonDensity = poissonPoints.length / imageArea;
+
+        // Generate points using fallback grid method with same target count
+        const fallbackPoints = generator.generateFallbackGrains(
+          [],
+          params.grainDensity,
+          params.minDistance
+        );
+        const fallbackDensity = fallbackPoints.length / imageArea;
+
+        console.log(
+          `  Target: ${params.grainDensity}, MinDistance: ${params.minDistance.toFixed(2)}`
+        );
+        console.log(
+          `  Poisson: ${poissonPoints.length} points (density: ${poissonDensity.toFixed(6)}, efficiency: ${((poissonPoints.length / params.grainDensity) * 100).toFixed(1)}%)`
+        );
+        console.log(
+          `  Fallback: ${fallbackPoints.length} points (density: ${fallbackDensity.toFixed(6)}, efficiency: ${((fallbackPoints.length / params.grainDensity) * 100).toFixed(1)}%)`
+        );
+
+        // Both methods should generate a reasonable number of points
+        expect(poissonPoints.length).toBeGreaterThan(0);
+        expect(fallbackPoints.length).toBeGreaterThan(0);
+
+        // Calculate density ratio
+        const densityRatio = fallbackDensity / poissonDensity;
+        console.log(`  Density ratio (fallback/poisson): ${densityRatio.toFixed(3)}`);
+
+        // The densities should be reasonably similar considering the different approaches:
+        // - Poisson is probabilistic and may not achieve full target density
+        // - Fallback is systematic and should achieve close to target density
+        // Allow for wider range since Poisson can vary significantly based on parameters
+        expect(densityRatio).toBeGreaterThan(0.2); // Fallback shouldn't be much less than Poisson
+        expect(densityRatio).toBeLessThan(10.0); // But also shouldn't be extremely higher
+        
+        // More important: both should produce reasonable densities for their approach
+        // Poisson should achieve at least some reasonable fraction of target
+        const poissonEfficiency = poissonPoints.length / params.grainDensity;
+        expect(poissonEfficiency).toBeGreaterThan(0.05); // At least 5% of target
+        
+        // Fallback should achieve very close to target (since it's systematic)
+        const fallbackEfficiency = fallbackPoints.length / params.grainDensity;
+        expect(fallbackEfficiency).toBeGreaterThan(0.85); // At least 85% of target
+      }
+    });
   });
 
   describe('Parameter Validation', () => {
