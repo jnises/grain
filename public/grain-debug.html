@@ -524,7 +524,24 @@
         }
       }
 
-      function drawGrains(canvasId, grains, color = '#ffffff') {
+      /**
+       * Determine grain color based on size using the same color scheme as size distribution
+       */
+      function getGrainSizeColor(grainSize, minSize, maxSize) {
+        const sizeRange = maxSize - minSize;
+        const smallThreshold = minSize + sizeRange * 0.33;
+        const mediumThreshold = minSize + sizeRange * 0.66;
+        
+        if (grainSize <= smallThreshold) {
+          return '#ff4400'; // Red-orange for small grains
+        } else if (grainSize <= mediumThreshold) {
+          return '#ff8800'; // Orange for medium grains
+        } else {
+          return '#ffff00'; // Yellow for large grains
+        }
+      }
+
+      function drawGrains(canvasId, grains, color = '#ffffff', colorBySize = false) {
         const canvas = document.getElementById(canvasId);
         const ctx = canvas.getContext('2d');
 
@@ -538,12 +555,26 @@
         const scaleX = canvas.width / currentSettings.width;
         const scaleY = canvas.height / currentSettings.height;
 
+        // Calculate size range for color-by-size mode
+        let minSize = 0, maxSize = 0;
+        if (colorBySize && grains.length > 0) {
+          const sizes = grains.map(g => g.size);
+          minSize = Math.min(...sizes);
+          maxSize = Math.max(...sizes);
+        }
+
         // Add transparency to see overlapping grains
         ctx.globalAlpha = 0.7;
-        ctx.fillStyle = color;
-
+        
         let drawnCount = 0;
         for (const grain of grains) {
+          // Determine color for this grain
+          if (colorBySize) {
+            ctx.fillStyle = getGrainSizeColor(grain.size, minSize, maxSize);
+          } else {
+            ctx.fillStyle = color;
+          }
+
           // Scale both position and size
           const scaledX = grain.x * scaleX;
           const scaledY = grain.y * scaleY;
@@ -563,8 +594,9 @@
         // Reset alpha
         ctx.globalAlpha = 1.0;
 
+        const colorDescription = colorBySize ? 'color-coded by size' : `with color ${color}`;
         console.log(
-          `Drew ${drawnCount} grains for ${canvasId} with color ${color}`
+          `Drew ${drawnCount} grains for ${canvasId} ${colorDescription}`
         );
       }
 
@@ -907,8 +939,8 @@
           ctx.strokeRect(x, y, width, height);
         }
 
-        // Draw grains as white dots
-        drawGrains('gridCanvas', allGrains, '#ffffff');
+        // Draw grains color-coded by size
+        drawGrains('gridCanvas', allGrains, '#ffffff', true);
 
         // Log statistics
         log(`Original grid size: ${originalGridSize}px`, 'gridStats');

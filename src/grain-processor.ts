@@ -816,6 +816,7 @@ export class GrainProcessor {
   /**
    * Debug function to draw grain center points on the image
    * Only available in development mode for debugging grain placement
+   * Grain centers are color-coded by size: small=red, medium=orange, large=yellow
    */
   private static drawGrainCenters(
     imageData: ImageData,
@@ -825,14 +826,37 @@ export class GrainProcessor {
   ): void {
     console.log(`Drawing grain centers for ${grainStructure.length} grains`);
 
+    if (grainStructure.length === 0) return;
+
+    // Calculate size range for color coding
+    const sizes = grainStructure.map(g => g.size);
+    let minSize = sizes[0];
+    let maxSize = sizes[0];
+    for (const size of sizes) {
+      if (size < minSize) minSize = size;
+      if (size > maxSize) maxSize = size;
+    }
+    const sizeRange = maxSize - minSize;
+
+    const smallThreshold = minSize + sizeRange * 0.33;
+    const mediumThreshold = minSize + sizeRange * 0.66;
+
     for (const grain of grainStructure) {
       const centerX = Math.round(grain.x);
       const centerY = Math.round(grain.y);
 
       // Draw a small cross at the grain center
-      // Use bright magenta color that's unlikely to be in the original image
+      // Color-code by grain size: small=red, medium=orange, large=yellow
       const crossSize = Math.max(1, Math.floor(grain.size * 0.3)); // Scale cross size with grain size
-      const color = { r: 255, g: 0, b: 255 }; // Bright magenta
+      
+      let color: { r: number; g: number; b: number };
+      if (grain.size <= smallThreshold) {
+        color = { r: 255, g: 68, b: 0 }; // Red-orange (#ff4400)
+      } else if (grain.size <= mediumThreshold) {
+        color = { r: 255, g: 136, b: 0 }; // Orange (#ff8800)
+      } else {
+        color = { r: 255, g: 255, b: 0 }; // Yellow (#ffff00)
+      }
 
       // Draw horizontal line
       for (let dx = -crossSize; dx <= crossSize; dx++) {
@@ -859,6 +883,6 @@ export class GrainProcessor {
       }
     }
 
-    console.log(`Debug: Drew ${grainStructure.length} grain center markers`);
+    console.log(`Debug: Drew ${grainStructure.length} grain center markers color-coded by size`);
   }
 }
