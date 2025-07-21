@@ -1,21 +1,14 @@
-- [x] Use something like a flamegraph to find the hotspots in the code and optimize those
-- [x] Create a separate assert util for slow checks that is only run when in dev mode.
-- [x] Update agent instructions on how to use the asserts.
-- [x] Update hot code to use the dev assert. look for hot code using the profiling functionality as outlined in scripts/profiling/README.md
-- [x] Figure out why `npm run profile` prints an empty table for `🔥 Top CPU Hotspots (by self time):` and make it work
-- [x] Run `npm run profile` to figure out hot codepaths and use devAssert there
-- [x] Make sure `npm run preview` optimizes out devAssert
 - [x] Go through the code and apply the rules around constants from the instructions
 - [x] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
 - [x] Add section about using descriptive types or aliases where it makes sense to your instructions.
 - [x] Add a code formatting configuration to the project. And apply it to all source code.
-- [x] Reenable these tests and make sure they pass
-  - [x] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
-  - [x] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
-  - [x] `test/grain-processor-integration.test.ts` > "should produce different results for different film types" (algorithm outputs black)
-  - [x] `test/iterative-vs-single-pass.test.ts` > "should demonstrate improved lightness preservation with iterative approach" (algorithm outputs black)
-  - [x] `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" (test times out due to expensive computation)
 - [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use \*\* instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future. Also add eslint checks where applicable. Start by running a test to make sure your changes does not add new ones. Keep going until the tests and `npm run check` passes.
+- [ ] Reenable these tests and make sure they pass
+  - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
+  - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
+  - [ ] `test/grain-processor-integration.test.ts` > "should produce different results for different film types" (algorithm outputs black)
+  - [ ] `test/iterative-vs-single-pass.test.ts` > "should demonstrate improved lightness preservation with iterative approach" (algorithm outputs black)
+  - [ ] `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" (test times out due to expensive computation)
 - [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
 - [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
 - [ ] Implement sampling estimation for the iterative lightness compensation in processImage.
