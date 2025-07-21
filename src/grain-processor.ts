@@ -231,11 +231,6 @@ export class GrainProcessor {
     // Convert input to linear floating-point for precision preservation and gamma correctness
     const floatData = convertSrgbToLinearFloat(grayscaleImageData.data);
 
-    // Create floating-point result buffer
-    const resultFloatData = new Float32Array(floatData.length);
-    // Copy original data as starting point
-    resultFloatData.set(floatData);
-
     const totalImagePixels = this.width * this.height;
 
     // Start overall benchmark
