@@ -19,7 +19,8 @@
     "profile:flamegraph": "NODE_ENV=production npx tsx scripts/profiling/flamegraph_profiler.ts",
     "profile:simple": "NODE_ENV=production npx tsx scripts/profiling/simple_profiler.ts",
     "profile:hotspots": "NODE_ENV=production scripts/profiling/profile_hotspots.sh",
-    "profile": "npm run profile:flamegraph"
+    "profile": "npm run profile:flamegraph",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "react": "^19.1.0",
@@ -40,6 +41,7 @@
     "gh-pages": "^6.3.0",
     "globals": "^16.2.0",
     "jsdom": "^26.1.0",
+    "prettier": "^3.6.2",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vite": "^7.0.0",
