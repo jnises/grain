@@ -35,6 +35,7 @@
   - In the current implementation we don't support overlapping.
   - Could just take the current grain generation and just have multiple at different depths?
   - refer to GRAIN_OVERLAPPING.md for some notes on the issue
+  - Update ALGORITHM_DESIGN.md with the new functionality
 - [ ] Add support for lower iso than 50
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
