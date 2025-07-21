@@ -73,3 +73,31 @@ export interface FilmCharacteristics {
   grainClumping: number;
   colorVariation: number;
 }
+
+/**
+ * Represents the light exposure received by a single grain.
+ * This is a linear float value, typically in the range [0, 1].
+ */
+export type GrainExposure = number;
+
+/**
+ * A map from each grain point to its calculated light exposure.
+ */
+export type GrainExposureMap = Map<GrainPoint, GrainExposure>;
+
+/**
+ * Represents the intrinsic optical density of a single developed grain.
+ * This is a unitless value representing light absorption, typically in the range [0, 1].
+ */
+export type GrainIntrinsicDensity = number;
+
+/**
+ * A map from each grain point to its intrinsic density after the development phase.
+ */
+export type GrainIntrinsicDensityMap = Map<GrainPoint, GrainIntrinsicDensity>;
+
+/**
+ * Represents the contribution of a single grain to a pixel's total density.
+ * This is a unitless value.
+ */
+export type PixelGrainEffect = number;

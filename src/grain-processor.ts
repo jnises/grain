@@ -17,7 +17,9 @@ import { convertImageDataToGrayscale } from './color-space';
 import type {
   GrainSettings,
   GrainPoint,
-  RandomNumberGenerator
+  RandomNumberGenerator,
+  GrainExposureMap,
+  GrainIntrinsicDensityMap,
 } from './types';
 import { 
   assertPositiveInteger, 
@@ -136,10 +138,10 @@ export class GrainProcessor {
    * 
    * See ALGORITHM_DESIGN.md: "Camera Exposure Phase"
    */
-  private calculateGrainExposures(grains: GrainPoint[], imageData: Float32Array): Map<GrainPoint, number> {
+  private calculateGrainExposures(grains: GrainPoint[], imageData: Float32Array): GrainExposureMap {
     console.log(`Calculating kernel-based exposures for ${grains.length} grains...`);
     
-    const exposureMap = new Map<GrainPoint, number>();
+    const exposureMap: GrainExposureMap = new Map();
     
     for (const grain of grains) {
       const averageExposure = sampleGrainAreaExposure(
@@ -250,7 +252,7 @@ export class GrainProcessor {
     
     // Initialize exposure adjustment factor
     let exposureAdjustmentFactor = 1.0;
-    let convergedGrainIntrinsicDensityMap: Map<GrainPoint, number> | null = null;
+    let convergedGrainIntrinsicDensityMap: GrainIntrinsicDensityMap | null = null;
     let actualIterations = 0;
     
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
@@ -441,10 +443,10 @@ export class GrainProcessor {
    * @returns New adjusted exposure map with values clamped to [0, 1]
    */
   private adjustGrainExposures(
-    originalExposureMap: Map<GrainPoint, number>, 
+    originalExposureMap: GrainExposureMap, 
     adjustmentFactor: number
-  ): Map<GrainPoint, number> {
-    const adjustedMap = new Map<GrainPoint, number>();
+  ): GrainExposureMap {
+    const adjustedMap: GrainExposureMap = new Map();
     
     // Use smaller, more conservative adjustment steps to avoid exceeding bounds
     // Convert factor to logarithmic adjustment for more stable iteration
@@ -483,7 +485,7 @@ export class GrainProcessor {
   private processPixelEffects(
     grainStructure: GrainPoint[],
     grainGrid: SpatialLookupGrid,
-    grainIntrinsicDensityMap: Map<GrainPoint, number>, // Grain densities from development phase
+    grainIntrinsicDensityMap: GrainIntrinsicDensityMap, // Grain densities from development phase
     outputWidth: number,
     outputHeight: number
   ): { resultFloatData: Float32Array; grainEffectCount: number; processedPixels: number } {
