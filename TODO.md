@@ -10,6 +10,8 @@
 - [x] Apply the rules from "Static Methods and Free Functions" from your instructions to grain-processor.ts
 - [x] Write testcases for GrainProcessor.adjustGrainExposures
 - [x] Write unit tests for calculateLightnessFactor
+- [x] Write test that ensures that the lightness iteration converges. Specifically that the individual components behave.
+ - [x] Make sure the value returned by calculateLightnessFactor behaves correctly when applied by adjustGrainExposures
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
