@@ -12,6 +12,10 @@
 - [x] Write unit tests for calculateLightnessFactor
 - [x] Write test that ensures that the lightness iteration converges. Specifically that the individual components behave.
  - [x] Make sure the value returned by calculateLightnessFactor behaves correctly when applied by adjustGrainExposures
+- [ ] Apply the instructions from the "Descriptive Types and Type Aliases" section on the types in types.ts
+- [ ] Implement sampling estimation for the iterative lightness compensation in processImage.
+  - [ ] Share code with `processPixelEffects` for the estimation
+  - [ ] Profile to make sure it improves performance
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
@@ -20,9 +24,6 @@
   - [ ] `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" (test times out due to expensive computation)
 - [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
 - [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
-- [ ] Implement sampling estimation for the iterative lightness compensation in processImage.
-  - [ ] Share code with `processPixelEffects` for the estimation
-  - [ ] Profile to make sure it improves performance
 - [ ] Enable each test below one by one. Check if it passes. If not, determine if the code or the test is wrong (probably the test). If the test is wrong, determine if it is worth it to update the test or better to just remove it.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
   - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"

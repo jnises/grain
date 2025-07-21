@@ -298,32 +298,4 @@ export class GrainDensityCalculator {
     const pixelEffect = intrinsicDensity * falloffFactor;
     return pixelEffect;
   }
-
-  /**
-   * Calculate grain density for density-based compositing
-   * Converts grain strength to optical density using film characteristic curve
-   */
-  public calculateGrainDensity(
-    grainStrength: number,
-    grain: GrainPoint
-  ): number {
-    // Maximum reasonable density per unit area (from grain-processor validation limits)
-    const MAX_REASONABLE_DENSITY = 1000000;
-    
-    // Convert grain strength to optical density
-    const baseDensity = grainStrength * grain.sensitivity;
-
-    // Normalize density to [0, 1] range for film curve
-    // Maximum reasonable density is around 3.0 (very dense grain)
-    const normalizedDensity = Math.min(
-      baseDensity / MAX_REASONABLE_DENSITY,
-      1.0
-    );
-
-    // Apply film characteristic curve for density response
-    const densityResponse = this.filmCurve(normalizedDensity);
-
-    // Return the density response directly from film curve
-    return densityResponse;
-  }
 }
