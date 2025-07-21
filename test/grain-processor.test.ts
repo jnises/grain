@@ -1,6 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest';
-import type { GrainSettings } from '../src/types';
+import { GrainProcessor } from '../src/grain-processor';
+import type { GrainSettings, GrainPoint, GrainExposureMap } from '../src/types';
 import { createMockImageData, createTestGrainProcessor } from './test-utils';
+
+// Test helper class to access GrainProcessor private static methods
+class TestGrainProcessor extends GrainProcessor {
+  public static testAdjustGrainExposures(
+    originalExposureMap: GrainExposureMap,
+    adjustmentFactor: number
+  ): GrainExposureMap {
+    return (this as any).adjustGrainExposures(originalExposureMap, adjustmentFactor);
+  }
+}
 
 /**
  * Unit tests for GrainProcessor class
@@ -245,6 +257,196 @@ describe('GrainProcessor', () => {
       console.log(
         `Structure preservation test: left=${averageLeftLuminance.toFixed(1)}, right=${averageRightLuminance.toFixed(1)}, diff=${luminanceDifference.toFixed(1)}`
       );
+    });
+  });
+
+  describe('adjustGrainExposures', () => {
+    /**
+     * Helper function to create a test grain point
+     */
+    const createTestGrain = (x: number, y: number): GrainPoint => ({
+      x,
+      y,
+      size: 1.0,
+      sensitivity: 1.0,
+      developmentThreshold: 0.5,
+    });
+
+    /**
+     * Helper function to create a test exposure map
+     */
+    const createTestExposureMap = (exposures: number[]): GrainExposureMap => {
+      const map: GrainExposureMap = new Map();
+      exposures.forEach((exposure, index) => {
+        const grain = createTestGrain(index, index);
+        map.set(grain, exposure);
+      });
+      return map;
+    };
+
+    it('should preserve map structure', () => {
+      const originalMap = createTestExposureMap([0.2, 0.5, 0.8]);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.0);
+
+      expect(adjustedMap.size).toBe(originalMap.size);
+      
+      // Check that all original grains are present in adjusted map
+      for (const grain of originalMap.keys()) {
+        expect(adjustedMap.has(grain)).toBe(true);
+      }
+    });
+
+    it('should clamp all values to [0, 1] range', () => {
+      const originalMap = createTestExposureMap([0.1, 0.5, 0.9]);
+      
+      // Test with very large adjustment factor
+      const adjustedMapLarge = TestGrainProcessor.testAdjustGrainExposures(originalMap, 100.0);
+      for (const exposure of adjustedMapLarge.values()) {
+        expect(exposure).toBeGreaterThanOrEqual(0.0);
+        expect(exposure).toBeLessThanOrEqual(1.0);
+      }
+
+      // Test with very small adjustment factor  
+      const adjustedMapSmall = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.01);
+      for (const exposure of adjustedMapSmall.values()) {
+        expect(exposure).toBeGreaterThanOrEqual(0.0);
+        expect(exposure).toBeLessThanOrEqual(1.0);
+      }
+    });
+
+    it('should preserve relative ordering with moderate adjustment factors', () => {
+      const originalMap = createTestExposureMap([0.2, 0.5, 0.8]);
+      const originalGrains = Array.from(originalMap.keys());
+
+      // Test with moderate increase
+      const adjustedMapIncrease = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.2);
+      const adjustedExposuresIncrease = originalGrains.map(grain => adjustedMapIncrease.get(grain)!);
+      
+      // Should maintain relative ordering: first < second < third
+      expect(adjustedExposuresIncrease[0]).toBeLessThan(adjustedExposuresIncrease[1]);
+      expect(adjustedExposuresIncrease[1]).toBeLessThan(adjustedExposuresIncrease[2]);
+
+      // Test with moderate decrease
+      const adjustedMapDecrease = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.8);
+      const adjustedExposuresDecrease = originalGrains.map(grain => adjustedMapDecrease.get(grain)!);
+      
+      // Should maintain relative ordering: first < second < third
+      expect(adjustedExposuresDecrease[0]).toBeLessThan(adjustedExposuresDecrease[1]);
+      expect(adjustedExposuresDecrease[1]).toBeLessThan(adjustedExposuresDecrease[2]);
+    });
+
+    it('should apply no adjustment when factor is 1.0', () => {
+      const originalMap = createTestExposureMap([0.1, 0.3, 0.7, 0.9]);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.0);
+
+      for (const [grain, originalExposure] of originalMap.entries()) {
+        const adjustedExposure = adjustedMap.get(grain)!;
+        expect(adjustedExposure).toBeCloseTo(originalExposure, 5);
+      }
+    });
+
+    it('should increase exposures when factor > 1.0', () => {
+      const originalMap = createTestExposureMap([0.2, 0.4, 0.6]);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.5);
+
+      for (const [grain, originalExposure] of originalMap.entries()) {
+        const adjustedExposure = adjustedMap.get(grain)!;
+        // Should increase (unless clamped at 1.0)
+        if (originalExposure < 0.9) {
+          expect(adjustedExposure).toBeGreaterThan(originalExposure);
+        }
+      }
+    });
+
+    it('should decrease exposures when factor < 1.0', () => {
+      const originalMap = createTestExposureMap([0.3, 0.5, 0.8]);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.7);
+
+      for (const [grain, originalExposure] of originalMap.entries()) {
+        const adjustedExposure = adjustedMap.get(grain)!;
+        // Should decrease (unless clamped at 0.0)
+        if (originalExposure > 0.1) {
+          expect(adjustedExposure).toBeLessThan(originalExposure);
+        }
+      }
+    });
+
+    it('should handle edge case with zero exposures', () => {
+      const originalMap = createTestExposureMap([0.0, 0.0, 0.0]);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 2.0);
+
+      for (const exposure of adjustedMap.values()) {
+        expect(exposure).toBe(0.0);
+      }
+    });
+
+    it('should handle edge case with maximum exposures', () => {
+      const originalMap = createTestExposureMap([1.0, 1.0, 1.0]);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.5);
+
+      for (const exposure of adjustedMap.values()) {
+        expect(exposure).toBeLessThan(1.0);
+        expect(exposure).toBeGreaterThan(0.0);
+      }
+    });
+
+    it('should handle extreme adjustment factors gracefully', () => {
+      const originalMap = createTestExposureMap([0.1, 0.5, 0.9]);
+      
+      // Test with very large factor
+      const adjustedMapExtremeLarge = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1000000.0);
+      expect(() => {
+        for (const exposure of adjustedMapExtremeLarge.values()) {
+          expect(exposure).toBeGreaterThanOrEqual(0.0);
+          expect(exposure).toBeLessThanOrEqual(1.0);
+          expect(Number.isFinite(exposure)).toBe(true);
+        }
+      }).not.toThrow();
+
+      // Test with very small factor
+      const adjustedMapExtremeSmall = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.000001);
+      expect(() => {
+        for (const exposure of adjustedMapExtremeSmall.values()) {
+          expect(exposure).toBeGreaterThanOrEqual(0.0);
+          expect(exposure).toBeLessThanOrEqual(1.0);
+          expect(Number.isFinite(exposure)).toBe(true);
+        }
+      }).not.toThrow();
+    });
+
+    it('should create a new map and not modify the original', () => {
+      const originalExposures = [0.2, 0.5, 0.8];
+      const originalMap = createTestExposureMap(originalExposures);
+      const originalMapCopy = new Map(originalMap);
+      
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.5);
+
+      // Original map should be unchanged
+      expect(originalMap).toEqual(originalMapCopy);
+      
+      // Adjusted map should be a different instance
+      expect(adjustedMap).not.toBe(originalMap);
+    });
+
+    it('should apply logarithmic scaling behavior', () => {
+      const originalMap = createTestExposureMap([0.5]);
+      const grain = Array.from(originalMap.keys())[0];
+      
+      // Test that the adjustment is dampened (logarithmic scaling with dampening factor 0.3)
+      const adjustedMap2x = TestGrainProcessor.testAdjustGrainExposures(originalMap, 2.0);
+      const adjustedMap10x = TestGrainProcessor.testAdjustGrainExposures(originalMap, 10.0);
+      
+      const exposure2x = adjustedMap2x.get(grain)!;
+      const exposure10x = adjustedMap10x.get(grain)!;
+      
+      // Due to logarithmic scaling with dampening, 10x factor should not result in 5x more change than 2x factor
+      const change2x = exposure2x - 0.5;
+      const change10x = exposure10x - 0.5;
+      
+      // The ratio should be less than 5 due to dampening
+      if (change2x > 0 && change10x > 0) {
+        expect(change10x / change2x).toBeLessThan(5.0);
+      }
     });
   });
 });
