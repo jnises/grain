@@ -641,14 +641,11 @@ export class GrainProcessor {
                 x,
                 y
               );
-            const grainDensity = this.grainDensityCalculator.calculateGrainDensity(
-              pixelGrainEffect,
-              grain
-            );
 
             // For monochrome processing, use simple grayscale density accumulation
             // Skip color-specific effects (channel sensitivity, color shifts, chromatic aberration)
-            totalGrainDensity += grainDensity * weight;
+            // pixelGrainEffect is already the final optical density contribution
+            totalGrainDensity += pixelGrainEffect * weight;
 
             totalWeight += weight;
           }
