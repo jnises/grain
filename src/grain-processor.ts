@@ -217,7 +217,10 @@ export class GrainProcessor {
   }
 
   // Apply grain to image
-  public async processImage(imageData: ImageData): Promise<ImageData> {
+  public async processImage(
+    imageData: ImageData,
+    customGrains?: GrainPoint[]
+  ): Promise<ImageData> {
     // Assert that the incoming image dimensions match the processor dimensions
     assert(
       imageData.width === this.width && imageData.height === this.height,
@@ -253,7 +256,7 @@ export class GrainProcessor {
     // Step 1: Generate grain structure (simulates film emulsion grain distribution)
     this.reportProgress(5, 'Generating grain structure...');
     this.performanceTracker.startBenchmark('Grain Generation');
-    const grainStructure = this.generateGrainStructure();
+    const grainStructure = customGrains ?? this.generateGrainStructure();
     this.performanceTracker.endBenchmark('Grain Generation');
 
     // Step 2: Create spatial acceleration grid for efficient grain lookup

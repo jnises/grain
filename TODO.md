@@ -23,7 +23,8 @@
   - [x] Add tests to ensure sampling estimation provides reasonable accuracy vs full processing
 - [x] Clean up comments like ```// See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"``` that are no longer valid with the updated ALGORITHM_DESIGN.md
 - [x] disable the test "should produce LARGER average grain sizes as ISO increases" and move "should provide significant performance improvement over full processing" to benchmarking
-- [ ] Refactor GrainProcessor to allow us to specify the exact grains to use for processImage. Write a test that generates uniform grains and use those along with a middle gray test image for processImage. Test that the output is mostly uniform gray without much structure.
+- [x] Refactor GrainProcessor to allow us to specify the exact grains to use for processImage. Write a test that generates uniform grains on a dense grid and use those along with a middle gray test image for processImage. Test that the output is mostly uniform gray without much structure.
+- [ ] Change the grain debug drawing to show the size of the grains using color.
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  

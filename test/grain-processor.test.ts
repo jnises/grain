@@ -444,10 +444,134 @@ describe('GrainProcessor', () => {
       const change2x = exposure2x - 0.5;
       const change10x = exposure10x - 0.5;
       
-      // The ratio should be less than 5 due to dampening
+            // The ratio should be less than 5 due to dampening
       if (change2x > 0 && change10x > 0) {
         expect(change10x / change2x).toBeLessThan(5.0);
       }
+    });
+  });
+
+  describe('Custom Grains Processing', () => {
+    it('should process uniform grains with middle gray image producing uniform output', async () => {
+      const width = 64;
+      const height = 64;
+      const settings: GrainSettings = {
+        iso: 100,
+        filmType: 'kodak',
+      };
+
+      // Create uniform grains on a dense grid (4x4 pixel spacing)
+      const uniformGrains: GrainPoint[] = [];
+      const grainSpacing = 4;
+      const grainSize = 2.0;
+      const uniformSensitivity = 0.5;
+      const uniformThreshold = 0.1;
+
+      for (let y = grainSpacing; y < height; y += grainSpacing) {
+        for (let x = grainSpacing; x < width; x += grainSpacing) {
+          uniformGrains.push({
+            x,
+            y,
+            size: grainSize,
+            sensitivity: uniformSensitivity,
+            developmentThreshold: uniformThreshold,
+          });
+        }
+      }
+
+      // Create middle gray test image (18% gray ≈ 128 in 8-bit)
+      const middleGrayValue = 128;
+      const testImage = createMockImageData(width, height, middleGrayValue);
+
+      // Process with uniform grains
+      const processor = createTestGrainProcessor(width, height, settings);
+      const result = await processor.processImage(testImage, uniformGrains);
+
+      // Analyze the output for uniformity
+      const outputData = result.data;
+      const pixelValues: number[] = [];
+      
+      // Collect all pixel values (R channel, since it's grayscale)
+      for (let i = 0; i < outputData.length; i += 4) {
+        pixelValues.push(outputData[i]);
+      }
+
+      // Calculate statistics
+      const mean = pixelValues.reduce((sum, val) => sum + val, 0) / pixelValues.length;
+      const variance = pixelValues.reduce((sum, val) => sum + (val - mean) ** 2, 0) / pixelValues.length;
+      const stdDev = Math.sqrt(variance);
+      
+      // Find min and max values efficiently without spread operator
+      let minValue = pixelValues[0];
+      let maxValue = pixelValues[0];
+      for (let i = 1; i < pixelValues.length; i++) {
+        if (pixelValues[i] < minValue) minValue = pixelValues[i];
+        if (pixelValues[i] > maxValue) maxValue = pixelValues[i];
+      }
+
+      // Debug output to understand the actual values
+      console.log(`Debug - Mean: ${mean.toFixed(2)}, StdDev: ${stdDev.toFixed(2)}, Min: ${minValue}, Max: ${maxValue}`);
+
+      // With uniform grains, the output should be relatively uniform
+      // Allow for some variation due to grain effects but expect reasonable standard deviation
+      expect(stdDev).toBeLessThan(50); // Allow for reasonable film simulation variation
+      
+      // The mean should be reasonably close to the original gray value
+      // (may differ due to film processing simulation)
+      expect(Math.abs(mean - middleGrayValue)).toBeLessThan(50);
+      
+      // Ensure the image doesn't have too many extreme values
+      // Film simulation can create some black pixels, but not too many
+      const blackPixels = pixelValues.filter(val => val === 0).length;
+      const whitePixels = pixelValues.filter(val => val === 255).length;
+      const totalPixels = pixelValues.length;
+      
+      expect(blackPixels / totalPixels).toBeLessThan(0.1); // Less than 10% black pixels
+      expect(whitePixels / totalPixels).toBeLessThan(0.1); // Less than 10% white pixels
+    });
+
+    it('should accept custom grains and use them instead of generating random grains', async () => {
+      const width = 32;
+      const height = 32;
+      const settings: GrainSettings = {
+        iso: 200,
+        filmType: 'kodak',
+      };
+
+      // Create a specific set of custom grains
+      const customGrains: GrainPoint[] = [
+        { x: 8, y: 8, size: 3.0, sensitivity: 0.8, developmentThreshold: 0.2 },
+        { x: 16, y: 8, size: 2.5, sensitivity: 0.6, developmentThreshold: 0.15 },
+        { x: 24, y: 8, size: 3.5, sensitivity: 0.7, developmentThreshold: 0.25 },
+        { x: 8, y: 16, size: 2.0, sensitivity: 0.5, developmentThreshold: 0.1 },
+        { x: 16, y: 16, size: 4.0, sensitivity: 0.9, developmentThreshold: 0.3 },
+        { x: 24, y: 16, size: 2.8, sensitivity: 0.65, developmentThreshold: 0.18 },
+        { x: 8, y: 24, size: 3.2, sensitivity: 0.75, developmentThreshold: 0.22 },
+        { x: 16, y: 24, size: 2.2, sensitivity: 0.55, developmentThreshold: 0.12 },
+        { x: 24, y: 24, size: 3.8, sensitivity: 0.85, developmentThreshold: 0.28 },
+      ];
+
+      const testImage = createMockImageData(width, height, 100);
+      const processor = createTestGrainProcessor(width, height, settings);
+
+      // Process with custom grains - should not throw any errors
+      const result = await processor.processImage(testImage, customGrains);
+
+      // Basic sanity checks
+      expect(result.width).toBe(width);
+      expect(result.height).toBe(height);
+      expect(result.data.length).toBe(width * height * 4);
+
+      // Ensure processing actually occurred (output should differ from input)
+      let differenceCount = 0;
+      for (let i = 0; i < result.data.length; i += 4) {
+        if (result.data[i] !== 100) { // R channel differs from original gray value
+          differenceCount++;
+        }
+      }
+      
+      // With grain processing, at least some pixels should be affected
+      expect(differenceCount).toBeGreaterThan(0);
     });
   });
 });
