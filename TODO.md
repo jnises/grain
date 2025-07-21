@@ -21,13 +21,13 @@
   - [x] Add configuration options for sampling density/strategy
   - [x] Profile to make sure it improves performance
   - [x] Add tests to ensure sampling estimation provides reasonable accuracy vs full processing
+- [ ] Clean up comments like ```// See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"``` that are no longer valid with the updated ALGORITHM_DESIGN.md
 - [ ] Reenable these tests and make sure they pass
   - [ ] `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" (algorithm outputs black)
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
   - [ ] `test/grain-processor-integration.test.ts` > "should produce different results for different film types" (algorithm outputs black)
   - [ ] `test/iterative-vs-single-pass.test.ts` > "should demonstrate improved lightness preservation with iterative approach" (algorithm outputs black)
   - [ ] `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" (test times out due to expensive computation)
-- [ ] Clean up comments like ```// See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"``` that are no longer valid with the updated ALGORITHM_DESIGN.md
 - [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
 - [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
 - [ ] Enable each test below one by one. Check if it passes. If not, determine if the code or the test is wrong (probably the test). If the test is wrong, determine if it is worth it to update the test or better to just remove it.
@@ -55,6 +55,7 @@
   - Could just take the current grain generation and just have multiple at different depths?
   - refer to GRAIN_OVERLAPPING.md for some notes on the issue
   - Update ALGORITHM_DESIGN.md with the new functionality
+- [ ] Refactor functions like processPixelEffects to instead of iterating over pixels and using the spatial lookup grid it should iterate over grains and "render" those to the output image. Make sure it actually improves performance
 - [ ] Add support for lower iso than 50
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
