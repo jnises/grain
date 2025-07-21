@@ -5,9 +5,13 @@ export interface RandomNumberGenerator {
   random(): number;
 }
 
+/** Film emulsion type affecting grain characteristics and development behavior */
+export type FilmType = 'kodak' | 'fuji' | 'ilford';
+
 export interface GrainSettings {
+  /** ISO sensitivity value (e.g., 100, 400, 800) */
   iso: number;
-  filmType: 'kodak' | 'fuji' | 'ilford';
+  filmType: FilmType;
   debugGrainCenters?: boolean; // Optional debug option to draw grain center points
   // Iterative lightness compensation parameters
   maxIterations?: number; // Maximum iterations for lightness convergence (default: 5)
@@ -50,25 +54,36 @@ export interface ErrorMessage {
 
 // Grain processing internal types
 export interface Point2D {
+  /** X coordinate in pixel space */
   x: number;
+  /** Y coordinate in pixel space */
   y: number;
 }
 
 export interface GrainPoint {
+  /** X coordinate in pixel space */
   x: number;
+  /** Y coordinate in pixel space */
   y: number;
+  /** Grain size in pixels */
   size: number;
+  /** Grain sensitivity coefficient affecting light response */
   sensitivity: number;
-  developmentThreshold: number; // Per-grain development threshold for activation
+  /** Development threshold for activation (0-1 range) */
+  developmentThreshold: number;
 }
 
 export interface GrayscaleGrainDensity {
+  /** Grain density value (unitless optical density) */
   density: number;
 }
 
 export interface FilmCharacteristics {
+  /** Film contrast factor affecting tone curve steepness */
   contrast: number;
+  /** Grain clumping factor affecting spatial distribution */
   grainClumping: number;
+  /** Color variation coefficient for grain appearance */
   colorVariation: number;
 }
 
@@ -76,7 +91,7 @@ export interface FilmCharacteristics {
  * Represents the light exposure received by a single grain.
  * This is a linear float value, typically in the range [0, 1].
  */
-export type GrainExposure = number;
+export type GrainExposure = number & { __brand: 'GrainExposure' };
 
 /**
  * A map from each grain point to its calculated light exposure.
@@ -87,7 +102,7 @@ export type GrainExposureMap = Map<GrainPoint, GrainExposure>;
  * Represents the intrinsic optical density of a single developed grain.
  * This is a unitless value representing light absorption, typically in the range [0, 1].
  */
-export type GrainIntrinsicDensity = number;
+export type GrainIntrinsicDensity = number & { __brand: 'GrainIntrinsicDensity' };
 
 /**
  * A map from each grain point to its intrinsic density after the development phase.
@@ -98,4 +113,17 @@ export type GrainIntrinsicDensityMap = Map<GrainPoint, GrainIntrinsicDensity>;
  * Represents the contribution of a single grain to a pixel's total density.
  * This is a unitless value.
  */
-export type PixelGrainEffect = number;
+export type PixelGrainEffect = number & { __brand: 'PixelGrainEffect' };
+
+// Helper functions to create branded types
+export function createGrainExposure(value: number): GrainExposure {
+  return value as GrainExposure;
+}
+
+export function createGrainIntrinsicDensity(value: number): GrainIntrinsicDensity {
+  return value as GrainIntrinsicDensity;
+}
+
+export function createPixelGrainEffect(value: number): PixelGrainEffect {
+  return value as PixelGrainEffect;
+}

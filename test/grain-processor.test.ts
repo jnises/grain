@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { GrainProcessor } from '../src/grain-processor';
 import type { GrainSettings, GrainPoint, GrainExposureMap } from '../src/types';
+import { createGrainExposure } from '../src/types';
 import { createMockImageData, createTestGrainProcessor } from './test-utils';
 
 // Test helper class to access GrainProcessor private static methods
@@ -279,7 +280,7 @@ describe('GrainProcessor', () => {
       const map: GrainExposureMap = new Map();
       exposures.forEach((exposure, index) => {
         const grain = createTestGrain(index, index);
-        map.set(grain, exposure);
+        map.set(grain, createGrainExposure(exposure));
       });
       return map;
     };

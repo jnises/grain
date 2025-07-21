@@ -6,6 +6,11 @@
 
 import { FILM_CHARACTERISTICS } from './constants';
 import { calculateGrainFalloff } from './grain-math';
+import {
+  createGrainExposure,
+  createGrainIntrinsicDensity,
+  createPixelGrainEffect,
+} from './types';
 import type {
   GrainSettings,
   GrainPoint,
@@ -201,7 +206,7 @@ export class GrainDensityCalculator {
     // Validate exposure input
     if (!Number.isFinite(exposure)) {
       console.warn(`Invalid exposure value: ${exposure}, defaulting to 0`);
-      exposure = 0;
+      exposure = createGrainExposure(0);
     }
 
     // Implementation of development threshold system as designed
@@ -221,7 +226,7 @@ export class GrainDensityCalculator {
 
     // Check if grain is activated (above development threshold)
     if (activationStrength <= grain.developmentThreshold) {
-      return 0; // Grain not developed - no visible effect
+      return createGrainIntrinsicDensity(0); // Grain not developed - no visible effect
     }
 
     // Calculate how much above threshold the grain is
@@ -249,7 +254,7 @@ export class GrainDensityCalculator {
 
     // Apply film characteristic curve for density response
     const filmResponse = this.filmCurve(grainDensity);
-    return filmResponse * FILM_RESPONSE_VISIBILITY_MULTIPLIER;
+    return createGrainIntrinsicDensity(filmResponse * FILM_RESPONSE_VISIBILITY_MULTIPLIER);
   }
 
   /**
@@ -275,7 +280,7 @@ export class GrainDensityCalculator {
 
     // If grain not activated, return 0
     if (intrinsicDensity === 0) {
-      return 0;
+      return createPixelGrainEffect(0);
     }
 
     // Calculate offset from grain center
@@ -288,7 +293,7 @@ export class GrainDensityCalculator {
     // Add distance falloff calculation based on grain position and radius
     const falloffRadius = grain.size * GRAIN_FALLOFF_RADIUS_MULTIPLIER; // Grain influence extends to 2x grain size
     if (distance >= falloffRadius) {
-      return 0; // No effect beyond falloff radius
+      return createPixelGrainEffect(0); // No effect beyond falloff radius
     }
 
     // Apply distance-based falloff using shared Gaussian function for consistency with exposure sampling
@@ -296,6 +301,6 @@ export class GrainDensityCalculator {
 
     // Apply the intrinsic density with consistent falloff
     const pixelEffect = intrinsicDensity * falloffFactor;
-    return pixelEffect;
+    return createPixelGrainEffect(pixelEffect);
   }
 }

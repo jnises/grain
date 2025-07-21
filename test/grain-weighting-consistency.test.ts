@@ -9,6 +9,7 @@ import {
   calculateSampleWeight,
 } from '../src/grain-math';
 import type { GrainPoint } from '../src/types';
+import { createGrainExposure } from '../src/types';
 
 // Test utility function - create grayscale image data
 function createGrayscaleImageData(
@@ -122,7 +123,7 @@ describe('Grain Weighting Consistency', () => {
       // Calculate intrinsic density from exposure
       const intrinsicDensity = grainDensityCalculator[
         'calculateIntrinsicGrainDensity'
-      ](grainExposure, grain);
+      ](createGrainExposure(grainExposure), grain);
 
       // Test pixel effects at various distances from grain center
       const testDistances = [0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0];
@@ -197,7 +198,7 @@ describe('Grain Weighting Consistency', () => {
         // Calculate intrinsic density
         const intrinsicDensity = grainDensityCalculator[
           'calculateIntrinsicGrainDensity'
-        ](grainExposure, grain);
+        ](createGrainExposure(grainExposure), grain);
 
         // Test pixel at fixed distance
         const testX = grain.x + testDistance;
@@ -216,7 +217,7 @@ describe('Grain Weighting Consistency', () => {
           const smallGrain: GrainPoint = { ...grain, size: 3.0 };
           const smallIntrinsicDensity = grainDensityCalculator[
             'calculateIntrinsicGrainDensity'
-          ](grainExposure, smallGrain);
+          ](createGrainExposure(grainExposure), smallGrain);
           const smallPixelEffect =
             grainDensityCalculator.calculatePixelGrainEffect(
               smallIntrinsicDensity,

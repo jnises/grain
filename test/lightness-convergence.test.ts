@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { calculateLightnessFactor } from '../src/grain-math.js';
 import { GrainProcessor } from '../src/grain-processor.js';
 import type { GrainPoint, GrainExposureMap } from '../src/types.js';
+import { createGrainExposure } from '../src/types.js';
 
 describe('Lightness Iteration Convergence', () => {
   // Create a test subclass to access private methods
@@ -24,9 +25,9 @@ describe('Lightness Iteration Convergence', () => {
       ];
 
       // Set initial exposures
-      map.set(testGrains[0], 0.2);
-      map.set(testGrains[1], 0.5);
-      map.set(testGrains[2], 0.8);
+      map.set(testGrains[0], createGrainExposure(0.2));
+      map.set(testGrains[1], createGrainExposure(0.5));
+      map.set(testGrains[2], createGrainExposure(0.8));
 
       return map;
     }
@@ -180,9 +181,9 @@ describe('Lightness Iteration Convergence', () => {
         { x: 30, y: 30, size: 2.0, sensitivity: 0.8, developmentThreshold: 0.4 }, // High exposure
       ];
       
-      exposureMap.set(grains[0], 0.2); // Low
-      exposureMap.set(grains[1], 0.5); // Medium
-      exposureMap.set(grains[2], 0.8); // High
+      exposureMap.set(grains[0], createGrainExposure(0.2)); // Low
+      exposureMap.set(grains[1], createGrainExposure(0.5)); // Medium
+      exposureMap.set(grains[2], createGrainExposure(0.8)); // High
       
       // Apply moderate adjustment factor
       const adjustmentFactor = 1.5;

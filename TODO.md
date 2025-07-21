@@ -12,7 +12,7 @@
 - [x] Write unit tests for calculateLightnessFactor
 - [x] Write test that ensures that the lightness iteration converges. Specifically that the individual components behave.
  - [x] Make sure the value returned by calculateLightnessFactor behaves correctly when applied by adjustGrainExposures
-- [ ] Apply the instructions from the "Descriptive Types and Type Aliases" section on the types in types.ts
+- [x] Apply the instructions from the "Descriptive Types and Type Aliases" section on the types in types.ts
 - [ ] Implement sampling estimation for the iterative lightness compensation in processImage.
   - [ ] Share code with `processPixelEffects` for the estimation
   - [ ] Profile to make sure it improves performance

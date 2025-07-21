@@ -13,6 +13,7 @@ import {
   applyBeerLambertCompositingGrayscale,
 } from './grain-math';
 import { convertImageDataToGrayscale } from './color-space';
+import { createGrainExposure } from './types';
 import type {
   GrainSettings,
   GrainPoint,
@@ -176,7 +177,7 @@ export class GrainProcessor {
         this.height,
         this.kernelGenerator
       );
-      exposureMap.set(grain, averageExposure);
+      exposureMap.set(grain, createGrainExposure(averageExposure));
     }
 
     console.log(
@@ -549,7 +550,7 @@ export class GrainProcessor {
       const adjustedExposure = exposure * safeAdjustmentFactor;
       // Strictly clamp to [0, 1] range as required by grain density calculator
       const clampedExposure = Math.max(0.0, Math.min(1.0, adjustedExposure));
-      adjustedMap.set(grain, clampedExposure);
+      adjustedMap.set(grain, createGrainExposure(clampedExposure));
     }
 
     return adjustedMap;
