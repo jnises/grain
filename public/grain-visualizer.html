@@ -1,341 +1,390 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Grain Visualization</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #1a1a1a;
-            color: #ffffff;
-        }
-        canvas {
-            border: 1px solid #ccc;
-            background-color: #000;
-            margin: 10px 0;
-        }
-        .controls {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #2a2a2a;
-            border-radius: 5px;
-        }
-        .controls label {
-            display: inline-block;
-            width: 120px;
-            margin-right: 10px;
-        }
-        .controls input {
-            margin: 5px 10px 5px 0;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .output {
-            background-color: #000;
-            color: #00ff00;
-            padding: 10px;
-            border-radius: 5px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            font-size: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #1a1a1a;
+        color: #ffffff;
+      }
+      canvas {
+        border: 1px solid #ccc;
+        background-color: #000;
+        margin: 10px 0;
+      }
+      .controls {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #2a2a2a;
+        border-radius: 5px;
+      }
+      .controls label {
+        display: inline-block;
+        width: 120px;
+        margin-right: 10px;
+      }
+      .controls input {
+        margin: 5px 10px 5px 0;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .output {
+        background-color: #000;
+        color: #00ff00;
+        padding: 10px;
+        border-radius: 5px;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Grain Distribution Visualizer</h1>
-    
+
     <div class="controls">
-        <div>
-            <label>Width:</label>
-            <input type="number" id="width" value="400" min="100" max="1200">
-            
-            <label>Height:</label>
-            <input type="number" id="height" value="300" min="100" max="800">
-            
-            <label>ISO:</label>
-            <input type="number" id="iso" value="400" min="100" max="3200">
-        </div>
-        <div>
-            <button onclick="generateGrains()">Generate Grains</button>
-            <button onclick="testVariableSizes()">Test Variable Sizes</button>
-            <button onclick="testPoisson()">Test Poisson Only</button>
-            <button onclick="testFallback()">Test Fallback Only</button>
-            <button onclick="clearCanvas()">Clear</button>
-        </div>
+      <div>
+        <label>Width:</label>
+        <input type="number" id="width" value="400" min="100" max="1200" />
+
+        <label>Height:</label>
+        <input type="number" id="height" value="300" min="100" max="800" />
+
+        <label>ISO:</label>
+        <input type="number" id="iso" value="400" min="100" max="3200" />
+      </div>
+      <div>
+        <button onclick="generateGrains()">Generate Grains</button>
+        <button onclick="testVariableSizes()">Test Variable Sizes</button>
+        <button onclick="testPoisson()">Test Poisson Only</button>
+        <button onclick="testFallback()">Test Fallback Only</button>
+        <button onclick="clearCanvas()">Clear</button>
+      </div>
     </div>
-    
+
     <canvas id="grainCanvas" width="400" height="300"></canvas>
-    
+
     <div class="output" id="output">
-        Click "Generate Grains" to see grain distribution visualization...
+      Click "Generate Grains" to see grain distribution visualization...
     </div>
 
     <script type="module">
-        // Efficient array utilities to avoid spread operator performance issues
-        function arrayMax(array) {
-            if (array.length === 0) return -Infinity;
-            let max = array[0];
-            for (let i = 1; i < array.length; i++) {
-                if (array[i] > max) max = array[i];
-            }
-            return max;
+      // Efficient array utilities to avoid spread operator performance issues
+      function arrayMax(array) {
+        if (array.length === 0) return -Infinity;
+        let max = array[0];
+        for (let i = 1; i < array.length; i++) {
+          if (array[i] > max) max = array[i];
         }
-        
-        function arrayMin(array) {
-            if (array.length === 0) return Infinity;
-            let min = array[0];
-            for (let i = 1; i < array.length; i++) {
-                if (array[i] < min) min = array[i];
-            }
-            return min;
+        return max;
+      }
+
+      function arrayMin(array) {
+        if (array.length === 0) return Infinity;
+        let min = array[0];
+        for (let i = 1; i < array.length; i++) {
+          if (array[i] < min) min = array[i];
         }
-        
-        function arrayMinMax(array) {
-            if (array.length === 0) return { min: Infinity, max: -Infinity };
-            let min = array[0];
-            let max = array[0];
-            for (let i = 1; i < array.length; i++) {
-                const value = array[i];
-                if (value < min) min = value;
-                else if (value > max) max = value;
-            }
-            return { min, max };
+        return min;
+      }
+
+      function arrayMinMax(array) {
+        if (array.length === 0) return { min: Infinity, max: -Infinity };
+        let min = array[0];
+        let max = array[0];
+        for (let i = 1; i < array.length; i++) {
+          const value = array[i];
+          if (value < min) min = value;
+          else if (value > max) max = value;
+        }
+        return { min, max };
+      }
+
+      // Import the actual GrainGenerator class to avoid code duplication
+      import { GrainGenerator } from '../src/grain-generator.js';
+
+      console.log('GrainGenerator imported:', GrainGenerator);
+
+      // Grain visualizer that uses the production GrainGenerator
+      class GrainVisualizer {
+        constructor(width, height, iso) {
+          this.width = width;
+          this.height = height;
+          this.iso = iso;
+          this.grainGenerator = new GrainGenerator(width, height, {
+            iso: iso,
+            filmType: 'kodak',
+            grainIntensity: 1.0,
+          });
         }
 
-        // Import the actual GrainGenerator class to avoid code duplication
-        import { GrainGenerator } from '../src/grain-generator.js';
-        
-        console.log('GrainGenerator imported:', GrainGenerator);
-        
-        // Grain visualizer that uses the production GrainGenerator
-        class GrainVisualizer {
-            constructor(width, height, iso) {
-                this.width = width;
-                this.height = height;
-                this.iso = iso;
-                this.grainGenerator = new GrainGenerator(width, height, { 
-                    iso: iso,
-                    filmType: 'kodak',
-                    grainIntensity: 1.0,
-                });
-            }
-            
-            generateGrains() {
-                const params = this.grainGenerator.calculateGrainParameters();
-                
-                log(`=== Grain Generation ===`);
-                log(`Image: ${this.width}x${this.height} (${params.imageArea} pixels)`);
-                log(`ISO: ${this.iso}`);
-                log(`Base size: ${params.baseGrainSize.toFixed(3)}`);
-                log(`Density factor: ${params.densityFactor.toFixed(6)}`);
-                log(`Target density: ${params.grainDensity}`);
-                log(`Min distance: ${params.minDistance.toFixed(3)}`);
-                
-                const poissonPoints = this.grainGenerator.generatePoissonDiskSampling(params.minDistance, params.grainDensity);
-                
-                let finalPoints = poissonPoints;
-                if (poissonPoints.length < params.grainDensity * 0.5) {
-                    log(`Using fallback: ${poissonPoints.length} < ${params.grainDensity * 0.5}`);
-                    finalPoints = this.grainGenerator.generateFallbackGrains(poissonPoints, params.grainDensity, params.minDistance);
-                }
-                
-                log(`Final count: ${finalPoints.length}`);
-                log(`Density: ${(finalPoints.length / params.imageArea * 1000).toFixed(2)} per 1000 pixels`);
-                
-                return finalPoints;
-            }
-            
-            testPoissonOnly() {
-                const params = this.grainGenerator.calculateGrainParameters();
-                log(`Poisson: cellSize=${(params.minDistance / Math.sqrt(2)).toFixed(2)}, target=${params.grainDensity}`);
-                const points = this.grainGenerator.generatePoissonDiskSampling(params.minDistance, params.grainDensity);
-                log(`Poisson result: ${points.length}/${params.grainDensity} points`);
-                return points;
-            }
-            
-            testFallbackOnly() {
-                const params = this.grainGenerator.calculateGrainParameters();
-                log(`Fallback: target=${params.grainDensity}`);
-                const points = this.grainGenerator.generateFallbackGrains([], params.grainDensity, params.minDistance);
-                log(`Fallback result: ${points.length} points`);
-                return points;
-            }
-            
-            testVariableSizeGrains() {
-                log(`Variable Size: generating grain structure with varying sizes`);
-                const grains = this.grainGenerator.generateGrainStructure();
-                log(`Variable size result: ${grains.length} grains`);
-                
-                // Analyze size distribution
-                const sizes = grains.map(g => g.size);
-                const { min: minSize, max: maxSize } = arrayMinMax(sizes);
-                const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
-                
-                log(`Sizes - Min: ${minSize.toFixed(2)}, Max: ${maxSize.toFixed(2)}, Avg: ${avgSize.toFixed(2)}`);
-                
-                const smallGrains = grains.filter(g => g.size < avgSize * 0.8).length;
-                const mediumGrains = grains.filter(g => g.size >= avgSize * 0.8 && g.size <= avgSize * 1.2).length;
-                const largeGrains = grains.filter(g => g.size > avgSize * 1.2).length;
-                
-                log(`Distribution - Small: ${smallGrains}, Medium: ${mediumGrains}, Large: ${largeGrains}`);
-                
-                return grains;
-            }
+        generateGrains() {
+          const params = this.grainGenerator.calculateGrainParameters();
+
+          log(`=== Grain Generation ===`);
+          log(
+            `Image: ${this.width}x${this.height} (${params.imageArea} pixels)`
+          );
+          log(`ISO: ${this.iso}`);
+          log(`Base size: ${params.baseGrainSize.toFixed(3)}`);
+          log(`Density factor: ${params.densityFactor.toFixed(6)}`);
+          log(`Target density: ${params.grainDensity}`);
+          log(`Min distance: ${params.minDistance.toFixed(3)}`);
+
+          const poissonPoints = this.grainGenerator.generatePoissonDiskSampling(
+            params.minDistance,
+            params.grainDensity
+          );
+
+          let finalPoints = poissonPoints;
+          if (poissonPoints.length < params.grainDensity * 0.5) {
+            log(
+              `Using fallback: ${poissonPoints.length} < ${params.grainDensity * 0.5}`
+            );
+            finalPoints = this.grainGenerator.generateFallbackGrains(
+              poissonPoints,
+              params.grainDensity,
+              params.minDistance
+            );
+          }
+
+          log(`Final count: ${finalPoints.length}`);
+          log(
+            `Density: ${((finalPoints.length / params.imageArea) * 1000).toFixed(2)} per 1000 pixels`
+          );
+
+          return finalPoints;
         }
-        
-        function log(message) {
-            const output = document.getElementById('output');
-            output.textContent += message + '\n';
-            output.scrollTop = output.scrollHeight;
+
+        testPoissonOnly() {
+          const params = this.grainGenerator.calculateGrainParameters();
+          log(
+            `Poisson: cellSize=${(params.minDistance / Math.sqrt(2)).toFixed(2)}, target=${params.grainDensity}`
+          );
+          const points = this.grainGenerator.generatePoissonDiskSampling(
+            params.minDistance,
+            params.grainDensity
+          );
+          log(`Poisson result: ${points.length}/${params.grainDensity} points`);
+          return points;
         }
-        
-        function clearOutput() {
-            document.getElementById('output').textContent = '';
+
+        testFallbackOnly() {
+          const params = this.grainGenerator.calculateGrainParameters();
+          log(`Fallback: target=${params.grainDensity}`);
+          const points = this.grainGenerator.generateFallbackGrains(
+            [],
+            params.grainDensity,
+            params.minDistance
+          );
+          log(`Fallback result: ${points.length} points`);
+          return points;
         }
-        
-        window.clearCanvas = function() {
-            const canvas = document.getElementById('grainCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            clearOutput();
-        };
-        
-        function drawGrains(points, color = '#ffffff', size = 1) {
-            const canvas = document.getElementById('grainCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = color;
-            
-            points.forEach(point => {
-                // Use the grain's own size if available (variable size grains), otherwise use default size
-                const grainSize = point.size ? Math.max(0.5, point.size) : size;
-                ctx.fillRect(point.x - grainSize/2, point.y - grainSize/2, grainSize, grainSize);
-            });
+
+        testVariableSizeGrains() {
+          log(`Variable Size: generating grain structure with varying sizes`);
+          const grains = this.grainGenerator.generateGrainStructure();
+          log(`Variable size result: ${grains.length} grains`);
+
+          // Analyze size distribution
+          const sizes = grains.map((g) => g.size);
+          const { min: minSize, max: maxSize } = arrayMinMax(sizes);
+          const avgSize =
+            sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
+
+          log(
+            `Sizes - Min: ${minSize.toFixed(2)}, Max: ${maxSize.toFixed(2)}, Avg: ${avgSize.toFixed(2)}`
+          );
+
+          const smallGrains = grains.filter(
+            (g) => g.size < avgSize * 0.8
+          ).length;
+          const mediumGrains = grains.filter(
+            (g) => g.size >= avgSize * 0.8 && g.size <= avgSize * 1.2
+          ).length;
+          const largeGrains = grains.filter(
+            (g) => g.size > avgSize * 1.2
+          ).length;
+
+          log(
+            `Distribution - Small: ${smallGrains}, Medium: ${mediumGrains}, Large: ${largeGrains}`
+          );
+
+          return grains;
         }
-        
-        // Make functions globally available
-        window.generateGrains = function() {
-            clearOutput();
-            
-            const width = parseInt(document.getElementById('width').value);
-            const height = parseInt(document.getElementById('height').value);
-            const iso = parseInt(document.getElementById('iso').value);
-            
-            // Update canvas size
-            const canvas = document.getElementById('grainCanvas');
-            canvas.width = width;
-            canvas.height = height;
-            clearCanvas();
-            
-            const visualizer = new GrainVisualizer(width, height, iso);
-            const grains = visualizer.generateGrains();
-            
-            drawGrains(grains, '#00ff00', 2);
-            
-            // Analyze distribution using the production code
-            const analysis = visualizer.grainGenerator.analyzeDistribution(grains);
-            
-            log(`\n=== Distribution Analysis ===`);
-            log(`Top-left: ${analysis.quadrants.topLeft} (${(analysis.quadrants.topLeft/grains.length*100).toFixed(1)}%)`);
-            log(`Top-right: ${analysis.quadrants.topRight} (${(analysis.quadrants.topRight/grains.length*100).toFixed(1)}%)`);
-            log(`Bottom-left: ${analysis.quadrants.bottomLeft} (${(analysis.quadrants.bottomLeft/grains.length*100).toFixed(1)}%)`);
-            log(`Bottom-right: ${analysis.quadrants.bottomRight} (${(analysis.quadrants.bottomRight/grains.length*100).toFixed(1)}%)`);
-            log(`Density: ${analysis.density.toFixed(2)} per 1000 pixels`);
-            if (analysis.minDistance) log(`Min distance: ${analysis.minDistance.toFixed(2)}`);
-            if (analysis.medianDistance) log(`Median distance: ${analysis.medianDistance.toFixed(2)}`);
-        };
-        
-        window.testVariableSizes = function() {
-            clearOutput();
-            
-            const width = parseInt(document.getElementById('width').value);
-            const height = parseInt(document.getElementById('height').value);
-            const iso = parseInt(document.getElementById('iso').value);
-            
-            const canvas = document.getElementById('grainCanvas');
-            canvas.width = width;
-            canvas.height = height;
-            clearCanvas();
-            
-            const visualizer = new GrainVisualizer(width, height, iso);
-            const grains = visualizer.testVariableSizeGrains();
-            
-            // Draw grains with different colors based on size
-            const sizes = grains.map(g => g.size);
-            const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
-            
-            grains.forEach(grain => {
-                let color;
-                if (grain.size < avgSize * 0.8) {
-                    color = '#ff4400'; // Small grains - red
-                } else if (grain.size <= avgSize * 1.2) {
-                    color = '#ff8800'; // Medium grains - orange  
-                } else {
-                    color = '#ffff00'; // Large grains - yellow
-                }
-                drawGrains([grain], color);
-            });
-        };
-        
-        window.testPoisson = function() {
-            clearOutput();
-            
-            const width = parseInt(document.getElementById('width').value);
-            const height = parseInt(document.getElementById('height').value);
-            const iso = parseInt(document.getElementById('iso').value);
-            
-            const canvas = document.getElementById('grainCanvas');
-            canvas.width = width;
-            canvas.height = height;
-            clearCanvas();
-            
-            const visualizer = new GrainVisualizer(width, height, iso);
-            const points = visualizer.testPoissonOnly();
-            drawGrains(points, '#ff0000', 2);
-        };
-        
-        window.testFallback = function() {
-            clearOutput();
-            
-            const width = parseInt(document.getElementById('width').value);
-            const height = parseInt(document.getElementById('height').value);
-            const iso = parseInt(document.getElementById('iso').value);
-            
-            const canvas = document.getElementById('grainCanvas');
-            canvas.width = width;
-            canvas.height = height;
-            clearCanvas();
-            
-            const visualizer = new GrainVisualizer(width, height, iso);
-            const points = visualizer.testFallbackOnly();
-            drawGrains(points, '#0000ff', 2);
-        };
-        
-        // Generate initial grains on load
-        window.onload = function() {
-            try {
-                console.log('Page loaded, testing GrainGenerator...');
-                window.generateGrains();
-            } catch (error) {
-                console.error('Error during initialization:', error);
-                log('Error: ' + error.message);
-            }
-        };
+      }
+
+      function log(message) {
+        const output = document.getElementById('output');
+        output.textContent += message + '\n';
+        output.scrollTop = output.scrollHeight;
+      }
+
+      function clearOutput() {
+        document.getElementById('output').textContent = '';
+      }
+
+      window.clearCanvas = function () {
+        const canvas = document.getElementById('grainCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        clearOutput();
+      };
+
+      function drawGrains(points, color = '#ffffff', size = 1) {
+        const canvas = document.getElementById('grainCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = color;
+
+        points.forEach((point) => {
+          // Use the grain's own size if available (variable size grains), otherwise use default size
+          const grainSize = point.size ? Math.max(0.5, point.size) : size;
+          ctx.fillRect(
+            point.x - grainSize / 2,
+            point.y - grainSize / 2,
+            grainSize,
+            grainSize
+          );
+        });
+      }
+
+      // Make functions globally available
+      window.generateGrains = function () {
+        clearOutput();
+
+        const width = parseInt(document.getElementById('width').value);
+        const height = parseInt(document.getElementById('height').value);
+        const iso = parseInt(document.getElementById('iso').value);
+
+        // Update canvas size
+        const canvas = document.getElementById('grainCanvas');
+        canvas.width = width;
+        canvas.height = height;
+        clearCanvas();
+
+        const visualizer = new GrainVisualizer(width, height, iso);
+        const grains = visualizer.generateGrains();
+
+        drawGrains(grains, '#00ff00', 2);
+
+        // Analyze distribution using the production code
+        const analysis = visualizer.grainGenerator.analyzeDistribution(grains);
+
+        log(`\n=== Distribution Analysis ===`);
+        log(
+          `Top-left: ${analysis.quadrants.topLeft} (${((analysis.quadrants.topLeft / grains.length) * 100).toFixed(1)}%)`
+        );
+        log(
+          `Top-right: ${analysis.quadrants.topRight} (${((analysis.quadrants.topRight / grains.length) * 100).toFixed(1)}%)`
+        );
+        log(
+          `Bottom-left: ${analysis.quadrants.bottomLeft} (${((analysis.quadrants.bottomLeft / grains.length) * 100).toFixed(1)}%)`
+        );
+        log(
+          `Bottom-right: ${analysis.quadrants.bottomRight} (${((analysis.quadrants.bottomRight / grains.length) * 100).toFixed(1)}%)`
+        );
+        log(`Density: ${analysis.density.toFixed(2)} per 1000 pixels`);
+        if (analysis.minDistance)
+          log(`Min distance: ${analysis.minDistance.toFixed(2)}`);
+        if (analysis.medianDistance)
+          log(`Median distance: ${analysis.medianDistance.toFixed(2)}`);
+      };
+
+      window.testVariableSizes = function () {
+        clearOutput();
+
+        const width = parseInt(document.getElementById('width').value);
+        const height = parseInt(document.getElementById('height').value);
+        const iso = parseInt(document.getElementById('iso').value);
+
+        const canvas = document.getElementById('grainCanvas');
+        canvas.width = width;
+        canvas.height = height;
+        clearCanvas();
+
+        const visualizer = new GrainVisualizer(width, height, iso);
+        const grains = visualizer.testVariableSizeGrains();
+
+        // Draw grains with different colors based on size
+        const sizes = grains.map((g) => g.size);
+        const avgSize =
+          sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
+
+        grains.forEach((grain) => {
+          let color;
+          if (grain.size < avgSize * 0.8) {
+            color = '#ff4400'; // Small grains - red
+          } else if (grain.size <= avgSize * 1.2) {
+            color = '#ff8800'; // Medium grains - orange
+          } else {
+            color = '#ffff00'; // Large grains - yellow
+          }
+          drawGrains([grain], color);
+        });
+      };
+
+      window.testPoisson = function () {
+        clearOutput();
+
+        const width = parseInt(document.getElementById('width').value);
+        const height = parseInt(document.getElementById('height').value);
+        const iso = parseInt(document.getElementById('iso').value);
+
+        const canvas = document.getElementById('grainCanvas');
+        canvas.width = width;
+        canvas.height = height;
+        clearCanvas();
+
+        const visualizer = new GrainVisualizer(width, height, iso);
+        const points = visualizer.testPoissonOnly();
+        drawGrains(points, '#ff0000', 2);
+      };
+
+      window.testFallback = function () {
+        clearOutput();
+
+        const width = parseInt(document.getElementById('width').value);
+        const height = parseInt(document.getElementById('height').value);
+        const iso = parseInt(document.getElementById('iso').value);
+
+        const canvas = document.getElementById('grainCanvas');
+        canvas.width = width;
+        canvas.height = height;
+        clearCanvas();
+
+        const visualizer = new GrainVisualizer(width, height, iso);
+        const points = visualizer.testFallbackOnly();
+        drawGrains(points, '#0000ff', 2);
+      };
+
+      // Generate initial grains on load
+      window.onload = function () {
+        try {
+          console.log('Page loaded, testing GrainGenerator...');
+          window.generateGrains();
+        } catch (error) {
+          console.error('Error during initialization:', error);
+          log('Error: ' + error.message);
+        }
+      };
     </script>
-</body>
+  </body>
 </html>

@@ -25,6 +25,7 @@ This uses the Node.js Inspector API to generate detailed CPU profiles that can b
 **Generated files:** `.cpuprofile` files in `scripts/profiling/output/`
 
 **Analysis tools:**
+
 - **Chrome DevTools:** Navigate to `chrome://inspect` → "Open dedicated DevTools for Node" → Profiler tab
 - **speedscope.app:** Upload .cpuprofile files for interactive flamegraph visualization
 - **VSCode:** Install "Profile Visualizer" extension
@@ -50,7 +51,7 @@ From the flamegraph profiling, the main bottlenecks are:
    - Runs multiple times during iterative development
    - Contains the core grain effects calculations
 
-2. **Grain Generation: ~10-20% of total time**  
+2. **Grain Generation: ~10-20% of total time**
    - Variable grain generation with Poisson disk sampling
    - Fallback grid generation for coverage
    - Spatial grid creation for optimization
@@ -64,7 +65,8 @@ From the flamegraph profiling, the main bottlenecks are:
 
 Based on the existing performance analysis and profiling:
 
-#### Hot Path 1: `processPixelEffects()` 
+#### Hot Path 1: `processPixelEffects()`
+
 - **Location:** `src/grain-processor.ts:456+`
 - **Issue:** Nested loops through pixels and nearby grains
 - **Complexity:** O(pixels × nearby_grains)
@@ -74,6 +76,7 @@ Based on the existing performance analysis and profiling:
   - Vectorize grain influence calculations
 
 #### Hot Path 2: Iterative Development Loop
+
 - **Location:** `src/grain-processor.ts:212+`
 - **Issue:** Full pixel processing repeated 5 times
 - **Optimization opportunities:**
@@ -82,6 +85,7 @@ Based on the existing performance analysis and profiling:
   - Cache intermediate results
 
 #### Hot Path 3: Grain Grid Lookups
+
 - **Location:** Throughout pixel processing
 - **Issue:** Repeated spatial grid queries
 - **Optimization opportunities:**
@@ -92,16 +96,19 @@ Based on the existing performance analysis and profiling:
 ## Optimization Recommendations
 
 ### Priority 1: High Impact
+
 1. **Optimize iterative development**: Use sampling for lightness estimation instead of full pixel processing
 2. **Improve spatial grid efficiency**: Reduce unnecessary grain distance calculations
 3. **Vectorize grain calculations**: Use SIMD-like operations where possible
 
 ### Priority 2: Medium Impact
+
 1. **Reduce iteration count**: Find optimal balance between quality and performance
 2. **Cache grain influence maps**: Precompute grain effects for common patterns
 3. **Optimize memory access patterns**: Improve data locality in hot loops
 
 ### Priority 3: Low Impact
+
 1. **Profile with different ISO settings**: Understand scaling behavior
 2. **Consider WebGPU acceleration**: Move pixel processing to GPU
 3. **Explore different algorithms**: Alternative approaches to grain simulation
@@ -137,13 +144,14 @@ npm run profile:hotspots
 
 # Make changes...
 
-# After optimization  
+# After optimization
 npm run profile:hotspots
 
 # Compare the results
 ```
 
 Look for:
+
 - Reduced total processing time
 - Lower self-time percentages for optimized functions
 - Better pixel processing rates (pixels/second)

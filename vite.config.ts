@@ -1,13 +1,13 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   worker: {
-    format: 'es'
+    format: 'es',
   },
   optimizeDeps: {
-    exclude: ['./src/grain-worker.ts']
-  }
-})
+    exclude: ['./src/grain-worker.ts'],
+  },
+});

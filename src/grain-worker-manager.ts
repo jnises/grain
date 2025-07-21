@@ -3,15 +3,20 @@
 import type {
   GrainSettings,
   GrainProcessingResult,
-  GrainProcessingProgress
+  GrainProcessingProgress,
 } from './types';
-import { assertImageData, assertObject, assertPositiveNumber, assert } from './utils';
+import {
+  assertImageData,
+  assertObject,
+  assertPositiveNumber,
+  assert,
+} from './utils';
 
 // Re-export shared types for consumers
 export type {
   GrainSettings,
   GrainProcessingResult,
-  GrainProcessingProgress
+  GrainProcessingProgress,
 } from './types';
 
 export class GrainWorkerManager {
@@ -25,10 +30,9 @@ export class GrainWorkerManager {
   private initializeWorker(): void {
     try {
       // Create worker from the grain-worker.ts file
-      this.worker = new Worker(
-        new URL('./grain-worker.ts', import.meta.url),
-        { type: 'module' }
-      );
+      this.worker = new Worker(new URL('./grain-worker.ts', import.meta.url), {
+        type: 'module',
+      });
       console.log('Grain worker initialized successfully');
     } catch (error) {
       console.error('Failed to initialize grain worker:', error);
@@ -37,7 +41,7 @@ export class GrainWorkerManager {
         console.error('Worker initialization error details:', {
           message: error.message,
           name: error.name,
-          stack: error.stack
+          stack: error.stack,
         });
       }
     }
@@ -51,7 +55,7 @@ export class GrainWorkerManager {
     // Validate input parameters with custom assertions that provide type narrowing
     assertImageData(imageData, 'imageData');
     assertObject(settings, 'settings');
-    
+
     // Validate settings properties
     assertPositiveNumber(settings.iso, 'settings.iso');
     assert(
@@ -63,29 +67,35 @@ export class GrainWorkerManager {
     // Validate optional iteration parameters
     if (settings.maxIterations !== undefined) {
       assert(
-        typeof settings.maxIterations === 'number' && settings.maxIterations >= 1 && settings.maxIterations <= 20,
+        typeof settings.maxIterations === 'number' &&
+          settings.maxIterations >= 1 &&
+          settings.maxIterations <= 20,
         'settings.maxIterations must be a number between 1 and 20',
         { maxIterations: settings.maxIterations }
       );
     }
-    
+
     if (settings.convergenceThreshold !== undefined) {
       assert(
-        typeof settings.convergenceThreshold === 'number' && settings.convergenceThreshold > 0 && settings.convergenceThreshold <= 1,
+        typeof settings.convergenceThreshold === 'number' &&
+          settings.convergenceThreshold > 0 &&
+          settings.convergenceThreshold <= 1,
         'settings.convergenceThreshold must be a number between 0 and 1',
         { convergenceThreshold: settings.convergenceThreshold }
       );
     }
 
     // Log processing parameters for debugging
-    console.log(`Processing image: ${imageData.width}x${imageData.height}, ISO: ${settings.iso}, filmType: ${settings.filmType}`);
+    console.log(
+      `Processing image: ${imageData.width}x${imageData.height}, ISO: ${settings.iso}, filmType: ${settings.filmType}`
+    );
 
     if (!this.worker) {
       console.error('Worker not initialized - cannot process image');
       return {
         imageData,
         success: false,
-        error: 'Worker not initialized'
+        error: 'Worker not initialized',
       };
     }
 
@@ -94,7 +104,7 @@ export class GrainWorkerManager {
       return {
         imageData,
         success: false,
-        error: 'Processing already in progress'
+        error: 'Processing already in progress',
       };
     }
 
@@ -106,7 +116,7 @@ export class GrainWorkerManager {
         resolve({
           imageData,
           success: false,
-          error: 'Worker not available'
+          error: 'Worker not available',
         });
         return;
       }
@@ -125,13 +135,18 @@ export class GrainWorkerManager {
           case 'progress':
             if (onProgress) {
               // Validate progress data structure
-              if (typeof data.progress === 'number' && typeof data.stage === 'string') {
+              if (
+                typeof data.progress === 'number' &&
+                typeof data.stage === 'string'
+              ) {
                 onProgress({
                   progress: data.progress,
-                  stage: data.stage
+                  stage: data.stage,
                 });
               } else {
-                console.warn('Invalid progress data received from worker', { data });
+                console.warn('Invalid progress data received from worker', {
+                  data,
+                });
               }
             }
             break;
@@ -139,27 +154,30 @@ export class GrainWorkerManager {
           case 'result':
             this.worker?.removeEventListener('message', handleMessage);
             this.isProcessing = false;
-            
+
             // Validate result data with custom assertion
             assertImageData(data.imageData, 'worker result imageData');
-            
+
             console.log('Image processing completed successfully');
             resolve({
               imageData: data.imageData,
-              success: true
+              success: true,
             });
             break;
 
           case 'error':
             this.worker?.removeEventListener('message', handleMessage);
             this.isProcessing = false;
-            
-            const errorMessage = typeof data.error === 'string' ? data.error : 'Unknown worker error';
+
+            const errorMessage =
+              typeof data.error === 'string'
+                ? data.error
+                : 'Unknown worker error';
             console.error('Worker processing error:', errorMessage);
             resolve({
               imageData,
               success: false,
-              error: errorMessage
+              error: errorMessage,
             });
             break;
 
@@ -170,12 +188,12 @@ export class GrainWorkerManager {
       };
 
       this.worker.addEventListener('message', handleMessage);
-      
+
       // Send processing request to worker
       this.worker.postMessage({
         type: 'process',
         imageData,
-        settings
+        settings,
       });
     });
   }
@@ -197,42 +215,42 @@ export class GrainWorkerManager {
 export const FILM_PRESETS: Record<string, GrainSettings> = {
   'kodak-100': {
     iso: 100,
-    filmType: 'kodak'
+    filmType: 'kodak',
   },
   'kodak-400': {
     iso: 400,
-    filmType: 'kodak'
+    filmType: 'kodak',
   },
   'kodak-800': {
     iso: 800,
-    filmType: 'kodak'
+    filmType: 'kodak',
   },
   'kodak-1600': {
     iso: 1600,
-    filmType: 'kodak'
+    filmType: 'kodak',
   },
   'fuji-100': {
     iso: 100,
-    filmType: 'fuji'
+    filmType: 'fuji',
   },
   'fuji-400': {
     iso: 400,
-    filmType: 'fuji'
+    filmType: 'fuji',
   },
   'fuji-800': {
     iso: 800,
-    filmType: 'fuji'
+    filmType: 'fuji',
   },
   'ilford-100': {
     iso: 100,
-    filmType: 'ilford'
+    filmType: 'ilford',
   },
   'ilford-400': {
     iso: 400,
-    filmType: 'ilford'
+    filmType: 'ilford',
   },
   'ilford-800': {
     iso: 800,
-    filmType: 'ilford'
-  }
+    filmType: 'ilford',
+  },
 };

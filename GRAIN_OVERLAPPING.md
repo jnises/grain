@@ -7,6 +7,7 @@ Film emulsions are three-dimensional layers, typically 10-20 microns thick, with
 
 **Why Overlapping Matters:**
 This overlapping is actually beneficial for image quality. When multiple grains overlap in the same area:
+
 - You get better spatial sampling and smoother tonal gradations
 - It reduces the visibility of individual grain boundaries
 - It helps fill in gaps that might otherwise appear as unexposed spots
@@ -19,7 +20,6 @@ The grain pattern you see in a final photograph is actually the cumulative effec
 
 The random overlapping is part of what gives film its distinctive look compared to the regular pixel grid of digital sensors.
 
-
 within an emulsion layer are grains at different depths completely independent? or will for example a large grain at one depth result in fewer grains at other depths for the same location on the film?
 
 This is a really insightful question that gets to the heart of how film emulsions are manufactured and structured.
@@ -29,6 +29,7 @@ The grains within a single emulsion layer are generally distributed independentl
 
 **But There Are Some Constraints:**
 However, it's not completely random because:
+
 - **Physical volume**: Very large grains do take up more 3D space, which can create some local exclusion effects
 - **Gelatin matrix**: The gelatin acts as a supporting structure that can influence grain positioning to some degree
 - **Manufacturing consistency**: Film manufacturers control the overall grain density and size distribution for the entire layer
@@ -40,7 +41,6 @@ In practice, you can definitely have multiple grains stacked vertically in the s
 This independence is actually important for image quality - it means that even if there's a gap between grains at one depth, there are likely other grains at different depths in that same location to capture light. It contributes to the smooth, organic sampling that gives film its characteristic look.
 
 The randomness within constraints is a key part of what makes film grain look natural rather than artificial or patterned.
-
 
 will grains in front of other grains affect how the rearmost grain is developed?
 
@@ -54,12 +54,14 @@ This becomes especially important in color film where different emulsion layers 
 
 **Development Chemistry Interactions:**
 During development, the chemical process can also create interactions:
+
 - Developer chemicals must diffuse through the gelatin to reach all grains
 - Byproducts from developing front grains can affect the local chemical environment
 - Already-developed silver can act as a catalyst that influences nearby undeveloped grains
 
 **Practical Consequences:**
 This layering effect contributes to:
+
 - The organic, non-linear response characteristics of film
 - Subtle color and tonal variations that give film its distinctive look
 - Some of the "depth" and dimensional quality people describe in film images

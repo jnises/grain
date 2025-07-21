@@ -29,10 +29,12 @@ The algorithms are designed to be both scientifically accurate and computational
 ## 📋 Requirements
 
 ### System Requirements
+
 - **Node.js**: Version 18.0.0 or higher
 - **npm**: Version 8.0.0 or higher (comes with Node.js)
 
 ### Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/jnises/grain.git
@@ -48,6 +50,7 @@ npm run dev
 ## 🔧 Development Scripts
 
 ### Server Management
+
 - `npm run dev` - Start the Vite development server
 - `npm run dev:stop` - Safely stop any running development servers (targets Vite ports 5173, 5174)
 - `npm run dev:restart` - Stop existing servers and start a fresh development server
@@ -59,19 +62,23 @@ The `dev:stop` script safely targets only processes using Vite's default ports t
 This project uses Vitest for testing with separate configurations for unit tests and performance benchmarks.
 
 **Unit Tests:**
+
 - `npm test` - Run unit tests once (excludes performance benchmarks for faster execution)
 - `npm run test:watch` - Run unit tests in watch mode (for development)
 - `npm run test:ui` - Run unit tests with UI interface
 
 **Code Quality:**
+
 - `npm run check` - Run both linting and type checking
 - `npm run lint` - Run ESLint for code style and quality checks
 - `npm run type-check` - Run TypeScript compiler for type checking
 
 **Performance Benchmarks:**
+
 - `npm run benchmark` - Run performance benchmarks (separate from unit tests)
 
 ### Test Structure
+
 - Unit tests are in the `/test/` directory (excluding performance benchmark files)
 - Performance benchmarks: `test/performance-benchmark.test.ts` and `test/grain-worker-performance.test.ts`
 - Tests focus on behavior verification rather than implementation details

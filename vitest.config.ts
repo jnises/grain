@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   test: {
@@ -12,7 +12,7 @@ export default defineConfig({
       '**/dist/**',
       '**/*.{test,spec}.performance.{js,ts}',
       '**/performance-benchmark.test.ts',
-      '**/grain-worker-performance.test.ts'
+      '**/grain-worker-performance.test.ts',
     ],
   },
-})
+});

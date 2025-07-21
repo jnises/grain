@@ -11,7 +11,7 @@ The current film grain simulation algorithm is a physically-based, monochrome gr
 The main processing flow occurs in `GrainProcessor.processImage()`:
 
 1. **Input Conversion** - Convert sRGB ImageData to grayscale and linear float values
-2. **Grain Generation** - Create grain structure with spatial distribution 
+2. **Grain Generation** - Create grain structure with spatial distribution
 3. **Spatial Optimization** - Build spatial grid for efficient pixel processing
 4. **Exposure Calculation** - Calculate grain exposures using kernel-based sampling
 5. **Density Pre-calculation** - Compute intrinsic grain densities (Phase 1)
@@ -24,21 +24,25 @@ The main processing flow occurs in `GrainProcessor.processImage()`:
 #### 1. Grain Generation (`GrainGenerator`)
 
 **Grain Structure Creation:**
+
 - Uses adaptive Poisson disk sampling with fallback grid generation
 - Generates grains with variable sizes based on ISO sensitivity
 - Each grain has properties: position (x,y), size, sensitivity, shape, developmentThreshold
 
 **Size Distribution:**
+
 - Base grain size: `ISO / 200` (with minimum constraints)
 - Variable sizes using seeded random with bias toward smaller grains
 - Size range typically 0.5x to 3x base size
 
 **Spatial Distribution:**
+
 - Primary: Poisson disk sampling for natural distribution
 - Fallback: Grid-based placement with randomization when Poisson fails
 - Minimum distance between grains: `baseGrainSize * 1.8`
 
 **Development Threshold System:**
+
 - Each grain has individual development threshold (0.1 to 1.5 range)
 - Based on grain size (larger = more sensitive) and film characteristics
 - Includes random variation per grain for realistic heterogeneity
@@ -48,12 +52,14 @@ The main processing flow occurs in `GrainProcessor.processImage()`:
 **Two-Phase Processing:**
 
 **Phase 1 - Intrinsic Density (grain-dependent only):**
+
 - Calculates base grain activation using: `(exposure + random_sensitivity) > development_threshold`
 - Applies sigmoid response for smooth density transition
 - Modifies by grain sensitivity and shape properties
 - Uses film characteristic curve for realistic density response
 
 **Phase 2 - Pixel Effects (position-dependent):**
+
 - Distance-based falloff: exponential decay from grain center
 - Elliptical grain shape distortion based on orientation
 - Multi-scale noise texture overlay (fine/medium/coarse)
@@ -62,11 +68,13 @@ The main processing flow occurs in `GrainProcessor.processImage()`:
 #### 3. Exposure Calculation (`KernelGenerator` + sampling)
 
 **Kernel-Based Sampling:**
+
 - Adaptive sample count: 4 samples (small grains) to 16 samples (large grains)
 - Gaussian-weighted sample points within grain area
 - Shape-aware weighting for elliptical grain characteristics
 
 **Grayscale Exposure Conversion:**
+
 - Direct conversion from linear luminance to exposure using logarithmic scaling
 - Zone system mapping (Ansel Adams inspired) with 10-zone range
 - Middle gray (18% reflectance) as reference point
@@ -74,6 +82,7 @@ The main processing flow occurs in `GrainProcessor.processImage()`:
 #### 4. Spatial Optimization
 
 **Grid-Based Acceleration:**
+
 - Divides image into grid cells (8px minimum, 2x max grain size)
 - Each grain stored in cells it can influence (2x grain radius)
 - 3x3 cell neighborhood search during pixel processing
@@ -82,17 +91,20 @@ The main processing flow occurs in `GrainProcessor.processImage()`:
 #### 5. Film Physics Models
 
 **Film Characteristic Curves:**
+
 - Photographic S-curve with toe/shoulder compression
 - Different curves per film type (Kodak/Fuji/Ilford)
 - Gamma, toe strength, shoulder strength parameters
 - Simulates real film response characteristics
 
 **Beer-Lambert Compositing:**
+
 - Physics-based optical density compositing: `I = I₀ * e^(-density)`
 - Realistic light attenuation through grain particles
 - Maintains physical accuracy in density accumulation
 
 **Lightness Preservation:**
+
 - Calculates overall image lightness change after grain processing
 - Applies uniform scaling to maintain original image brightness
 - Operates in linear space for physically correct luminance
@@ -103,17 +115,17 @@ The main processing flow occurs in `GrainProcessor.processImage()`:
 
 ```typescript
 interface GrainPoint {
-  x: number;                    // Grain center X position
-  y: number;                    // Grain center Y position  
-  size: number;                 // Grain radius in pixels
-  sensitivity: number;          // Individual grain sensitivity (0.4-1.2)
-  shape: number;                // Grain shape factor (0-1, affects elliptical distortion)
+  x: number; // Grain center X position
+  y: number; // Grain center Y position
+  size: number; // Grain radius in pixels
+  sensitivity: number; // Individual grain sensitivity (0.4-1.2)
+  shape: number; // Grain shape factor (0-1, affects elliptical distortion)
   developmentThreshold: number; // Activation threshold (0.1-1.5)
 }
 
 interface GrainSettings {
-  iso: number;                  // Film ISO sensitivity (100-3200)
-  filmType: 'kodak'|'fuji'|'ilford'; // Film characteristic type
+  iso: number; // Film ISO sensitivity (100-3200)
+  filmType: 'kodak' | 'fuji' | 'ilford'; // Film characteristic type
 }
 ```
 
@@ -128,16 +140,19 @@ interface GrainSettings {
 ### Film Type Characteristics
 
 **Kodak:**
+
 - Gamma: 2.2, moderate contrast
 - Development threshold: 0.75 (more sensitive)
 - Smooth grain characteristics
 
 **Fuji:**
+
 - Gamma: 1.8, lower contrast
 - Development threshold: 0.80 (medium sensitivity)
 - Fine grain structure
 
 **Ilford:**
+
 - Gamma: 2.6, high contrast
 - Development threshold: 0.85 (less sensitive)
 - Coarser grain structure
@@ -153,18 +168,21 @@ interface GrainSettings {
 ## Performance Characteristics
 
 ### Computational Complexity
+
 - Grain generation: O(n) where n = target grain count
 - Spatial grid: O(n) for n grains
-- Pixel processing: O(m*k) where m = pixels, k = average nearby grains
-- Overall: O(m*k + n) typically scaling well with image size
+- Pixel processing: O(m\*k) where m = pixels, k = average nearby grains
+- Overall: O(m\*k + n) typically scaling well with image size
 
 ### Memory Usage
+
 - Float32Array for linear image data (4x original ImageData size)
 - Grain structure storage: ~64 bytes per grain
 - Spatial grid: ~16 bytes per grid cell + grain references
 - Kernel cache: ~100 cached patterns maximum
 
 ### Typical Processing Times
+
 - 1MP image: ~100-500ms (depends on grain density)
 - Grain generation: ~10% of total time
 - Pixel processing: ~70% of total time
@@ -173,12 +191,14 @@ interface GrainSettings {
 ## Color Space Handling
 
 **Linear Processing:**
+
 - All internal processing in linear RGB space
 - sRGB → Linear conversion on input
 - Linear → sRGB conversion on output
 - Physically correct light calculations
 
 **Monochrome Conversion:**
+
 - RGB → Grayscale using ITU-R BT.709 weights (0.2126R + 0.7152G + 0.0722B)
 - Duplicates grayscale values across RGB channels in output
 - Maintains ImageData compatibility while being truly monochrome
@@ -186,12 +206,14 @@ interface GrainSettings {
 ## Testing and Quality Assurance
 
 **Test Coverage:**
+
 - 223+ unit tests covering all major components
 - Integration tests for full processing pipeline
 - Performance benchmarks for optimization validation
 - Edge case handling (empty images, extreme ISO values)
 
 **Validation Methods:**
+
 - Lightness preservation validation (maintains overall image brightness)
 - Grain distribution analysis (spatial uniformity checks)
 - Processing consistency verification (deterministic results with same seed)
@@ -208,12 +230,14 @@ interface GrainSettings {
 ## Debug and Development Tools
 
 **Visualization Tools:**
+
 - `grain-debug.html` - Internal grain generation analysis
 - `grain-visualizer.html` - Grain distribution testing
 - Debug grain centers drawing option
 - Performance tracking and benchmarking
 
 **Debug Features:**
+
 - Comprehensive console logging for all processing stages
 - Performance metrics with pixel/second processing rates
 - Grain coverage and effect statistics

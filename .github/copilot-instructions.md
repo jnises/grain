@@ -1,10 +1,12 @@
 # Coding Guidelines
+
 - This is a prototype, no need to worry about backwards compatibility and such.
 - The tests were vibecoded and can often be wrong. If the user or design documents say something that contradicts the tests, trust the user and the documents.
 
 ## Development Guidelines
 
 ### Functional Design and Pure Functions
+
 - Prefer pure functions and functional programming patterns over imperative code and mutation
 - Pure functions should not modify their inputs or rely on external state; always return new values
 - Minimize side effects and shared mutable state throughout the codebase
@@ -15,6 +17,7 @@
 - Functional design improves testability, predictability, and maintainability
 
 ### Object Design and Lifecycle
+
 - Design objects so all fields remain valid throughout the object's lifetime
 - Avoid objects with "phases" where certain fields or methods are only valid after specific initialization steps
 - If a class requires multi-step initialization or has functionality that's only valid in certain states, consider splitting it into multiple classes with clear responsibilities
@@ -22,6 +25,7 @@
 - Example: Instead of a class that requires `init()` before `process()` works, create separate classes or use a factory pattern that returns fully-initialized objects
 
 ### Avoiding Pointless Abstractions
+
 - **NEVER create wrapper classes that only delegate to other classes** - this adds complexity without benefit
 - Before extracting a class, ensure it provides meaningful abstraction with:
   - Substantial logic or processing
@@ -33,14 +37,16 @@
 - If a proposed class would only have methods that call other classes' methods 1:1, don't create it
 
 ### Constants and Configuration
+
 - Avoid magic numbers for non-obvious values. Use constants to improve maintainability:
   - Single-use constants: define just before the line where used
   - Function-specific constants: define at the start of the function
   - Module-specific constants: define at the top of the file
   - Global constants: define in `src/constants.ts`
-  Prefer single-use constants to keep the information as close to the place where it is used as possible.
+    Prefer single-use constants to keep the information as close to the place where it is used as possible.
 
 ### Static Methods and Free Functions
+
 - Prefer static methods for utility functions that don't depend on instance state
 - Convert static methods to free functions when they aren't directly related to the class
 - Place free functions in appropriate utility modules (e.g., `grain-math.ts` for mathematical operations)
@@ -52,6 +58,7 @@
 - This improves code organization, testability, and reusability
 
 ### Error Handling
+
 - Use assertions to validate assumptions and preconditions in your code
 - Prefer failing fast and loudly over silent error handling
 - For logic errors: use `assert()` to crash immediately with clear error messages
@@ -70,9 +77,11 @@
   - The assertion is primarily for development debugging rather than critical safety
 
 ### Doc comments
+
 - Document any function argument whose meaning isn't obvious.
 
 ### Descriptive Types and Type Aliases
+
 - Use descriptive type aliases and custom types to make code more self-documenting and type-safe
 - Replace generic types like `Map<GrainPoint, number>` with more specific types that clarify intent:
   - Create type aliases: `type GrainDensityMap = Map<GrainPoint, GrainDensity>`
@@ -88,6 +97,7 @@
 - This improves code readability, helps catch type errors, and makes the codebase more maintainable
 
 ### Code Reuse and Testing
+
 - Import and use actual production classes in tests (e.g., `GrainGenerator`)
 - **NEVER reimplement production functions in test files** - always import and test the actual production code
 - If testing private methods, make them protected and create a test subclass, or extract to a testable utility module
@@ -101,17 +111,20 @@
 ## Development Workflow
 
 ### Server Management (CRITICAL)
+
 - **ALWAYS check for running servers before starting new ones** to avoid port conflicts
 - If you need to restart the server, use `npm run dev:restart` or `npm run dev:stop` first
 - `npm run dev:stop` safely kills only processes using Vite ports (5173, 5174) without affecting other processes
 - Before running `npm run dev`, `npm start`, or any long-running command, either check existing terminals or use `npm run dev:stop` to ensure no conflicts
 
 ### Before Starting Work
+
 1. Check existing code structure and patterns
 2. Identify where new files should be placed according to these guidelines
 3. Use existing utilities and patterns where possible
 
 ### During Development
+
 1. Place temporary files in appropriate locations
 2. Follow existing code patterns and naming conventions
 3. Add appropriate assertions and error handling
@@ -119,6 +132,7 @@
 5. Run `npm run check` to verify code quality and TypeScript errors
 
 ### Before Completing
+
 1. Clean up temporary files
 2. Update documentation if needed
 3. Update `ALGORITHM_DESIGN.md` if any relevant changes to the main algorithm have been made
@@ -126,34 +140,39 @@
 5. Run `npm run check` to verify code quality and TypeScript errors
 6. Check that no unnecessary files were added to the repository
 
-
 ## Project Structure and File Organization
 
 ### Temporary Files and Tools
+
 When creating temporary files, debug utilities, or development tools, please follow these guidelines to keep the repository clean:
 
 #### Temporary File Locations
+
 - **Temporary scripts**: Place in `scripts/temp/` (will be git-ignored)
 - **Debug utilities**: Place in `src/debug/` for source files or `public/debug/` for HTML files
 - **Test data/fixtures**: Place in `test/fixtures/` or `test/temp/`
-- **Benchmark files**: Place in `test/benchmarks/` 
+- **Benchmark files**: Place in `test/benchmarks/`
 - **Development tools**: Place in `scripts/dev/`
 
 #### Naming Conventions
+
 - Prefix temporary files with `temp_` or `debug_`
 - Use descriptive names that indicate purpose: `temp_grain_analysis.ts`, `debug_visualizer.html`
 - Include date/timestamp for time-sensitive files: `temp_performance_test_2024-01-15.ts`
 
 #### Cleanup Guidelines
+
 - Remove temporary files after completing the task
 - Keep debug utilities only if they provide ongoing value
 - Avoid committing files to the root directory unless they're permanent project files
 
 ### File Naming and Organization
+
 - Use kebab-case for filenames: `grain-generator.ts`, `test-utils.ts`
 - Use descriptive names that clearly indicate purpose
 
 ## Tools
+
 - Always use TypeScript for new tools; avoid JavaScript for scripts and utilities.
 - Place tool scripts in the appropriate directory (see "Temporary File Locations" above).
 - Use `npx tsx scriptpath.ts` to run TypeScript tools.
@@ -161,4 +180,5 @@ When creating temporary files, debug utilities, or development tools, please fol
 - Add comments or documentation to clarify tool purpose and usage.
 
 # Memory and Learned Preferences
+
 - When the user provides feedback that seems like a lasting preference rather than a one-time correction, add it to the appropriate section above with context about when and why it applies.

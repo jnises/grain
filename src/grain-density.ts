@@ -1,7 +1,6 @@
 // Grain Density Calculation Module
 // Contains substantial grain physics algorithms for film simulation
 
-
 // --- Grain Density Calculation Constants ---
 // Only truly shared constants should remain here. Function-specific and single-use constants are moved into their respective functions.
 
@@ -25,44 +24,55 @@ export class GrainDensityCalculator {
   private settings: GrainSettings;
 
   constructor(settings: GrainSettings) {
-    assert(settings && typeof settings === 'object', 'settings must be a valid settings object', { settings });
+    assert(
+      settings && typeof settings === 'object',
+      'settings must be a valid settings object',
+      { settings }
+    );
     assert(
       ['kodak', 'fuji', 'ilford'].includes(settings.filmType),
       'settings.filmType must be one of: kodak, fuji, ilford',
       { filmType: settings.filmType, validTypes: ['kodak', 'fuji', 'ilford'] }
     );
-    assert(typeof settings.iso === 'number' && settings.iso > 0, 'settings.iso must be a positive number', { iso: settings.iso });
-    
+    assert(
+      typeof settings.iso === 'number' && settings.iso > 0,
+      'settings.iso must be a positive number',
+      { iso: settings.iso }
+    );
+
     this.settings = settings;
   }
 
   /**
    * Pre-calculate intrinsic grain densities for all grains (Phase 1 optimization)
    * FILM DEVELOPMENT PHASE (Phase 1 - Grain-dependent calculations)
-   * 
+   *
    * This simulates the chemical development process where exposed grains become opaque.
    * Grains that received sufficient light exposure become developed (high optical density).
    * Grains below their development threshold remain undeveloped (transparent).
-   * 
+   *
    * See ALGORITHM_DESIGN.md: "Film Development Phase"
-   * 
+   *
    * This computes grain-specific properties that don't depend on pixel position
    * and caches them for efficient pixel processing
    */
   calculateIntrinsicGrainDensities(
     grains: GrainPoint[],
-    grainExposureMap: GrainExposureMap,
+    grainExposureMap: GrainExposureMap
   ): GrainIntrinsicDensityMap {
     assertArray(grains, 'grains');
     // Allow empty grains array in edge cases (e.g., very small images or high ISO where no grains are generated)
     // Map type is guaranteed by TypeScript, but we validate it has the expected methods
     assert(
-      typeof grainExposureMap.has === 'function' && typeof grainExposureMap.get === 'function',
+      typeof grainExposureMap.has === 'function' &&
+        typeof grainExposureMap.get === 'function',
       'grainExposureMap must be a Map with expected methods',
-      { grainExposureMap },
+      { grainExposureMap }
     );
 
-    console.log(`Pre-calculating intrinsic densities for ${grains.length} grains...`);
+    console.log(
+      `Pre-calculating intrinsic densities for ${grains.length} grains...`
+    );
 
     const intrinsicDensityMap: GrainIntrinsicDensityMap = new Map();
 
@@ -75,14 +85,19 @@ export class GrainDensityCalculator {
           grain: { x: grain.x, y: grain.y, size: grain.size },
           mapSize: grainExposureMap.size,
           grainsLength: grains.length,
-        },
+        }
       );
 
-      const intrinsicDensity = this.calculateIntrinsicGrainDensity(grainExposure, grain);
+      const intrinsicDensity = this.calculateIntrinsicGrainDensity(
+        grainExposure,
+        grain
+      );
       intrinsicDensityMap.set(grain, intrinsicDensity);
     }
 
-    console.log(`Completed intrinsic density calculation for ${intrinsicDensityMap.size} grains`);
+    console.log(
+      `Completed intrinsic density calculation for ${intrinsicDensityMap.size} grains`
+    );
     return intrinsicDensityMap;
   }
 
@@ -121,7 +136,11 @@ export class GrainDensityCalculator {
       output = 1 - compressedShoulder * (1 - curve.shoulder);
     }
 
-    devAssert(output >= 0 && output <= 1, 'filmCurve output must be in [0, 1] range', { output });
+    devAssert(
+      output >= 0 && output <= 1,
+      'filmCurve output must be in [0, 1] range',
+      { output }
+    );
     return output;
   }
 
@@ -131,26 +150,44 @@ export class GrainDensityCalculator {
    */
   private calculateIntrinsicGrainDensity(
     exposure: GrainExposure,
-    grain: GrainPoint,
+    grain: GrainPoint
   ): GrainIntrinsicDensity {
-    devAssert(Number.isFinite(exposure), 'exposure must be finite', { exposure });
-    devAssert(exposure >= 0 && exposure <= 1, 'exposure must be in range [0,1]', { exposure });
-    devAssert(grain && typeof grain === 'object', 'grain must be a valid grain object', { grain });
-    devAssert(Number.isFinite(grain.x), 'grain.x must be finite', { x: grain.x });
-    devAssert(Number.isFinite(grain.y), 'grain.y must be finite', { y: grain.y });
-    devAssert(typeof grain.size === 'number' && grain.size > 0, 'grain.size must be a positive number', {
-      size: grain.size,
+    devAssert(Number.isFinite(exposure), 'exposure must be finite', {
+      exposure,
     });
+    devAssert(
+      exposure >= 0 && exposure <= 1,
+      'exposure must be in range [0,1]',
+      { exposure }
+    );
+    devAssert(
+      grain && typeof grain === 'object',
+      'grain must be a valid grain object',
+      { grain }
+    );
+    devAssert(Number.isFinite(grain.x), 'grain.x must be finite', {
+      x: grain.x,
+    });
+    devAssert(Number.isFinite(grain.y), 'grain.y must be finite', {
+      y: grain.y,
+    });
+    devAssert(
+      typeof grain.size === 'number' && grain.size > 0,
+      'grain.size must be a positive number',
+      {
+        size: grain.size,
+      }
+    );
     devAssert(
       grain.sensitivity >= 0 && grain.sensitivity <= 10,
       'grain.sensitivity must be in range [0,10]',
-      { sensitivity: grain.sensitivity },
+      { sensitivity: grain.sensitivity }
     );
     // Development threshold can be outside [0,1] in some film simulation cases
     devAssert(
       Number.isFinite(grain.developmentThreshold),
       'grain.developmentThreshold must be finite',
-      { developmentThreshold: grain.developmentThreshold },
+      { developmentThreshold: grain.developmentThreshold }
     );
 
     // Function-specific constants
@@ -173,7 +210,8 @@ export class GrainDensityCalculator {
     // Calculate random sensitivity variation for this grain
     // Use grain-based randomness for consistent grain behavior (position-independent)
     const randomSeed =
-      (grain.x * GRAIN_RANDOM_SEED_X + grain.y * GRAIN_RANDOM_SEED_Y) % GRAIN_RANDOM_SEED_MOD;
+      (grain.x * GRAIN_RANDOM_SEED_X + grain.y * GRAIN_RANDOM_SEED_Y) %
+      GRAIN_RANDOM_SEED_MOD;
     const randomSensitivity =
       (randomSeed / GRAIN_RANDOM_SEED_MOD) * GRAIN_RANDOM_SENSITIVITY_RANGE -
       GRAIN_RANDOM_SENSITIVITY_OFFSET;
@@ -217,20 +255,20 @@ export class GrainDensityCalculator {
   /**
    * Calculate pixel-level grain effects (Phase 2)
    * DARKROOM PRINTING PHASE - Position-dependent spatial effects
-   * 
+   *
    * This simulates light passing through the developed film negative to create the final photograph.
    * The spatial effect of each grain varies by distance from the grain center.
    * Uses pre-calculated intrinsic grain density from the development phase.
-   * 
+   *
    * See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"
-   * 
+   *
    * This method computes position-dependent visual effects that vary by pixel location
    */
   calculatePixelGrainEffect(
     intrinsicDensity: GrainIntrinsicDensity,
     grain: GrainPoint,
     pixelX: number,
-    pixelY: number,
+    pixelY: number
   ): PixelGrainEffect {
     // Function-specific constants
     const GRAIN_FALLOFF_RADIUS_MULTIPLIER = 2;

@@ -4,7 +4,7 @@
 import type { GrainPoint } from './types';
 
 export class SpatialLookupGrid {
-    // TODO: Better to do a `GrainPoint[][]` using `grid[y * this.gridWidth + x]` for lookup instead of the nested approach?
+  // TODO: Better to do a `GrainPoint[][]` using `grid[y * this.gridWidth + x]` for lookup instead of the nested approach?
   private grid: GrainPoint[][][];
   private readonly gridWidth: number;
   private readonly gridHeight: number;
@@ -19,11 +19,11 @@ export class SpatialLookupGrid {
       }
     }
     this.gridSize = Math.max(16, Math.floor(maxGrainSize * 2));
-    
+
     // Calculate grid dimensions
     this.gridWidth = Math.ceil(imageWidth / this.gridSize);
     this.gridHeight = Math.ceil(imageHeight / this.gridSize);
-    
+
     // Initialize 2D array grid
     this.grid = Array(this.gridWidth);
     for (let x = 0; x < this.gridWidth; x++) {
@@ -39,11 +39,22 @@ export class SpatialLookupGrid {
 
   private populateGrid(grains: GrainPoint[]): void {
     for (const grain of grains) {
-      const gridX = Math.min(Math.floor(grain.x / this.gridSize), this.gridWidth - 1);
-      const gridY = Math.min(Math.floor(grain.y / this.gridSize), this.gridHeight - 1);
-      
+      const gridX = Math.min(
+        Math.floor(grain.x / this.gridSize),
+        this.gridWidth - 1
+      );
+      const gridY = Math.min(
+        Math.floor(grain.y / this.gridSize),
+        this.gridHeight - 1
+      );
+
       // Bounds check
-      if (gridX >= 0 && gridX < this.gridWidth && gridY >= 0 && gridY < this.gridHeight) {
+      if (
+        gridX >= 0 &&
+        gridX < this.gridWidth &&
+        gridY >= 0 &&
+        gridY < this.gridHeight
+      ) {
         this.grid[gridX][gridY].push(grain);
       }
     }
@@ -62,11 +73,16 @@ export class SpatialLookupGrid {
   getGrainsAt(x: number, y: number): GrainPoint[] {
     const gridX = Math.floor(x / this.gridSize);
     const gridY = Math.floor(y / this.gridSize);
-    
-    if (gridX >= 0 && gridX < this.gridWidth && gridY >= 0 && gridY < this.gridHeight) {
+
+    if (
+      gridX >= 0 &&
+      gridX < this.gridWidth &&
+      gridY >= 0 &&
+      gridY < this.gridHeight
+    ) {
       return this.grid[gridX][gridY];
     }
-    
+
     return [];
   }
 
@@ -76,20 +92,26 @@ export class SpatialLookupGrid {
    */
   getGrainsNear(x: number, y: number, radius: number): GrainPoint[] {
     const result: GrainPoint[] = [];
-    
+
     // Calculate the range of grid cells to check
     const minGridX = Math.max(0, Math.floor((x - radius) / this.gridSize));
-    const maxGridX = Math.min(this.gridWidth - 1, Math.floor((x + radius) / this.gridSize));
+    const maxGridX = Math.min(
+      this.gridWidth - 1,
+      Math.floor((x + radius) / this.gridSize)
+    );
     const minGridY = Math.max(0, Math.floor((y - radius) / this.gridSize));
-    const maxGridY = Math.min(this.gridHeight - 1, Math.floor((y + radius) / this.gridSize));
-    
+    const maxGridY = Math.min(
+      this.gridHeight - 1,
+      Math.floor((y + radius) / this.gridSize)
+    );
+
     // Collect grains from all relevant cells
     for (let gridX = minGridX; gridX <= maxGridX; gridX++) {
       for (let gridY = minGridY; gridY <= maxGridY; gridY++) {
         result.push(...this.grid[gridX][gridY]);
       }
     }
-    
+
     return result;
   }
 
@@ -128,8 +150,9 @@ export class SpatialLookupGrid {
       totalCells: this.gridWidth * this.gridHeight,
       nonEmptyCells,
       totalGrainReferences,
-      averageGrainsPerCell: nonEmptyCells > 0 ? totalGrainReferences / nonEmptyCells : 0,
-      maxGrainsPerCell
+      averageGrainsPerCell:
+        nonEmptyCells > 0 ? totalGrainReferences / nonEmptyCells : 0,
+      maxGrainsPerCell,
     };
   }
 

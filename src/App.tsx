@@ -1,142 +1,159 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { GrainWorkerManager, FILM_PRESETS, GrainSettings, GrainProcessingProgress } from './grain-worker-manager'
-import { assertImageData, assertObject, assert } from './utils'
-import './App.css'
+import { useState, useRef, useCallback, useEffect } from 'react';
+import {
+  GrainWorkerManager,
+  FILM_PRESETS,
+  GrainSettings,
+  GrainProcessingProgress,
+} from './grain-worker-manager';
+import { assertImageData, assertObject, assert } from './utils';
+import './App.css';
 
 function App() {
-  const [image, setImage] = useState<string | null>(null)
-  const [processedImage, setProcessedImage] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(1)
-  const [pan, setPan] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [processingProgress, setProcessingProgress] = useState<GrainProcessingProgress>({ progress: 0, stage: '' })
-  const [selectedPreset, setSelectedPreset] = useState('kodak-400')
-  const [customSettings, setCustomSettings] = useState<GrainSettings>(FILM_PRESETS['kodak-400'])
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [showOriginal, setShowOriginal] = useState(false)
-  
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const imageRef = useRef<HTMLImageElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const grainWorkerRef = useRef<GrainWorkerManager | null>(null)
+  const [image, setImage] = useState<string | null>(null);
+  const [processedImage, setProcessedImage] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] =
+    useState<GrainProcessingProgress>({ progress: 0, stage: '' });
+  const [selectedPreset, setSelectedPreset] = useState('kodak-400');
+  const [customSettings, setCustomSettings] = useState<GrainSettings>(
+    FILM_PRESETS['kodak-400']
+  );
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const grainWorkerRef = useRef<GrainWorkerManager | null>(null);
 
   // Initialize grain worker
   useEffect(() => {
-    grainWorkerRef.current = new GrainWorkerManager()
-    
+    grainWorkerRef.current = new GrainWorkerManager();
+
     return () => {
-      grainWorkerRef.current?.terminate()
-    }
-  }, [])
+      grainWorkerRef.current?.terminate();
+    };
+  }, []);
 
   // Keyboard shortcuts for comparison
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (processedImage && (event.key === ' ' || event.key === 'c')) {
-        event.preventDefault()
-        setShowOriginal(prev => !prev)
+        event.preventDefault();
+        setShowOriginal((prev) => !prev);
       }
-    }
+    };
 
-    window.addEventListener('keydown', handleKeyPress)
+    window.addEventListener('keydown', handleKeyPress);
     return () => {
-      window.removeEventListener('keydown', handleKeyPress)
-    }
-  }, [processedImage])
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [processedImage]);
 
   const processFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (e) => {
-        setImage(e.target?.result as string)
-        setProcessedImage(null)
-        setZoom(1)
-        setPan({ x: 0, y: 0 })
-      }
-      reader.readAsDataURL(file)
+        setImage(e.target?.result as string);
+        setProcessedImage(null);
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+      };
+      reader.readAsDataURL(file);
     }
-  }, [])
+  }, []);
 
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      processFile(file)
-    }
-  }, [processFile])
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        processFile(file);
+      }
+    },
+    [processFile]
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(true)
-  }, [])
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-  }, [])
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    
-    const files = Array.from(e.dataTransfer.files)
-    const imageFile = files.find(file => file.type.startsWith('image/'))
-    
-    if (imageFile) {
-      processFile(imageFile)
-    }
-  }, [processFile])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+
+      const files = Array.from(e.dataTransfer.files);
+      const imageFile = files.find((file) => file.type.startsWith('image/'));
+
+      if (imageFile) {
+        processFile(imageFile);
+      }
+    },
+    [processFile]
+  );
 
   const handleUploadClick = () => {
-    fileInputRef.current?.click()
-  }
+    fileInputRef.current?.click();
+  };
 
   const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev * 1.2, 10))
-  }
+    setZoom((prev) => Math.min(prev * 1.2, 10));
+  };
 
   const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev / 1.2, 0.1))
-  }
+    setZoom((prev) => Math.max(prev / 1.2, 0.1));
+  };
 
   const handleResetZoom = () => {
-    setZoom(1)
-    setPan({ x: 0, y: 0 })
-  }
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (zoom > 1) {
-      setIsDragging(true)
-      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     }
-  }
+  };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDragging && zoom > 1) {
       setPan({
         x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y
-      })
+        y: e.clientY - dragStart.y,
+      });
     }
-  }
+  };
 
   const handleMouseUp = () => {
-    setIsDragging(false)
-  }
+    setIsDragging(false);
+  };
 
   const handlePresetChange = (presetKey: string) => {
-    setSelectedPreset(presetKey)
-    setCustomSettings(FILM_PRESETS[presetKey])
-  }
+    setSelectedPreset(presetKey);
+    setCustomSettings(FILM_PRESETS[presetKey]);
+  };
 
-  const handleCustomSettingChange = (key: keyof GrainSettings, value: string | number | boolean) => {
-    setCustomSettings(prev => ({
+  const handleCustomSettingChange = (
+    key: keyof GrainSettings,
+    value: string | number | boolean
+  ) => {
+    setCustomSettings((prev) => ({
       ...prev,
-      [key]: value
-    }))
-  }
+      [key]: value,
+    }));
+  };
 
   const extractImageData = (imageUrl: string): Promise<ImageData> => {
     return new Promise((resolve, reject) => {
@@ -147,15 +164,17 @@ function App() {
         { imageUrl, type: typeof imageUrl }
       );
 
-      console.log(`Extracting image data from URL: ${imageUrl.substring(0, 50)}...`);
+      console.log(
+        `Extracting image data from URL: ${imageUrl.substring(0, 50)}...`
+      );
 
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
-          const canvas = canvasRef.current || document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          
+          const canvas = canvasRef.current || document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+
           assert(
             ctx !== null,
             'Could not get canvas 2D context - browser may not support canvas'
@@ -168,55 +187,65 @@ function App() {
             { width: img.width, height: img.height }
           );
 
-          canvas.width = img.width
-          canvas.height = img.height
-          ctx.drawImage(img, 0, 0)
-          
-          const imageData = ctx.getImageData(0, 0, img.width, img.height)
-          
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          const imageData = ctx.getImageData(0, 0, img.width, img.height);
+
           // Validate extracted image data with custom assertion
           assertImageData(imageData, 'extracted image data');
 
-          console.log(`Successfully extracted image data: ${imageData.width}x${imageData.height}, ${imageData.data.length} bytes`);
+          console.log(
+            `Successfully extracted image data: ${imageData.width}x${imageData.height}, ${imageData.data.length} bytes`
+          );
           resolve(imageData);
         } catch (error) {
           console.error('Error during image data extraction:', error);
-          const extractionError = error instanceof Error ? error : new Error('Unknown extraction error');
+          const extractionError =
+            error instanceof Error
+              ? error
+              : new Error('Unknown extraction error');
           reject(extractionError);
         }
-      }
+      };
       img.onerror = (event) => {
-        const eventType = typeof event === 'string' ? event : (event as Event).type || 'unknown';
+        const eventType =
+          typeof event === 'string'
+            ? event
+            : (event as Event).type || 'unknown';
         const error = new Error(`Failed to load image: ${eventType}`);
         console.error('Image loading error:', error.message, 'URL:', imageUrl);
         reject(error);
-      }
-      img.src = imageUrl
-    })
-  }
+      };
+      img.src = imageUrl;
+    });
+  };
 
   const imageDataToDataUrl = (imageData: ImageData): string => {
     // Validate input parameter with custom assertion
     assertImageData(imageData, 'imageData parameter');
 
-    console.log(`Converting image data to data URL: ${imageData.width}x${imageData.height}`);
+    console.log(
+      `Converting image data to data URL: ${imageData.width}x${imageData.height}`
+    );
 
-    const canvas = canvasRef.current || document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    
+    const canvas = canvasRef.current || document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
     assert(
       ctx !== null,
       'Could not get canvas 2D context for image conversion'
     );
 
     try {
-      canvas.width = imageData.width
-      canvas.height = imageData.height
-      ctx.putImageData(imageData, 0, 0)
-      
+      canvas.width = imageData.width;
+      canvas.height = imageData.height;
+      ctx.putImageData(imageData, 0, 0);
+
       // Use PNG format to avoid compression artifacts (lossless)
       const dataUrl = canvas.toDataURL('image/png');
-      
+
       // Validate result with custom assertion
       assert(
         dataUrl && typeof dataUrl === 'string' && dataUrl.startsWith('data:'),
@@ -224,13 +253,17 @@ function App() {
         { dataUrl: dataUrl?.substring(0, 50) + '...', length: dataUrl?.length }
       );
 
-      console.log(`Successfully converted to data URL: ${dataUrl.length} characters`);
+      console.log(
+        `Successfully converted to data URL: ${dataUrl.length} characters`
+      );
       return dataUrl;
     } catch (error) {
       console.error('Error during image data to data URL conversion:', error);
-      throw error instanceof Error ? error : new Error('Unknown conversion error');
+      throw error instanceof Error
+        ? error
+        : new Error('Unknown conversion error');
     }
-  }
+  };
 
   const handleProcessGrain = async () => {
     // Validate preconditions with custom assertions
@@ -241,76 +274,84 @@ function App() {
 
     console.log('Starting grain processing with settings:', customSettings);
 
-    setIsProcessing(true)
-    setProcessingProgress({ progress: 0, stage: 'Starting...' })
+    setIsProcessing(true);
+    setProcessingProgress({ progress: 0, stage: 'Starting...' });
 
     try {
       // Extract image data from the uploaded image
-      const imageData = await extractImageData(image)
-      
+      const imageData = await extractImageData(image);
+
       // Process with grain algorithm
       const result = await grainWorkerRef.current.processImage(
         imageData,
         customSettings,
         (progress) => {
-          setProcessingProgress(progress)
+          setProcessingProgress(progress);
         }
-      )
+      );
 
       if (result.success) {
-        const processedDataUrl = imageDataToDataUrl(result.imageData)
-        setProcessedImage(processedDataUrl)
-        setProcessingProgress({ progress: 100, stage: 'Complete!' })
+        const processedDataUrl = imageDataToDataUrl(result.imageData);
+        setProcessedImage(processedDataUrl);
+        setProcessingProgress({ progress: 100, stage: 'Complete!' });
         console.log('Grain processing completed successfully');
       } else {
-        console.error('Grain processing failed:', result.error)
-        setProcessingProgress({ progress: 0, stage: `Error: ${result.error}` })
+        console.error('Grain processing failed:', result.error);
+        setProcessingProgress({ progress: 0, stage: `Error: ${result.error}` });
       }
     } catch (error) {
-      console.error('Error processing image:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred during processing';
-      setProcessingProgress({ progress: 0, stage: `Error: ${errorMessage}` })
+      console.error('Error processing image:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Unknown error occurred during processing';
+      setProcessingProgress({ progress: 0, stage: `Error: ${errorMessage}` });
     }
 
-    setIsProcessing(false)
-  }
+    setIsProcessing(false);
+  };
 
   const handleDownload = () => {
-    const imageToDownload = processedImage || image
+    const imageToDownload = processedImage || image;
     if (imageToDownload) {
-      const link = document.createElement('a')
-      link.href = imageToDownload
-      link.download = processedImage ? 'grain-processed-image.png' : 'original-image'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      const link = document.createElement('a');
+      link.href = imageToDownload;
+      link.download = processedImage
+        ? 'grain-processed-image.png'
+        : 'original-image';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
-  }
+  };
 
-  const displayImage = showOriginal ? image : (processedImage || image)
+  const displayImage = showOriginal ? image : processedImage || image;
 
   return (
     <div className="app">
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-      
+
       <header className="app-header">
         <h1>Analog Film Grain Simulator</h1>
         <p>Upload an image to add physically plausible analog film grain</p>
         <div className="prototype-notice">
-          <p>⚠️ <strong>Prototype:</strong> This is a development prototype for testing coding agent workflows. Functionality is incomplete.</p>
+          <p>
+            ⚠️ <strong>Prototype:</strong> This is a development prototype for
+            testing coding agent workflows. Functionality is incomplete.
+          </p>
         </div>
         {import.meta.env.DEV && (
           <div className="dev-debug-link">
-            <a 
-              href="/grain-debug.html" 
-              target="_blank" 
+            <a
+              href="/grain-debug.html"
+              target="_blank"
               rel="noopener noreferrer"
             >
               🔧 Debug Visualizer (Dev Mode)
             </a>
-            <a 
-              href="/grain-visualizer.html" 
-              target="_blank" 
+            <a
+              href="/grain-visualizer.html"
+              target="_blank"
               rel="noopener noreferrer"
             >
               👁️ Grain Visualizer (Dev Mode)
@@ -327,7 +368,7 @@ function App() {
           accept="image/*"
           style={{ display: 'none' }}
         />
-        
+
         <button onClick={handleUploadClick} className="btn btn-primary">
           📁 Upload Image
         </button>
@@ -335,8 +376,8 @@ function App() {
         {image && (
           <>
             <div className="grain-controls">
-              <select 
-                value={selectedPreset} 
+              <select
+                value={selectedPreset}
                 onChange={(e) => handlePresetChange(e.target.value)}
                 className="preset-select"
                 disabled={isProcessing}
@@ -353,16 +394,16 @@ function App() {
                 <option value="ilford-800">Ilford 800 (Visible Grain)</option>
               </select>
 
-              <button 
-                onClick={handleProcessGrain} 
+              <button
+                onClick={handleProcessGrain}
                 className="btn btn-accent"
                 disabled={isProcessing}
               >
                 {isProcessing ? '⚙️ Processing...' : '🎬 Add Grain'}
               </button>
 
-              <button 
-                onClick={() => setShowAdvanced(!showAdvanced)} 
+              <button
+                onClick={() => setShowAdvanced(!showAdvanced)}
                 className="btn btn-secondary"
                 disabled={isProcessing}
               >
@@ -385,19 +426,22 @@ function App() {
 
             {processedImage && (
               <div className="comparison-controls">
-                <button 
-                  onClick={() => setShowOriginal(!showOriginal)} 
+                <button
+                  onClick={() => setShowOriginal(!showOriginal)}
                   className={`btn ${showOriginal ? 'btn-accent' : 'btn-secondary'}`}
                   title="Press SPACE or C to toggle"
                 >
                   {showOriginal ? '📷 Original' : '🎬 Grain'}
                 </button>
-                <span className="keyboard-hint">Press SPACE or C to toggle</span>
+                <span className="keyboard-hint">
+                  Press SPACE or C to toggle
+                </span>
               </div>
             )}
 
             <button onClick={handleDownload} className="btn btn-success">
-              💾 Download {processedImage ? (showOriginal ? 'Original' : 'Grain') : 'Image'}
+              💾 Download{' '}
+              {processedImage ? (showOriginal ? 'Original' : 'Grain') : 'Image'}
             </button>
           </>
         )}
@@ -409,13 +453,15 @@ function App() {
           <div className="control-group">
             <label>
               ISO: {customSettings.iso}
-              <input 
-                type="range" 
-                min="50" 
-                max="3200" 
+              <input
+                type="range"
+                min="50"
+                max="3200"
                 step="50"
                 value={customSettings.iso}
-                onChange={(e) => handleCustomSettingChange('iso', parseInt(e.target.value))}
+                onChange={(e) =>
+                  handleCustomSettingChange('iso', parseInt(e.target.value))
+                }
                 disabled={isProcessing}
               />
             </label>
@@ -423,9 +469,11 @@ function App() {
           <div className="control-group">
             <label>
               Film Type:
-              <select 
+              <select
                 value={customSettings.filmType}
-                onChange={(e) => handleCustomSettingChange('filmType', e.target.value)}
+                onChange={(e) =>
+                  handleCustomSettingChange('filmType', e.target.value)
+                }
                 disabled={isProcessing}
               >
                 <option value="kodak">Kodak</option>
@@ -437,10 +485,15 @@ function App() {
           {import.meta.env.DEV && (
             <div className="control-group">
               <label>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={customSettings.debugGrainCenters || false}
-                  onChange={(e) => handleCustomSettingChange('debugGrainCenters', e.target.checked)}
+                  onChange={(e) =>
+                    handleCustomSettingChange(
+                      'debugGrainCenters',
+                      e.target.checked
+                    )
+                  }
                   disabled={isProcessing}
                 />
                 🎯 Debug: Show grain center points
@@ -453,8 +506,8 @@ function App() {
       {isProcessing && (
         <div className="processing-indicator">
           <div className="progress-bar">
-            <div 
-              className="progress-fill" 
+            <div
+              className="progress-fill"
               style={{ width: `${processingProgress.progress}%` }}
             ></div>
           </div>
@@ -462,14 +515,14 @@ function App() {
         </div>
       )}
 
-      <div 
+      <div
         className="image-container"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         {!image ? (
-          <div 
+          <div
             className={`upload-area ${isDragOver ? 'drag-over' : ''}`}
             onClick={handleUploadClick}
           >
@@ -480,18 +533,22 @@ function App() {
             </div>
           </div>
         ) : (
-          <div 
+          <div
             className={`image-viewer ${processedImage ? 'comparison-available' : ''}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            style={{ cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+            style={{
+              cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+            }}
           >
             <img
               ref={imageRef}
               src={displayImage || ''}
-              alt={showOriginal ? "Original image" : "Processed image with grain"}
+              alt={
+                showOriginal ? 'Original image' : 'Processed image with grain'
+              }
               key={showOriginal ? 'original' : 'processed'} // Force re-render for transition
               style={{
                 transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
@@ -499,7 +556,7 @@ function App() {
                 maxWidth: 'none',
                 maxHeight: 'none',
                 userSelect: 'none',
-                pointerEvents: 'none'
+                pointerEvents: 'none',
               }}
             />
           </div>
@@ -509,15 +566,14 @@ function App() {
       {image && (
         <div className="image-info">
           <p>
-            {processedImage 
+            {processedImage
               ? `✨ ${showOriginal ? 'Showing original image' : 'Showing processed image with grain'}. Use the toggle button to compare versions and zoom to inspect grain structure closely.`
-              : 'Image loaded. Select a film preset and click "Add Grain" to process.'
-            }
+              : 'Image loaded. Select a film preset and click "Add Grain" to process.'}
           </p>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

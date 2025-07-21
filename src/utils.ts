@@ -4,7 +4,7 @@
  * Custom assertion function that provides type narrowing and better error handling
  * than console.assert. This function will throw an error in all environments,
  * ensuring assertions are never ignored.
- * 
+ *
  * @param condition The condition to assert
  * @param message Error message to display if assertion fails
  * @param context Optional context object to include in error logging
@@ -20,7 +20,7 @@ export function assert(
     if (context) {
       console.error('Context:', context);
     }
-    
+
     // Throw error to fail fast
     throw new Error(`Assertion failed: ${message}`);
   }
@@ -31,7 +31,7 @@ export function assert(
  * only in development mode. In production builds, this becomes a no-op that is completely
  * eliminated by the bundler's dead code elimination and tree shaking.
  * Use this for expensive assertions in hot code paths that should not impact production performance.
- * 
+ *
  * @param condition The condition to assert (only checked in development)
  * @param message Error message to display if assertion fails
  * @param context Optional context object to include in error logging
@@ -40,20 +40,28 @@ export const devAssert: (
   condition: unknown,
   message: string,
   context?: Record<string, unknown>
-) => asserts condition = import.meta.env?.DEV 
-  ? (condition: unknown, message: string, context?: Record<string, unknown>): asserts condition => {
+) => asserts condition = import.meta.env?.DEV
+  ? (
+      condition: unknown,
+      message: string,
+      context?: Record<string, unknown>
+    ): asserts condition => {
       if (!condition) {
         // Log error with context for debugging
         console.error('Dev assertion failed:', message);
         if (context) {
           console.error('Context:', context);
         }
-        
+
         // Throw error to fail fast
         throw new Error(`Dev assertion failed: ${message}`);
       }
     }
-  : (() => {}) as (condition: unknown, message: string, context?: Record<string, unknown>) => asserts condition;
+  : ((() => {}) as (
+      condition: unknown,
+      message: string,
+      context?: Record<string, unknown>
+    ) => asserts condition);
 
 /**
  * Assert that a value is a positive integer
@@ -122,15 +130,35 @@ export const devAssertInRange: (
   min: number,
   max: number,
   name: string
-) => asserts value is number = import.meta.env?.DEV 
-  ? (value: number, min: number, max: number, name: string): asserts value is number => {
+) => asserts value is number = import.meta.env?.DEV
+  ? (
+      value: number,
+      min: number,
+      max: number,
+      name: string
+    ): asserts value is number => {
       if (!(value >= min && value <= max)) {
-        console.error('Dev assertion failed:', `${name} must be between ${min} and ${max}`);
-        console.error('Context:', { [name]: value, min, max, inRange: value >= min && value <= max });
-        throw new Error(`Dev assertion failed: ${name} must be between ${min} and ${max}`);
+        console.error(
+          'Dev assertion failed:',
+          `${name} must be between ${min} and ${max}`
+        );
+        console.error('Context:', {
+          [name]: value,
+          min,
+          max,
+          inRange: value >= min && value <= max,
+        });
+        throw new Error(
+          `Dev assertion failed: ${name} must be between ${min} and ${max}`
+        );
       }
     }
-  : (() => {}) as (value: number, min: number, max: number, name: string) => asserts value is number;
+  : ((() => {}) as (
+      value: number,
+      min: number,
+      max: number,
+      name: string
+    ) => asserts value is number);
 
 /**
  * Assert that a value is an array
@@ -139,11 +167,11 @@ export function assertArray<T>(
   value: unknown,
   name: string
 ): asserts value is T[] {
-  assert(
-    Array.isArray(value),
-    `${name} must be an array`,
-    { [name]: value, type: typeof value, isArray: Array.isArray(value) }
-  );
+  assert(Array.isArray(value), `${name} must be an array`, {
+    [name]: value,
+    type: typeof value,
+    isArray: Array.isArray(value),
+  });
 }
 
 /**
@@ -156,7 +184,12 @@ export function assertObject(
   assert(
     value && typeof value === 'object' && !Array.isArray(value),
     `${name} must be a non-null object`,
-    { [name]: value, type: typeof value, isNull: value === null, isArray: Array.isArray(value) }
+    {
+      [name]: value,
+      type: typeof value,
+      isNull: value === null,
+      isArray: Array.isArray(value),
+    }
   );
 }
 
@@ -171,12 +204,22 @@ export function assertPoint2D(
   assert(
     typeof point.x === 'number' && typeof point.y === 'number',
     `${name} must have numeric x and y properties`,
-    { [name]: point, hasX: 'x' in point, hasY: 'y' in point, xType: typeof point.x, yType: typeof point.y }
+    {
+      [name]: point,
+      hasX: 'x' in point,
+      hasY: 'y' in point,
+      xType: typeof point.x,
+      yType: typeof point.y,
+    }
   );
   assert(
     Number.isFinite(point.x) && Number.isFinite(point.y),
     `${name} x and y must be finite numbers`,
-    { [name]: point, xFinite: Number.isFinite(point.x), yFinite: Number.isFinite(point.y) }
+    {
+      [name]: point,
+      xFinite: Number.isFinite(point.x),
+      yFinite: Number.isFinite(point.y),
+    }
   );
 }
 
@@ -190,19 +233,19 @@ export function assertImageData(
   assertObject(imageData, name);
   const obj = imageData as Record<string, unknown>;
   assert(
-    typeof obj.width === 'number' && 
-    typeof obj.height === 'number' && 
-    obj.data && 
-    typeof (obj.data as ArrayLike<number>).length === 'number',
+    typeof obj.width === 'number' &&
+      typeof obj.height === 'number' &&
+      obj.data &&
+      typeof (obj.data as ArrayLike<number>).length === 'number',
     `${name} must be a valid ImageData object`,
-    { 
+    {
       [name]: imageData,
       hasWidth: 'width' in obj,
       hasHeight: 'height' in obj,
       hasData: 'data' in obj,
       widthType: typeof obj.width,
       heightType: typeof obj.height,
-      dataLength: (obj.data as ArrayLike<number>)?.length
+      dataLength: (obj.data as ArrayLike<number>)?.length,
     }
   );
   assertPositiveInteger(obj.width, `${name}.width`);
@@ -246,20 +289,25 @@ export function assertFiniteNumber(
   assert(
     typeof value === 'number' && Number.isFinite(value),
     `${name} must be a finite number`,
-    { [name]: value, type: typeof value, isFinite: Number.isFinite(value), isNaN: Number.isNaN(value) }
+    {
+      [name]: value,
+      type: typeof value,
+      isFinite: Number.isFinite(value),
+      isNaN: Number.isNaN(value),
+    }
   );
 }
 
 /**
  * Find the maximum value in an array efficiently without using the spread operator.
  * This is much more memory-efficient and won't cause stack overflow on large arrays.
- * 
+ *
  * @param array The array to find the maximum value in
  * @returns The maximum value, or -Infinity if the array is empty
  */
 export function arrayMax(array: readonly number[]): number {
   if (array.length === 0) return -Infinity;
-  
+
   let max = array[0];
   for (let i = 1; i < array.length; i++) {
     if (array[i] > max) {
@@ -272,13 +320,13 @@ export function arrayMax(array: readonly number[]): number {
 /**
  * Find the minimum value in an array efficiently without using the spread operator.
  * This is much more memory-efficient and won't cause stack overflow on large arrays.
- * 
+ *
  * @param array The array to find the minimum value in
  * @returns The minimum value, or Infinity if the array is empty
  */
 export function arrayMin(array: readonly number[]): number {
   if (array.length === 0) return Infinity;
-  
+
   let min = array[0];
   for (let i = 1; i < array.length; i++) {
     if (array[i] < min) {
@@ -291,16 +339,19 @@ export function arrayMin(array: readonly number[]): number {
 /**
  * Find both the minimum and maximum values in an array efficiently in a single pass.
  * This is more efficient than calling arrayMin and arrayMax separately.
- * 
+ *
  * @param array The array to find min/max values in
  * @returns An object with min and max properties, or {min: Infinity, max: -Infinity} if empty
  */
-export function arrayMinMax(array: readonly number[]): { min: number; max: number } {
+export function arrayMinMax(array: readonly number[]): {
+  min: number;
+  max: number;
+} {
   if (array.length === 0) return { min: Infinity, max: -Infinity };
-  
+
   let min = array[0];
   let max = array[0];
-  
+
   for (let i = 1; i < array.length; i++) {
     const value = array[i];
     if (value < min) {
@@ -309,6 +360,6 @@ export function arrayMinMax(array: readonly number[]): { min: number; max: numbe
       max = value;
     }
   }
-  
+
   return { min, max };
 }

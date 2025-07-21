@@ -2,6 +2,7 @@
 mode: agent
 model: Claude Sonnet 4
 ---
+
 Find the first unchecked (sub?)item in TODO.md and act on it.
 Start by checking if it is still applicable.
 If it looks like a small task just do it.

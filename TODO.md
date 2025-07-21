@@ -10,7 +10,7 @@
 - [x] Add section about using descriptive types or aliases where it makes sense to your instructions.
 - [x] Add a code formatting configuration to the project. And apply it to all source code.
 - [ ] Fix the test that fails. the algorithm currently just outputs black when I test it. could the tests failing have something to do with this?
-- [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use ** instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future. Also add eslint checks where applicable.
+- [ ] Go through the code and make sure we are using idiomatic modern typescript. For example use \*\* instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future. Also add eslint checks where applicable.
 - [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
 - [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
 - [ ] Implement sampling estimation for the iterative lightness compensation in processImage.
@@ -18,23 +18,23 @@
   - [ ] Profile to make sure it improves performance
 - [ ] Enable each test below one by one. Check if it passes. If not, determine if the code or the test is wrong (probably the test). If the test is wrong, determine if it is worth it to update the test or better to just remove it.
   - [ ] `test/grain-processor.test.ts` > "should produce minimal changes to the original image at low ISO"
-  - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"  
+  - [ ] `test/grain-processor.test.ts` > "should have minimal grain effect at very low ISO (50)"
   - [ ] `test/grain-processor.test.ts` > "should preserve image structure at low ISO"
   - [ ] `test/grain-processor-integration.test.ts` > "should process checkerboard patterns correctly"
   - [ ] `test/grain-processor-integration.test.ts` > "should maintain reasonable processing times"
   - [ ] `test/grain-processor-integration.test.ts` > "should produce minimal changes to the original image at low ISO"
   - [ ] `test/grain-processor-integration.test.ts` > "should have minimal grain effect at very low ISO (50)"
-  - [ ] `test/grain-processor-integration.test.ts` > "should preserve image structure at low ISO" 
+  - [ ] `test/grain-processor-integration.test.ts` > "should preserve image structure at low ISO"
   - [ ] `test/exposure-lightness-preservation.test.ts` > "should preserve overall lightness for middle gray (18% gray)"
   - [ ] `test/exposure-lightness-preservation.test.ts` > "should preserve overall lightness for various gray levels"
   - [ ] `test/exposure-lightness-preservation.test.ts` > "should preserve overall lightness for black and white extremes"
   - [ ] `test/grain-two-phase-verification.test.ts` > "Performance Characteristics" (describe.skip)
 - [ ] Create a page like public/grain-debug.html that replicates the testpatterns from grain-processor-integration.test.ts
 - [ ] Update the grain generation logic to do a full 3d emulsion simulation.
-  * In real film grains are suspended at multiple depths, and can overlap.
-  * In the current implementation we don't support overlapping.
-  * Could just take the current grain generation and just have multiple at different depths?
-  * refer to GRAIN_OVERLAPPING.md for some notes on the issue
+  - In real film grains are suspended at multiple depths, and can overlap.
+  - In the current implementation we don't support overlapping.
+  - Could just take the current grain generation and just have multiple at different depths?
+  - refer to GRAIN_OVERLAPPING.md for some notes on the issue
 - [ ] Add support for lower iso than 50
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)

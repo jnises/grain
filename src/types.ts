@@ -62,8 +62,6 @@ export interface GrainPoint {
   developmentThreshold: number; // Per-grain development threshold for activation
 }
 
-
-
 export interface GrayscaleGrainDensity {
   density: number;
 }
