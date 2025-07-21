@@ -31,7 +31,8 @@
   - [ ] `test/grain-processor-integration.test.ts` > "should process radial patterns correctly" (algorithm outputs black)  
   - [ ] `test/grain-processor-integration.test.ts` > "should produce different results for different film types" (algorithm outputs black)
   - [ ] `test/iterative-vs-single-pass.test.ts` > "should demonstrate improved lightness preservation with iterative approach" (algorithm outputs black)
-  - [ ] `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" (test times out due to expensive computation)
+  - [ ] `test/grain-physical-behavior.test.ts` > "should produce FEWER grains as ISO increases" (test times out due to expensive computation)  update the test to work with a smaller image to make it faster
+- [ ] I'm getting diagonal stripes in the processed image. Looks like the grains are uniform though. What could be causing this? It looks as if grain exposure is modulated with a mostly diagonal sawtooth pattern.
 - [ ] Remove any constants from constants.ts that are not used anywhere or are only used in tests
 - [ ] Move any constant in constants.ts that are only used a single place to that place and remove it from constants.ts
 - [ ] Enable each test below one by one. Check if it passes. If not, determine if the code or the test is wrong (probably the test). If the test is wrong, determine if it is worth it to update the test or better to just remove it.
