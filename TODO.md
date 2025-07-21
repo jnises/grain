@@ -13,6 +13,7 @@
 - [x] Write test that ensures that the lightness iteration converges. Specifically that the individual components behave.
  - [x] Make sure the value returned by calculateLightnessFactor behaves correctly when applied by adjustGrainExposures
 - [x] Apply the instructions from the "Descriptive Types and Type Aliases" section on the types in types.ts
+- [ ] Convert the types GrainExposure, GrainIntrinsicDensity and PixelGrainEffect to be classes with operator methods for all arithmetic operations that make sense. The arithmetic operations should only work with other values of the same type, not raw number.
 - [ ] Implement sampling estimation for the iterative lightness compensation in processImage.
   - [ ] Share code with `processPixelEffects` for the estimation
   - [ ] Profile to make sure it improves performance
