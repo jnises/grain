@@ -249,9 +249,11 @@ describe('Grain Properties Directional Bias Tests', () => {
       const thresholdRatios = results.map((r) => r.thresholdRatio);
 
       const sensitivityRange =
-        Math.max(...sensitivityRatios) - Math.min(...sensitivityRatios);
+        sensitivityRatios.reduce((max, val) => Math.max(max, val), -Infinity) -
+        sensitivityRatios.reduce((min, val) => Math.min(min, val), Infinity);
       const thresholdRange =
-        Math.max(...thresholdRatios) - Math.min(...thresholdRatios);
+        thresholdRatios.reduce((max, val) => Math.max(max, val), -Infinity) -
+        thresholdRatios.reduce((min, val) => Math.min(min, val), Infinity);
 
       expect(sensitivityRange).toBeLessThan(1.0);
       expect(thresholdRange).toBeLessThan(1.0);
@@ -543,8 +545,6 @@ function analyzePropertySpatialClustering(
     }
   }
 
-  const globalMean =
-    cellAverages.reduce((sum, val) => sum + val, 0) / cellAverages.length;
   const clusteringScore = calculateStandardDeviation(cellAverages);
 
   // Expected range for random distribution (rough estimate)
