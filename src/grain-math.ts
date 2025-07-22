@@ -1,11 +1,7 @@
 // Mathematical utility functions for grain processing
 // These are pure functions that don't depend on class state
 
-import {
-  SEEDED_RANDOM_MULTIPLIER,
-  EXPOSURE_CONVERSION,
-  RGB_COLOR_CONSTANTS,
-} from './constants';
+import { EXPOSURE_CONVERSION, RGB_COLOR_CONSTANTS } from './constants';
 import { srgbToLinear, linearToSrgb } from './color-space';
 import {
   assert,
@@ -15,13 +11,83 @@ import {
 } from './utils';
 
 /**
- * Generate pseudorandom number with seed
+ * Wang hash 32-bit integer hash function
+ * Based on Thomas Wang's integer hash algorithm for uniform distribution
+ * Pure function for deterministic hash generation
+ * Exported for use by other modules to avoid duplication
+ */
+export function wangHash32(key: number): number {
+  devAssert(() => Number.isFinite(key), `key must be finite, got ${key}`);
+  devAssert(() => Number.isInteger(key), `key must be an integer, got ${key}`);
+
+  // Ensure we work with 32-bit unsigned integers
+  key = Math.abs(key) >>> 0;
+
+  key = (~key + (key << 15)) >>> 0; // key = (key << 15) - key - 1;
+  key = (key ^ (key >>> 12)) >>> 0;
+  key = (key + (key << 2)) >>> 0;
+  key = (key ^ (key >>> 4)) >>> 0;
+  key = (key * 2057) >>> 0; // key = (key + (key << 3)) + (key << 11);
+  key = (key ^ (key >>> 16)) >>> 0;
+
+  return key;
+}
+
+/**
+ * Hash a seed to improve distribution and avoid systematic patterns
+ * Combines the input with a prime number before hashing to break up regular patterns
+ * Pure function for deterministic seed transformation
+ */
+function hashSeed(seed: number, salt: number = 0x9e3779b9): number {
+  devAssert(() => Number.isFinite(seed), `seed must be finite, got ${seed}`);
+  devAssert(() => Number.isFinite(salt), `salt must be finite, got ${salt}`);
+  // Convert to integer and combine with salt using addition and XOR
+  const intSeed = Math.floor(Math.abs(seed));
+  const intSalt = Math.floor(Math.abs(salt));
+  const combined = (intSeed + intSalt) ^ (intSeed >>> 16);
+  return wangHash32(combined);
+}
+
+/**
+ * Generate pseudorandom number with seed using Wang hash
  * Pure function for deterministic random number generation
+ * Returns a value in [0, 1) range
  */
 export function seededRandom(seed: number): number {
-  assertFiniteNumber(seed, 'seed');
-  const x = Math.sin(seed) * SEEDED_RANDOM_MULTIPLIER;
-  return x - Math.floor(x);
+  devAssert(() => Number.isFinite(seed), `seed must be finite, got ${seed}`);
+
+  // Convert to integer before hashing
+  const intSeed = Math.floor(seed);
+  const hashedSeed = hashSeed(intSeed);
+
+  // Convert to [0, 1) range by dividing by 2^32
+  return hashedSeed / 0x100000000;
+}
+
+/**
+ * Generate pseudorandom number with improved seeding for grain properties
+ * Combines index with a property-specific salt to avoid systematic patterns
+ * Pure function for deterministic random number generation
+ */
+export function seededRandomForGrain(
+  index: number,
+  property: 'size' | 'sensitivity' | 'threshold'
+): number {
+  devAssert(() => Number.isFinite(index), `index must be finite, got ${index}`);
+  devAssert(
+    () => Number.isInteger(index),
+    `index must be an integer, got ${index}`
+  );
+
+  // Use different salts for different grain properties to ensure independence
+  const salts = {
+    size: 0x456789ab,
+    sensitivity: 0x789012cd,
+    threshold: 0x234567ef,
+  };
+
+  const hashedSeed = hashSeed(index, salts[property]);
+  return hashedSeed / 0x100000000;
 }
 
 /**

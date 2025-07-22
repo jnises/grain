@@ -1,24 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  SEEDED_RANDOM_MULTIPLIER,
-  FILM_CHARACTERISTICS,
-  EXPOSURE_CONVERSION,
-} from '../src/constants';
+import { FILM_CHARACTERISTICS, EXPOSURE_CONVERSION } from '../src/constants';
 
 describe('Constants Validation', () => {
-  describe('SEEDED_RANDOM_MULTIPLIER', () => {
-    it('should be a positive number', () => {
-      expect(typeof SEEDED_RANDOM_MULTIPLIER).toBe('number');
-      expect(SEEDED_RANDOM_MULTIPLIER).toBeGreaterThan(0);
-      expect(Number.isFinite(SEEDED_RANDOM_MULTIPLIER)).toBe(true);
-    });
-
-    it('should be large enough for random number generation', () => {
-      // Should be at least 1000 to provide sufficient range for seeded RNG
-      expect(SEEDED_RANDOM_MULTIPLIER).toBeGreaterThanOrEqual(1000);
-    });
-  });
-
   describe('FILM_CHARACTERISTICS', () => {
     const filmTypes = ['kodak', 'fuji', 'ilford'] as const;
 

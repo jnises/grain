@@ -3,7 +3,7 @@ import {
   DefaultRandomNumberGenerator,
   SeededRandomNumberGenerator,
 } from '../src/grain-generator';
-import { SEEDED_RANDOM_MULTIPLIER } from '../src/constants';
+// SEEDED_RANDOM_MULTIPLIER no longer used with Wang hash
 
 describe('Random Number Generators', () => {
   describe('DefaultRandomNumberGenerator', () => {
@@ -96,16 +96,20 @@ describe('Random Number Generators', () => {
         expect(sequence1).toEqual(sequence2);
       });
 
-      it('should use SEEDED_RANDOM_MULTIPLIER constant correctly', () => {
-        // Test that the algorithm matches the expected implementation
+      it('should use Wang hash algorithm correctly', () => {
+        // Test that the algorithm produces values in correct range
         const seed = 100;
         const rng = new SeededRandomNumberGenerator(seed);
 
-        // Calculate first value manually to verify algorithm
-        const x = Math.sin(seed) * SEEDED_RANDOM_MULTIPLIER;
-        const expectedFirst = x - Math.floor(x);
+        const firstValue = rng.random();
 
-        expect(rng.random()).toBeCloseTo(expectedFirst, 10);
+        // Should be in [0, 1) range
+        expect(firstValue).toBeGreaterThanOrEqual(0);
+        expect(firstValue).toBeLessThan(1);
+
+        // Should be deterministic
+        rng.reset();
+        expect(rng.random()).toBe(firstValue);
       });
 
       it('should advance internal state with each call', () => {

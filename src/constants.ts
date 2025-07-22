@@ -1,9 +1,6 @@
 // Shared constants used across multiple files
 // File-specific constants are defined in their respective files
 
-// Random number generation - shared between GrainGenerator and potentially other modules
-export const SEEDED_RANDOM_MULTIPLIER = 10000;
-
 // Color space and RGB conversion constants
 export const RGB_COLOR_CONSTANTS = {
   // sRGB conversion values (normalized 0-1 range)

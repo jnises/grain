@@ -7,8 +7,8 @@ import type {
   GrainPoint,
   RandomNumberGenerator,
 } from './types';
-import { SEEDED_RANDOM_MULTIPLIER, FILM_CHARACTERISTICS } from './constants';
-import { seededRandom } from './grain-math';
+import { FILM_CHARACTERISTICS } from './constants';
+import { seededRandom, seededRandomForGrain, wangHash32 } from './grain-math';
 import { SpatialLookupGrid } from './spatial-lookup-grid';
 import {
   assertPositiveInteger,
@@ -40,9 +40,12 @@ export class SeededRandomNumberGenerator implements RandomNumberGenerator {
   }
 
   random(): number {
-    const x = Math.sin(this.current) * SEEDED_RANDOM_MULTIPLIER;
+    // Use Wang hash for better distribution
+    const hashedValue = wangHash32(this.current);
     this.current++;
-    return x - Math.floor(x);
+
+    // Convert to [0, 1) range by dividing by 2^32
+    return hashedValue / 0x100000000;
   }
 
   // Reset to original seed
@@ -72,9 +75,6 @@ const GRAIN_SIZE_DISTRIBUTION_BIAS = 0.6; // Bias towards smaller grains (>0.5 =
 
 // Random number generation seeds
 const DEFAULT_SEED = 12345;
-const GRAIN_SIZE_VARIATION_SEED_MULTIPLIER = 456.789;
-const SENSITIVITY_VARIATION_SEED_MULTIPLIER = 789.012;
-const DEVELOPMENT_THRESHOLD_SEED_MULTIPLIER = 234.567;
 
 export class GrainGenerator {
   private width: number;
@@ -571,9 +571,7 @@ export class GrainGenerator {
 
       // Convert fallback grains to variable-size grains
       return fallbackGrains.map((point, index) => {
-        const sensitivityVariation = seededRandom(
-          index * SENSITIVITY_VARIATION_SEED_MULTIPLIER
-        );
+        const sensitivityVariation = seededRandomForGrain(index, 'sensitivity');
 
         const grainSize = this.generateVariableGrainSize(
           params.baseGrainSize,
@@ -761,8 +759,9 @@ export class GrainGenerator {
       );
 
       if (this.isValidGrainPosition(x, y, minDistance, grains)) {
-        const sensitivityVariation = seededRandom(
-          attempts * SENSITIVITY_VARIATION_SEED_MULTIPLIER
+        const sensitivityVariation = seededRandomForGrain(
+          attempts,
+          'sensitivity'
         );
         const developmentThreshold = this.calculateDevelopmentThreshold(
           grainSize,
@@ -802,9 +801,7 @@ export class GrainGenerator {
 
   // Generate variable grain size with distribution bias towards smaller grains
   private generateVariableGrainSize(baseSize: number, index: number): number {
-    const sizeVariation = seededRandom(
-      index * GRAIN_SIZE_VARIATION_SEED_MULTIPLIER
-    );
+    const sizeVariation = seededRandomForGrain(index, 'size');
 
     // Apply distribution bias (more small grains than large ones)
     const biasedVariation =
@@ -903,9 +900,7 @@ export class GrainGenerator {
     threshold -= sizeEffect; // Larger grains = lower threshold = more sensitive
 
     // Random variation per grain using seeded random
-    const randomVariation = seededRandom(
-      seedIndex * DEVELOPMENT_THRESHOLD_SEED_MULTIPLIER
-    );
+    const randomVariation = seededRandomForGrain(seedIndex, 'threshold');
     const variationRange = thresholdConfig.randomVariation;
     const randomOffset = (randomVariation - 0.5) * variationRange; // Range: [-variation/2, +variation/2]
     threshold += randomOffset;

@@ -13,10 +13,18 @@
       Created comprehensive anisotropy tests in `grain-structure-anisotropy.test.ts`. Found minor directional bias at low ISO (ratio ~2.2) due to Poisson generation limitations, but acceptable levels overall. Fallback grid method shows excellent isotropy (ratio ~1.06).
 - [x] Also write tests to make sure the sensitivity and developmentThreshold of the grains don't have a directional bias. Don't just check for horizontal, vertical or diagonal. The strips I'm seeing is somewhere between horizontal and diagonal.
 - [x] Update grain-debug.html to also visualize grain sensitivity and developmentThreshold
-- [ ] grainGenerators use of seededRandom looks problematic. use a better prng algorithm than just Math.sin. wanghash perhaps? or perhaps just an off the shelf cryptographic random generator?
+- [x] grainGenerators use of seededRandom looks problematic. use a better prng algorithm than just Math.sin. wanghash perhaps? or perhaps just an off the shelf cryptographic random generator?
   when using grain index as input I wouldn't be surprised if you get patterns in the output with the current bad rng.
-  - [ ] Improve the prng algo
-  - [ ] Check if the input to the rng could be improved from just the grain index?
+  - [x] Research and implement better PRNG algorithm (Wang hash, xorshift, or similar)
+  - [x] Replace Math.sin-based seededRandom function in grain-math.ts
+  - [x] Update SeededRandomNumberGenerator class in grain-generator.ts to use new algorithm
+  - [x] Improve seeding strategy to avoid patterns from grain indices (hash the index before use)
+  - [x] Update all direct seededRandom calls to use better seed distribution
+  - [x] Add tests to verify new PRNG has good statistical properties
+  - [x] Test that visual patterns are reduced with new PRNG
+  - [x] Update constants and remove SEEDED_RANDOM_MULTIPLIER if no longer needed
+  - [x] assert that the wanghash input is indeed an integer
+  - [x] Since the hashing functions are likely to be quite hot, they should use devAssert rather than a normal assert
 - [ ] Examine why the algorithm introduces striped patterns. Look at gray.png grain-processed-image.png
   - [x] Create a visual analysis tool to examine stripe patterns in processed images
   - [x] Investigate Poisson disk sampling for directional bias in grain placement
