@@ -15,7 +15,9 @@
       Implemented Squirrel Noise 5 algorithm to replace Wang Hash. Updated grain-math.ts with squirrelNoise5() function, updated all references in grain-generator.ts, and renamed/updated test file to squirrel-noise-properties.test.ts. All tests pass and the new PRNG is now active in the grain generation system.
 - [x] The rng algorithms operate on integers, but the code just does Math.floor on the input. This silently throws away the fraction. The current code asserts that the input is finite, which isn't enough. If an algorithm requires an integer you MUST assert (devAssert) that it is actually an integer. Also, update your instructions to make sure you do this properly in the future.
       Added proper integer assertions to squirrelNoise5(), hashSeed(), and seededRandom() functions. Replaced Math.floor() conversions with devAssert(() => Number.isInteger(value)) to prevent silent data loss. Fixed grain-generator.ts to use integer arithmetic (attempts _ 1234 + 1) instead of decimal multipliers (attempts _ 12.34). Updated tests to expect integer assertion failures for non-integer inputs. The guidance was already present in copilot-instructions.md.
+- [ ] squirrelNoise5 has a seed that we aren't using currently. Is that correctly implemented? What are you meant to use it for? Should we use it?
 - [ ] Go though all code that eventually calls squirreNoise5 and make sure the seed used makes sense and does not repeat in a way that would cause structure in the noise.
+- [ ] Should we use more than the index of a grain for rng? perhaps its x and y possition as well?
 - [ ] reenable and fix these tests:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
   - [ ] Fix and re-enable test: "should generate minimum viable grain count" in test/grain-distribution.test.ts (timeout issue)
