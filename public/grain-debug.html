@@ -288,6 +288,52 @@
         </div>
       </div>
 
+      <!-- Grain Sensitivity -->
+      <div class="visualization-panel">
+        <h3>Grain Sensitivity Distribution</h3>
+        <canvas id="sensitivityCanvas" width="400" height="300"></canvas>
+        <div class="color-legend">
+          <div class="color-item">
+            <div class="color-box" style="background-color: #0000ff"></div>
+            <span>Low Sensitivity (0.4-0.6)</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #00ff00"></div>
+            <span>Medium Sensitivity (0.6-1.0)</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #ff0000"></div>
+            <span>High Sensitivity (1.0-1.2)</span>
+          </div>
+        </div>
+        <div class="stats" id="sensitivityStats">
+          Click "Generate Visualization" to see sensitivity distribution...
+        </div>
+      </div>
+
+      <!-- Development Threshold -->
+      <div class="visualization-panel">
+        <h3>Development Threshold Distribution</h3>
+        <canvas id="thresholdCanvas" width="400" height="300"></canvas>
+        <div class="color-legend">
+          <div class="color-item">
+            <div class="color-box" style="background-color: #ff00ff"></div>
+            <span>Low Threshold (Easy to develop)</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #ffff00"></div>
+            <span>Medium Threshold</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #00ffff"></div>
+            <span>High Threshold (Hard to develop)</span>
+          </div>
+        </div>
+        <div class="stats" id="thresholdStats">
+          Click "Generate Visualization" to see threshold distribution...
+        </div>
+      </div>
+
       <!-- Spatial Grid -->
       <div class="visualization-panel">
         <h3>Spatial Acceleration Grid</h3>
@@ -883,6 +929,112 @@
         );
       }
 
+      function visualizeSensitivity(layers) {
+        clearStats('sensitivityStats');
+        clearCanvas('sensitivityCanvas');
+
+        const allGrains = layers.flatMap((layer) => layer.grains);
+        const sensitivities = allGrains.map((g) => g.sensitivity);
+        const { min: minSensitivity, max: maxSensitivity } =
+          arrayMinMax(sensitivities);
+        const sensitivityRange = maxSensitivity - minSensitivity;
+
+        // Categorize grains by sensitivity (typical range is 0.4-1.2)
+        const lowThreshold = 0.6;
+        const highThreshold = 1.0;
+
+        const lowSensitivityGrains = allGrains.filter(
+          (g) => g.sensitivity <= lowThreshold
+        );
+        const mediumSensitivityGrains = allGrains.filter(
+          (g) => g.sensitivity > lowThreshold && g.sensitivity <= highThreshold
+        );
+        const highSensitivityGrains = allGrains.filter(
+          (g) => g.sensitivity > highThreshold
+        );
+
+        // Draw with different colors
+        drawGrains('sensitivityCanvas', lowSensitivityGrains, '#0000ff');
+        drawGrains('sensitivityCanvas', mediumSensitivityGrains, '#00ff00');
+        drawGrains('sensitivityCanvas', highSensitivityGrains, '#ff0000');
+
+        // Log statistics
+        log(
+          `Sensitivity range: ${minSensitivity.toFixed(3)} - ${maxSensitivity.toFixed(3)}`,
+          'sensitivityStats'
+        );
+        log(
+          `Low sensitivity (<=${lowThreshold}): ${lowSensitivityGrains.length}`,
+          'sensitivityStats'
+        );
+        log(
+          `Medium sensitivity: ${mediumSensitivityGrains.length}`,
+          'sensitivityStats'
+        );
+        log(
+          `High sensitivity (>${highThreshold}): ${highSensitivityGrains.length}`,
+          'sensitivityStats'
+        );
+        log(
+          `Average sensitivity: ${(sensitivities.reduce((a, b) => a + b, 0) / sensitivities.length).toFixed(3)}`,
+          'sensitivityStats'
+        );
+      }
+
+      function visualizeThreshold(layers) {
+        clearStats('thresholdStats');
+        clearCanvas('thresholdCanvas');
+
+        const allGrains = layers.flatMap((layer) => layer.grains);
+        const thresholds = allGrains.map((g) => g.developmentThreshold);
+        const { min: minThreshold, max: maxThreshold } =
+          arrayMinMax(thresholds);
+        const thresholdRange = maxThreshold - minThreshold;
+
+        // Categorize grains by development threshold
+        const lowThreshold = minThreshold + thresholdRange * 0.33;
+        const highThreshold = minThreshold + thresholdRange * 0.67;
+
+        const lowThresholdGrains = allGrains.filter(
+          (g) => g.developmentThreshold <= lowThreshold
+        );
+        const mediumThresholdGrains = allGrains.filter(
+          (g) =>
+            g.developmentThreshold > lowThreshold &&
+            g.developmentThreshold <= highThreshold
+        );
+        const highThresholdGrains = allGrains.filter(
+          (g) => g.developmentThreshold > highThreshold
+        );
+
+        // Draw with different colors (low threshold = easy to develop = bright)
+        drawGrains('thresholdCanvas', lowThresholdGrains, '#ff00ff');
+        drawGrains('thresholdCanvas', mediumThresholdGrains, '#ffff00');
+        drawGrains('thresholdCanvas', highThresholdGrains, '#00ffff');
+
+        // Log statistics
+        log(
+          `Threshold range: ${minThreshold.toFixed(3)} - ${maxThreshold.toFixed(3)}`,
+          'thresholdStats'
+        );
+        log(
+          `Low threshold (<=${lowThreshold.toFixed(3)}, easy to develop): ${lowThresholdGrains.length}`,
+          'thresholdStats'
+        );
+        log(
+          `Medium threshold: ${mediumThresholdGrains.length}`,
+          'thresholdStats'
+        );
+        log(
+          `High threshold (>${highThreshold.toFixed(3)}, hard to develop): ${highThresholdGrains.length}`,
+          'thresholdStats'
+        );
+        log(
+          `Average threshold: ${(thresholds.reduce((a, b) => a + b, 0) / thresholds.length).toFixed(3)}`,
+          'thresholdStats'
+        );
+      }
+
       function visualizeSpatialGrid(layers) {
         clearStats('gridStats');
         clearCanvas('gridCanvas');
@@ -1059,6 +1211,8 @@
         updateCanvasSize('rawGrainsCanvas', canvasWidth, canvasHeight);
         updateCanvasSize('sizeCategoriesCanvas', canvasWidth, canvasHeight);
         updateCanvasSize('sizesCanvas', canvasWidth, canvasHeight);
+        updateCanvasSize('sensitivityCanvas', canvasWidth, canvasHeight);
+        updateCanvasSize('thresholdCanvas', canvasWidth, canvasHeight);
         updateCanvasSize('gridCanvas', canvasWidth, canvasHeight);
 
         clearAllCanvases();
@@ -1101,6 +1255,12 @@
         // Show size distribution
         visualizeSizeDistribution(currentLayers);
 
+        // Show sensitivity distribution
+        visualizeSensitivity(currentLayers);
+
+        // Show threshold distribution
+        visualizeThreshold(currentLayers);
+
         // Show spatial grid
         visualizeSpatialGrid(currentLayers);
       }
@@ -1110,12 +1270,16 @@
           'rawGrainsCanvas',
           'sizeCategoriesCanvas',
           'sizesCanvas',
+          'sensitivityCanvas',
+          'thresholdCanvas',
           'gridCanvas',
         ].forEach(clearCanvas);
         [
           'rawGrainsStats',
           'sizeCategoriesStats',
           'sizesStats',
+          'sensitivityStats',
+          'thresholdStats',
           'gridStats',
         ].forEach(clearStats);
       };
