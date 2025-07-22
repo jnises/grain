@@ -33,40 +33,42 @@ describe('Lightness Sampling Performance Benchmarks', () => {
     });
 
     const processor = new GrainProcessor(width, height, settings);
-    
+
     const startTime = performance.now();
     const result = await processor.processImage(imageData);
     const endTime = performance.now();
-    
+
     const processingTime = endTime - startTime;
 
     // Verify the result is valid
     expect(result).toBeDefined();
     expect(result.width).toBe(width);
     expect(result.height).toBe(height);
-    
+
     // Performance assertion - should complete within reasonable time
     // With sampling, even a 200x200 image should process in under 2 seconds
     expect(processingTime).toBeLessThan(2000);
-    
+
     console.log(`\n📊 Sampling Performance (${width}x${height}):`);
     console.log(`  Processing time: ${processingTime.toFixed(2)}ms`);
-    
+
     // Test with different sampling densities to show the tradeoff
     const densities = [0.01, 0.05, 0.1]; // 1%, 5%, 10%
-    
+
     for (const density of densities) {
       const testSettings: GrainSettings = {
         ...settings,
         lightnessEstimationSamplingDensity: density,
       };
-      
+
       const testProcessor = new GrainProcessor(width, height, testSettings);
       const testStart = performance.now();
       await testProcessor.processImage(imageData);
       const testEnd = performance.now();
-      
-      console.log(`  Sampling density ${(density * 100).toFixed(0)}%: ${(testEnd - testStart).toFixed(2)}ms`);
+
+      console.log(
+        `  Sampling density ${(density * 100).toFixed(0)}%: ${(testEnd - testStart).toFixed(2)}ms`
+      );
     }
   });
 });

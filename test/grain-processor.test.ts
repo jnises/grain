@@ -13,9 +13,12 @@ class TestGrainProcessor extends GrainProcessor {
     originalExposureMap: GrainExposureMap,
     adjustmentFactor: number
   ): GrainExposureMap {
-    return (this as any).adjustGrainExposures(originalExposureMap, adjustmentFactor);
+    return (this as any).adjustGrainExposures(
+      originalExposureMap,
+      adjustmentFactor
+    );
   }
-  
+
   public testCalculateGrainExposures(
     grains: GrainPoint[],
     imageData: Float32Array
@@ -296,10 +299,13 @@ describe('GrainProcessor', () => {
 
     it('should preserve map structure', () => {
       const originalMap = createTestExposureMap([0.2, 0.5, 0.8]);
-      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.0);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        1.0
+      );
 
       expect(adjustedMap.size).toBe(originalMap.size);
-      
+
       // Check that all original grains are present in adjusted map
       for (const grain of originalMap.keys()) {
         expect(adjustedMap.has(grain)).toBe(true);
@@ -308,16 +314,22 @@ describe('GrainProcessor', () => {
 
     it('should clamp all values to [0, 1] range', () => {
       const originalMap = createTestExposureMap([0.1, 0.5, 0.9]);
-      
+
       // Test with very large adjustment factor
-      const adjustedMapLarge = TestGrainProcessor.testAdjustGrainExposures(originalMap, 100.0);
+      const adjustedMapLarge = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        100.0
+      );
       for (const exposure of adjustedMapLarge.values()) {
         expect(exposure).toBeGreaterThanOrEqual(0.0);
         expect(exposure).toBeLessThanOrEqual(1.0);
       }
 
-      // Test with very small adjustment factor  
-      const adjustedMapSmall = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.01);
+      // Test with very small adjustment factor
+      const adjustedMapSmall = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        0.01
+      );
       for (const exposure of adjustedMapSmall.values()) {
         expect(exposure).toBeGreaterThanOrEqual(0.0);
         expect(exposure).toBeLessThanOrEqual(1.0);
@@ -329,25 +341,46 @@ describe('GrainProcessor', () => {
       const originalGrains = Array.from(originalMap.keys());
 
       // Test with moderate increase
-      const adjustedMapIncrease = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.2);
-      const adjustedExposuresIncrease = originalGrains.map(grain => adjustedMapIncrease.get(grain)!);
-      
+      const adjustedMapIncrease = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        1.2
+      );
+      const adjustedExposuresIncrease = originalGrains.map(
+        (grain) => adjustedMapIncrease.get(grain)!
+      );
+
       // Should maintain relative ordering: first < second < third
-      expect(adjustedExposuresIncrease[0]).toBeLessThan(adjustedExposuresIncrease[1]);
-      expect(adjustedExposuresIncrease[1]).toBeLessThan(adjustedExposuresIncrease[2]);
+      expect(adjustedExposuresIncrease[0]).toBeLessThan(
+        adjustedExposuresIncrease[1]
+      );
+      expect(adjustedExposuresIncrease[1]).toBeLessThan(
+        adjustedExposuresIncrease[2]
+      );
 
       // Test with moderate decrease
-      const adjustedMapDecrease = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.8);
-      const adjustedExposuresDecrease = originalGrains.map(grain => adjustedMapDecrease.get(grain)!);
-      
+      const adjustedMapDecrease = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        0.8
+      );
+      const adjustedExposuresDecrease = originalGrains.map(
+        (grain) => adjustedMapDecrease.get(grain)!
+      );
+
       // Should maintain relative ordering: first < second < third
-      expect(adjustedExposuresDecrease[0]).toBeLessThan(adjustedExposuresDecrease[1]);
-      expect(adjustedExposuresDecrease[1]).toBeLessThan(adjustedExposuresDecrease[2]);
+      expect(adjustedExposuresDecrease[0]).toBeLessThan(
+        adjustedExposuresDecrease[1]
+      );
+      expect(adjustedExposuresDecrease[1]).toBeLessThan(
+        adjustedExposuresDecrease[2]
+      );
     });
 
     it('should apply no adjustment when factor is 1.0', () => {
       const originalMap = createTestExposureMap([0.1, 0.3, 0.7, 0.9]);
-      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.0);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        1.0
+      );
 
       for (const [grain, originalExposure] of originalMap.entries()) {
         const adjustedExposure = adjustedMap.get(grain)!;
@@ -357,7 +390,10 @@ describe('GrainProcessor', () => {
 
     it('should increase exposures when factor > 1.0', () => {
       const originalMap = createTestExposureMap([0.2, 0.4, 0.6]);
-      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.5);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        1.5
+      );
 
       for (const [grain, originalExposure] of originalMap.entries()) {
         const adjustedExposure = adjustedMap.get(grain)!;
@@ -370,7 +406,10 @@ describe('GrainProcessor', () => {
 
     it('should decrease exposures when factor < 1.0', () => {
       const originalMap = createTestExposureMap([0.3, 0.5, 0.8]);
-      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.7);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        0.7
+      );
 
       for (const [grain, originalExposure] of originalMap.entries()) {
         const adjustedExposure = adjustedMap.get(grain)!;
@@ -383,7 +422,10 @@ describe('GrainProcessor', () => {
 
     it('should handle edge case with zero exposures', () => {
       const originalMap = createTestExposureMap([0.0, 0.0, 0.0]);
-      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 2.0);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        2.0
+      );
 
       for (const exposure of adjustedMap.values()) {
         expect(exposure).toBe(0.0);
@@ -392,7 +434,10 @@ describe('GrainProcessor', () => {
 
     it('should handle edge case with maximum exposures', () => {
       const originalMap = createTestExposureMap([1.0, 1.0, 1.0]);
-      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.5);
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        0.5
+      );
 
       for (const exposure of adjustedMap.values()) {
         expect(exposure).toBeLessThan(1.0);
@@ -402,9 +447,10 @@ describe('GrainProcessor', () => {
 
     it('should handle extreme adjustment factors gracefully', () => {
       const originalMap = createTestExposureMap([0.1, 0.5, 0.9]);
-      
+
       // Test with very large factor
-      const adjustedMapExtremeLarge = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1000000.0);
+      const adjustedMapExtremeLarge =
+        TestGrainProcessor.testAdjustGrainExposures(originalMap, 1000000.0);
       expect(() => {
         for (const exposure of adjustedMapExtremeLarge.values()) {
           expect(exposure).toBeGreaterThanOrEqual(0.0);
@@ -414,7 +460,8 @@ describe('GrainProcessor', () => {
       }).not.toThrow();
 
       // Test with very small factor
-      const adjustedMapExtremeSmall = TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.000001);
+      const adjustedMapExtremeSmall =
+        TestGrainProcessor.testAdjustGrainExposures(originalMap, 0.000001);
       expect(() => {
         for (const exposure of adjustedMapExtremeSmall.values()) {
           expect(exposure).toBeGreaterThanOrEqual(0.0);
@@ -428,12 +475,15 @@ describe('GrainProcessor', () => {
       const originalExposures = [0.2, 0.5, 0.8];
       const originalMap = createTestExposureMap(originalExposures);
       const originalMapCopy = new Map(originalMap);
-      
-      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(originalMap, 1.5);
+
+      const adjustedMap = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        1.5
+      );
 
       // Original map should be unchanged
       expect(originalMap).toEqual(originalMapCopy);
-      
+
       // Adjusted map should be a different instance
       expect(adjustedMap).not.toBe(originalMap);
     });
@@ -441,19 +491,25 @@ describe('GrainProcessor', () => {
     it('should apply logarithmic scaling behavior', () => {
       const originalMap = createTestExposureMap([0.5]);
       const grain = Array.from(originalMap.keys())[0];
-      
+
       // Test that the adjustment is dampened (logarithmic scaling with dampening factor 0.3)
-      const adjustedMap2x = TestGrainProcessor.testAdjustGrainExposures(originalMap, 2.0);
-      const adjustedMap10x = TestGrainProcessor.testAdjustGrainExposures(originalMap, 10.0);
-      
+      const adjustedMap2x = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        2.0
+      );
+      const adjustedMap10x = TestGrainProcessor.testAdjustGrainExposures(
+        originalMap,
+        10.0
+      );
+
       const exposure2x = adjustedMap2x.get(grain)!;
       const exposure10x = adjustedMap10x.get(grain)!;
-      
+
       // Due to logarithmic scaling with dampening, 10x factor should not result in 5x more change than 2x factor
       const change2x = exposure2x - 0.5;
       const change10x = exposure10x - 0.5;
-      
-            // The ratio should be less than 5 due to dampening
+
+      // The ratio should be less than 5 due to dampening
       if (change2x > 0 && change10x > 0) {
         expect(change10x / change2x).toBeLessThan(5.0);
       }
@@ -499,17 +555,20 @@ describe('GrainProcessor', () => {
       // Analyze the output for uniformity
       const outputData = result.data;
       const pixelValues: number[] = [];
-      
+
       // Collect all pixel values (R channel, since it's grayscale)
       for (let i = 0; i < outputData.length; i += 4) {
         pixelValues.push(outputData[i]);
       }
 
       // Calculate statistics
-      const mean = pixelValues.reduce((sum, val) => sum + val, 0) / pixelValues.length;
-      const variance = pixelValues.reduce((sum, val) => sum + (val - mean) ** 2, 0) / pixelValues.length;
+      const mean =
+        pixelValues.reduce((sum, val) => sum + val, 0) / pixelValues.length;
+      const variance =
+        pixelValues.reduce((sum, val) => sum + (val - mean) ** 2, 0) /
+        pixelValues.length;
       const stdDev = Math.sqrt(variance);
-      
+
       // Find min and max values efficiently without spread operator
       let minValue = pixelValues[0];
       let maxValue = pixelValues[0];
@@ -519,22 +578,24 @@ describe('GrainProcessor', () => {
       }
 
       // Debug output to understand the actual values
-      console.log(`Debug - Mean: ${mean.toFixed(2)}, StdDev: ${stdDev.toFixed(2)}, Min: ${minValue}, Max: ${maxValue}`);
+      console.log(
+        `Debug - Mean: ${mean.toFixed(2)}, StdDev: ${stdDev.toFixed(2)}, Min: ${minValue}, Max: ${maxValue}`
+      );
 
       // With uniform grains, the output should be relatively uniform
       // Allow for some variation due to grain effects but expect reasonable standard deviation
       expect(stdDev).toBeLessThan(50); // Allow for reasonable film simulation variation
-      
+
       // The mean should be reasonably close to the original gray value
       // (may differ due to film processing simulation)
       expect(Math.abs(mean - middleGrayValue)).toBeLessThan(50);
-      
+
       // Ensure the image doesn't have too many extreme values
       // Film simulation can create some black pixels, but not too many
-      const blackPixels = pixelValues.filter(val => val === 0).length;
-      const whitePixels = pixelValues.filter(val => val === 255).length;
+      const blackPixels = pixelValues.filter((val) => val === 0).length;
+      const whitePixels = pixelValues.filter((val) => val === 255).length;
       const totalPixels = pixelValues.length;
-      
+
       expect(blackPixels / totalPixels).toBeLessThan(0.1); // Less than 10% black pixels
       expect(whitePixels / totalPixels).toBeLessThan(0.1); // Less than 10% white pixels
     });
@@ -550,14 +611,56 @@ describe('GrainProcessor', () => {
       // Create a specific set of custom grains
       const customGrains: GrainPoint[] = [
         { x: 8, y: 8, size: 3.0, sensitivity: 0.8, developmentThreshold: 0.2 },
-        { x: 16, y: 8, size: 2.5, sensitivity: 0.6, developmentThreshold: 0.15 },
-        { x: 24, y: 8, size: 3.5, sensitivity: 0.7, developmentThreshold: 0.25 },
+        {
+          x: 16,
+          y: 8,
+          size: 2.5,
+          sensitivity: 0.6,
+          developmentThreshold: 0.15,
+        },
+        {
+          x: 24,
+          y: 8,
+          size: 3.5,
+          sensitivity: 0.7,
+          developmentThreshold: 0.25,
+        },
         { x: 8, y: 16, size: 2.0, sensitivity: 0.5, developmentThreshold: 0.1 },
-        { x: 16, y: 16, size: 4.0, sensitivity: 0.9, developmentThreshold: 0.3 },
-        { x: 24, y: 16, size: 2.8, sensitivity: 0.65, developmentThreshold: 0.18 },
-        { x: 8, y: 24, size: 3.2, sensitivity: 0.75, developmentThreshold: 0.22 },
-        { x: 16, y: 24, size: 2.2, sensitivity: 0.55, developmentThreshold: 0.12 },
-        { x: 24, y: 24, size: 3.8, sensitivity: 0.85, developmentThreshold: 0.28 },
+        {
+          x: 16,
+          y: 16,
+          size: 4.0,
+          sensitivity: 0.9,
+          developmentThreshold: 0.3,
+        },
+        {
+          x: 24,
+          y: 16,
+          size: 2.8,
+          sensitivity: 0.65,
+          developmentThreshold: 0.18,
+        },
+        {
+          x: 8,
+          y: 24,
+          size: 3.2,
+          sensitivity: 0.75,
+          developmentThreshold: 0.22,
+        },
+        {
+          x: 16,
+          y: 24,
+          size: 2.2,
+          sensitivity: 0.55,
+          developmentThreshold: 0.12,
+        },
+        {
+          x: 24,
+          y: 24,
+          size: 3.8,
+          sensitivity: 0.85,
+          developmentThreshold: 0.28,
+        },
       ];
 
       const testImage = createMockImageData(width, height, 100);
@@ -574,11 +677,12 @@ describe('GrainProcessor', () => {
       // Ensure processing actually occurred (output should differ from input)
       let differenceCount = 0;
       for (let i = 0; i < result.data.length; i += 4) {
-        if (result.data[i] !== 100) { // R channel differs from original gray value
+        if (result.data[i] !== 100) {
+          // R channel differs from original gray value
           differenceCount++;
         }
       }
-      
+
       // With grain processing, at least some pixels should be affected
       expect(differenceCount).toBeGreaterThan(0);
     });
@@ -601,7 +705,7 @@ describe('GrainProcessor', () => {
 
       // Verify that all pixels in the output image are black (0,0,0,255)
       for (let i = 0; i < result.data.length; i += 4) {
-        expect(result.data[i]).toBe(0);     // R
+        expect(result.data[i]).toBe(0); // R
         expect(result.data[i + 1]).toBe(0); // G
         expect(result.data[i + 2]).toBe(0); // B
         expect(result.data[i + 3]).toBe(255); // A (alpha should remain opaque)
@@ -640,29 +744,36 @@ describe('GrainProcessor', () => {
       // Create middle gray test image (18% gray ≈ 128 in 8-bit)
       const middleGrayValue = 128;
       const testImage = createMockImageData(width, height, middleGrayValue);
-      
+
       // Convert to grayscale and then to linear float format (as done in GrainProcessor)
       const grayscaleImageData = convertImageDataToGrayscale(testImage);
       const linearFloatData = convertSrgbToLinearFloat(grayscaleImageData.data);
 
       // Create processor and test the calculateGrainExposures method directly
       const processor = new TestGrainProcessor(width, height, settings);
-      const exposureMap = processor.testCalculateGrainExposures(uniformGrains, linearFloatData);
+      const exposureMap = processor.testCalculateGrainExposures(
+        uniformGrains,
+        linearFloatData
+      );
 
       // Verify that all grains have exposure values
       expect(exposureMap.size).toBe(uniformGrains.length);
-      
+
       // Collect all exposure values
       const exposureValues: number[] = [];
-      exposureMap.forEach(exposure => {
+      exposureMap.forEach((exposure) => {
         exposureValues.push(exposure); // GrainExposure is a branded number type
       });
 
       // Calculate statistics for the exposures
-      const mean = exposureValues.reduce((sum, val) => sum + val, 0) / exposureValues.length;
-      const variance = exposureValues.reduce((sum, val) => sum + (val - mean) ** 2, 0) / exposureValues.length;
+      const mean =
+        exposureValues.reduce((sum, val) => sum + val, 0) /
+        exposureValues.length;
+      const variance =
+        exposureValues.reduce((sum, val) => sum + (val - mean) ** 2, 0) /
+        exposureValues.length;
       const stdDev = Math.sqrt(variance);
-      
+
       // Find min and max values
       let minExposure = exposureValues[0];
       let maxExposure = exposureValues[0];
@@ -672,17 +783,19 @@ describe('GrainProcessor', () => {
       }
 
       // Debug output to understand the actual values
-      console.log(`Debug - Exposure Mean: ${mean.toFixed(4)}, StdDev: ${stdDev.toFixed(4)}, Min: ${minExposure.toFixed(4)}, Max: ${maxExposure.toFixed(4)}`);
+      console.log(
+        `Debug - Exposure Mean: ${mean.toFixed(4)}, StdDev: ${stdDev.toFixed(4)}, Min: ${minExposure.toFixed(4)}, Max: ${maxExposure.toFixed(4)}`
+      );
 
       // With uniform grains on uniform middle gray image, all exposures should be almost the same
       // The standard deviation should be very small
       expect(stdDev).toBeLessThan(0.01); // Very tight tolerance for uniform input
-      
+
       // All individual exposures should be close to the mean
-      exposureValues.forEach(exposure => {
+      exposureValues.forEach((exposure) => {
         expect(Math.abs(exposure - mean)).toBeLessThan(0.02); // Small deviation from mean
       });
-      
+
       // The mean exposure should be reasonable for middle gray
       // Middle gray (128/255 ≈ 0.5) converted to linear is approximately 0.52 based on actual results
       expect(mean).toBeGreaterThan(0.4);

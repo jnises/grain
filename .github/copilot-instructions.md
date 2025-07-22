@@ -84,7 +84,7 @@
 
 - Prefer newtype patterns (e.g., branded types or opaque types) over type aliases to ensure type safety and prevent accidental assignment between types with the same underlying representation
 - Avoid type aliases for primitives (e.g., `type GrainDensity = number`) as they do not provide compile-time safety
-- Use branded types for distinct number/string types:  
+- Use branded types for distinct number/string types:
   - Example: `type LinearLightness = number & { __brand: 'LinearLightness' }`
   - Example: `type GrainDensity = number & { __brand: 'GrainDensity' }`
 - Use interfaces for complex objects instead of inline types

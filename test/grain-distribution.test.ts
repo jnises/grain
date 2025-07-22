@@ -607,8 +607,10 @@ describe('Grain Distribution Bug Tests', () => {
       ];
 
       for (const testCase of testCases) {
-        console.log(`Testing density comparison for ${testCase.width}x${testCase.height}, ISO ${testCase.iso}`);
-        
+        console.log(
+          `Testing density comparison for ${testCase.width}x${testCase.height}, ISO ${testCase.iso}`
+        );
+
         const generator = new GrainGenerator(testCase.width, testCase.height, {
           ...settings,
           iso: testCase.iso,
@@ -647,7 +649,9 @@ describe('Grain Distribution Bug Tests', () => {
 
         // Calculate density ratio
         const densityRatio = fallbackDensity / poissonDensity;
-        console.log(`  Density ratio (fallback/poisson): ${densityRatio.toFixed(3)}`);
+        console.log(
+          `  Density ratio (fallback/poisson): ${densityRatio.toFixed(3)}`
+        );
 
         // The densities should be reasonably similar considering the different approaches:
         // - Poisson is probabilistic and may not achieve full target density
@@ -655,12 +659,12 @@ describe('Grain Distribution Bug Tests', () => {
         // Allow for wider range since Poisson can vary significantly based on parameters
         expect(densityRatio).toBeGreaterThan(0.2); // Fallback shouldn't be much less than Poisson
         expect(densityRatio).toBeLessThan(10.0); // But also shouldn't be extremely higher
-        
+
         // More important: both should produce reasonable densities for their approach
         // Poisson should achieve at least some reasonable fraction of target
         const poissonEfficiency = poissonPoints.length / params.grainDensity;
         expect(poissonEfficiency).toBeGreaterThan(0.05); // At least 5% of target
-        
+
         // Fallback should achieve very close to target (since it's systematic)
         const fallbackEfficiency = fallbackPoints.length / params.grainDensity;
         expect(fallbackEfficiency).toBeGreaterThan(0.85); // At least 85% of target

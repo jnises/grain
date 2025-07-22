@@ -5,12 +5,12 @@
 - [x] Keep track of the largest grain in SpatialLookupGrid and use that radius in getGrainsNear instead of specifying a custom one. Also make sure getGrainsNear with that radius would be sure to pick up all grains that could affect the requested position.
 - [x] write an eslint rule to disallow raw Math.random instead RandomNumberGenerator should be dependency injected. The only allowed Math.random is in DefaultRandomNumberGenerator, and in test code.
 - [x] Try disabling the kernel sampling and just use center sampling, to see if that affects the stripes.
-  Didn't help :(
+      Didn't help :(
 - [x] Add test for GrainProcessor.calculateGrainExposures that uses custom uniform grains on a dense grid, with imageData as middle gray. The output exposures should all be almost the same.
 - [x] Write test for GrainDensityCalculator.calculateIntrinsicGrainDensities that uses custom uniform grains on a dense grid and uniform exposures in grainExposureMap. The result should have the same densities for all grains.
 - [x] Write test for GrainProcessor.processPixelEffects that takes a uniform dense grid of grains as its grainIntrinsicDensityMap with a grainGrid to match. Check that the output does not have any stripes or other anisotropic effects.
 - [x] Make sure there are tests that ensures that the grains generateGrainStructure returns don't have anisotropic structure. I'm currently seeing some diagonal stripes in the ouput. Perhaps this function could be the culprit..
-  Created comprehensive anisotropy tests in `grain-structure-anisotropy.test.ts`. Found minor directional bias at low ISO (ratio ~2.2) due to Poisson generation limitations, but acceptable levels overall. Fallback grid method shows excellent isotropy (ratio ~1.06).
+      Created comprehensive anisotropy tests in `grain-structure-anisotropy.test.ts`. Found minor directional bias at low ISO (ratio ~2.2) due to Poisson generation limitations, but acceptable levels overall. Fallback grid method shows excellent isotropy (ratio ~1.06).
 - [x] Also write tests to make sure the sensitivity and developmentThreshold of the grains don't have a directional bias. Don't just check for horizontal, vertical or diagonal. The strips I'm seeing is somewhere between horizontal and diagonal.
 - [ ] Update grain-debug.html to also visualize grain sensitivity and developmentThreshold
 - [ ] Examine why the algorithm introduces striped patterns. Look at gray.png grain-processed-image.png

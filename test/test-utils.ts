@@ -35,22 +35,25 @@ export function createMockImageData(
 export function createTestImageData(
   width: number,
   height: number,
-  pixelGenerator: (x: number, y: number) => { r: number; g: number; b: number; a: number }
+  pixelGenerator: (
+    x: number,
+    y: number
+  ) => { r: number; g: number; b: number; a: number }
 ): ImageData {
   const data = new Uint8ClampedArray(width * height * 4);
-  
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const pixel = pixelGenerator(x, y);
       const index = (y * width + x) * 4;
-      
-      data[index] = pixel.r;     // R
+
+      data[index] = pixel.r; // R
       data[index + 1] = pixel.g; // G
       data[index + 2] = pixel.b; // B
       data[index + 3] = pixel.a; // A
     }
   }
-  
+
   return {
     data,
     width,

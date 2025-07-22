@@ -531,7 +531,7 @@
         const sizeRange = maxSize - minSize;
         const smallThreshold = minSize + sizeRange * 0.33;
         const mediumThreshold = minSize + sizeRange * 0.66;
-        
+
         if (grainSize <= smallThreshold) {
           return '#ff4400'; // Red-orange for small grains
         } else if (grainSize <= mediumThreshold) {
@@ -541,7 +541,12 @@
         }
       }
 
-      function drawGrains(canvasId, grains, color = '#ffffff', colorBySize = false) {
+      function drawGrains(
+        canvasId,
+        grains,
+        color = '#ffffff',
+        colorBySize = false
+      ) {
         const canvas = document.getElementById(canvasId);
         const ctx = canvas.getContext('2d');
 
@@ -556,16 +561,17 @@
         const scaleY = canvas.height / currentSettings.height;
 
         // Calculate size range for color-by-size mode
-        let minSize = 0, maxSize = 0;
+        let minSize = 0,
+          maxSize = 0;
         if (colorBySize && grains.length > 0) {
-          const sizes = grains.map(g => g.size);
+          const sizes = grains.map((g) => g.size);
           minSize = Math.min(...sizes);
           maxSize = Math.max(...sizes);
         }
 
         // Add transparency to see overlapping grains
         ctx.globalAlpha = 0.7;
-        
+
         let drawnCount = 0;
         for (const grain of grains) {
           // Determine color for this grain
@@ -594,7 +600,9 @@
         // Reset alpha
         ctx.globalAlpha = 1.0;
 
-        const colorDescription = colorBySize ? 'color-coded by size' : `with color ${color}`;
+        const colorDescription = colorBySize
+          ? 'color-coded by size'
+          : `with color ${color}`;
         console.log(
           `Drew ${drawnCount} grains for ${canvasId} ${colorDescription}`
         );
