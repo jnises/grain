@@ -61,11 +61,23 @@ export function squirrelNoise5(positionX: number, seed: number = 0): number {
  */
 function hashSeed(seed: number, salt: number = 0x9e3779b9): number {
   devAssert(() => Number.isFinite(seed), `seed must be finite, got ${seed}`);
-  devAssert(() => Number.isInteger(seed), `seed must be an integer, got ${seed}`);
+  devAssert(
+    () => Number.isInteger(seed),
+    `seed must be an integer, got ${seed}`
+  );
   devAssert(() => Number.isFinite(salt), `salt must be finite, got ${salt}`);
-  devAssert(() => Number.isInteger(salt), `salt must be an integer, got ${salt}`);
-  devAssert(() => seed >= 0, `seed must be unsigned (non-negative), got ${seed}`);
-  devAssert(() => salt >= 0, `salt must be unsigned (non-negative), got ${salt}`);
+  devAssert(
+    () => Number.isInteger(salt),
+    `salt must be an integer, got ${salt}`
+  );
+  devAssert(
+    () => seed >= 0,
+    `seed must be unsigned (non-negative), got ${seed}`
+  );
+  devAssert(
+    () => salt >= 0,
+    `salt must be unsigned (non-negative), got ${salt}`
+  );
   // Combine seed with salt using addition and XOR
   const intSeed = seed;
   const intSalt = salt;

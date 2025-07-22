@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GrainGenerator, SeededRandomNumberGenerator } from '../src/grain-generator';
+import {
+  GrainGenerator,
+  SeededRandomNumberGenerator,
+} from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
 import { createMockImageData, createTestGrainProcessor } from './test-utils';
 
