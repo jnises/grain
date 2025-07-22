@@ -18,7 +18,6 @@
 - [x] Replace the squirrelNoise5-based rng with a dependency-injected RandomNumberGenerator as is done in for example GrainGenerator
       Completed proper dependency injection: squirrelNoise5 is now only used within SeededRandomNumberGenerator class. All other code (GrainGenerator, GrainProcessor, KernelGenerator) uses the RandomNumberGenerator interface through dependency injection. Removed all direct calls to seededRandom() and seededRandomForGrain() from application code. Tests use SeededRandomNumberGenerator for determinism while production code uses DefaultRandomNumberGenerator by default.
 - [ ] Remove seededRandomForGrain, seededRandom and hashSeed
-- [ ] Should we use more than the index of a grain for rng? perhaps its x and y possition as well?
 - [ ] reenable and fix these tests:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
   - [ ] Fix and re-enable test: "should generate minimum viable grain count" in test/grain-distribution.test.ts (timeout issue)
