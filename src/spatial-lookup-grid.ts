@@ -2,6 +2,7 @@
 // Uses 2D arrays instead of Map<string, Array> for better memory efficiency and performance
 
 import type { GrainPoint } from './types';
+import { devAssert } from './utils';
 
 export class SpatialLookupGrid {
   // TODO: Better to do a `GrainPoint[][]` using `grid[y * this.gridWidth + x]` for lookup instead of the nested approach?
@@ -41,24 +42,20 @@ export class SpatialLookupGrid {
 
   private populateGrid(grains: GrainPoint[]): void {
     for (const grain of grains) {
-      const gridX = Math.min(
-        Math.floor(grain.x / this.gridSize),
-        this.gridWidth - 1
-      );
-      const gridY = Math.min(
-        Math.floor(grain.y / this.gridSize),
-        this.gridHeight - 1
+      const gridX = Math.floor(grain.x / this.gridSize);
+      const gridY = Math.floor(grain.y / this.gridSize);
+
+      // Assert that grain is within image bounds
+      devAssert(
+        () =>
+          gridX >= 0 &&
+          gridX < this.gridWidth &&
+          gridY >= 0 &&
+          gridY < this.gridHeight,
+        `Grain at position (${grain.x}, ${grain.y}) is outside image bounds. Grid coordinates: (${gridX}, ${gridY}), Grid dimensions: ${this.gridWidth}x${this.gridHeight}`
       );
 
-      // Bounds check
-      if (
-        gridX >= 0 &&
-        gridX < this.gridWidth &&
-        gridY >= 0 &&
-        gridY < this.gridHeight
-      ) {
-        this.grid[gridX][gridY].push(grain);
-      }
+      this.grid[gridX][gridY].push(grain);
     }
   }
 
