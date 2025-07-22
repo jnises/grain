@@ -1,23 +1,3 @@
-- [x] grainGenerators use of seededRandom looks problematic. use a better prng algorithm than just Math.sin. Squirrel Noise 5 or similar high-quality PRNG needed.
-      when using grain index as input I wouldn't be surprised if you get patterns in the output with the current bad rng.
-  - [x] Research and implement better PRNG algorithm (Squirrel Noise 5, xorshift, or similar)
-  - [x] Replace Math.sin-based seededRandom function in grain-math.ts
-  - [x] Update SeededRandomNumberGenerator class in grain-generator.ts to use new algorithm
-  - [x] Improve seeding strategy to avoid patterns from grain indices (hash the index before use)
-  - [x] Update all direct seededRandom calls to use better seed distribution
-  - [x] Add tests to verify new PRNG has good statistical properties
-  - [x] Test that visual patterns are reduced with new PRNG
-  - [x] Update constants and remove SEEDED_RANDOM_MULTIPLIER if no longer needed
-  - [x] assert that the Squirrel Noise 5 input is indeed an integer
-  - [x] Since the hashing functions are likely to be quite hot, they should use devAssert rather than a normal assert
-- [x] make sure devAsserts work in tests. make sure they are enabled and that they properly fail the test
-- [x] Initial Wang hash and xorshift implementations made the visual patterns even more prominent unfortunately. Switched to Squirrel Noise 5.
-      Implemented Squirrel Noise 5 algorithm to replace previous PRNG attempts. Updated grain-math.ts with squirrelNoise5() function, updated all references in grain-generator.ts, and renamed/updated test file to squirrel-noise-properties.test.ts. All tests pass and the new PRNG is now active in the grain generation system.
-- [x] The rng algorithms operate on integers, but the code just does Math.floor on the input. This silently throws away the fraction. The current code asserts that the input is finite, which isn't enough. If an algorithm requires an integer you MUST assert (devAssert) that it is actually an integer. Also, update your instructions to make sure you do this properly in the future.
-      Added proper integer assertions to squirrelNoise5(), hashSeed(), and seededRandom() functions. Replaced Math.floor() conversions with devAssert(() => Number.isInteger(value)) to prevent silent data loss. Fixed grain-generator.ts to use integer arithmetic (attempts _ 1234 + 1) instead of decimal multipliers (attempts _ 12.34). Updated tests to expect integer assertion failures for non-integer inputs. The guidance was already present in copilot-instructions.md.
-- [x] Replace the squirrelNoise5-based rng with a dependency-injected RandomNumberGenerator as is done in for example GrainGenerator
-      Completed proper dependency injection: squirrelNoise5 is now only used within SeededRandomNumberGenerator class. All other code (GrainGenerator, GrainProcessor, KernelGenerator) uses the RandomNumberGenerator interface through dependency injection. Removed all direct calls to seededRandom() and seededRandomForGrain() from application code. Tests use SeededRandomNumberGenerator for determinism while production code uses DefaultRandomNumberGenerator by default.
-- [x] Remove seededRandomForGrain, seededRandom and hashSeed
 - [x] grain-properties-directional-bias.test.ts has the code ```
   // Diagonal threshold variations should not be extreme
       expect(thresholdDiagonalBias.ratio).toBeLessThan(25.0);
@@ -25,7 +5,8 @@
     That doesn't sound right. Isn't 25 quite extreme?
     Fixed: Changed threshold from 25.0 to 3.0 to be consistent with other bias tests (which use 2.0-2.5). The actual measured ratio is ~2.02, so 25.0 was indeed extremely lenient and not providing meaningful validation.
 - [x] Try reversing the pixel processing order in processPixelEffects to check if the stripes change behavior.
-- [ ] Add a section visualizing the output of calculateGrainExposures in grain-test.html
+- [x] Add a section visualizing the output of calculateGrainExposures in grain-test.html
+      Completed: Added grain exposure visualization panel to grain-debug.html that uses the actual GrainProcessor.calculateGrainExposures method. The visualization shows grains color-coded by their exposure values (black for no exposure, gray shades for low/medium exposure, white for high exposure) and displays statistics about exposure distribution.
 - [ ] reenable and fix these tests:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
   - [ ] Fix and re-enable test: "should generate minimum viable grain count" in test/grain-distribution.test.ts (timeout issue)

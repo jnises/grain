@@ -334,6 +334,33 @@
         </div>
       </div>
 
+      <!-- Grain Exposures -->
+      <div class="visualization-panel">
+        <h3>Grain Exposure Values</h3>
+        <canvas id="exposureCanvas" width="400" height="300"></canvas>
+        <div class="color-legend">
+          <div class="color-item">
+            <div class="color-box" style="background-color: #000000"></div>
+            <span>No Exposure (0.0)</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #444444"></div>
+            <span>Low Exposure (0.0-0.3)</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #888888"></div>
+            <span>Medium Exposure (0.3-0.7)</span>
+          </div>
+          <div class="color-item">
+            <div class="color-box" style="background-color: #ffffff"></div>
+            <span>High Exposure (0.7-1.0)</span>
+          </div>
+        </div>
+        <div class="stats" id="exposureStats">
+          Click "Generate Visualization" to see grain exposures...
+        </div>
+      </div>
+
       <!-- Spatial Grid -->
       <div class="visualization-panel">
         <h3>Spatial Acceleration Grid</h3>
@@ -403,11 +430,13 @@
         document.body.style.opacity = '0.5';
       }
 
-      // Import the actual GrainGenerator class to avoid code duplication
+      // Import the actual classes to avoid code duplication
       import {
         GrainGenerator,
         SeededRandomNumberGenerator,
       } from '../src/grain-generator.js';
+      import { GrainProcessor } from '../src/grain-processor.js';
+      import { convertSrgbToLinearFloat } from '../src/grain-math.js';
 
       console.log(
         'GrainGenerator imported for debug visualization:',
@@ -415,10 +444,12 @@
       );
 
       // Global state for visualization
+      // Data storage for visualizations
       let currentGrainStructure = null;
       let currentLayers = null;
       let currentRawGrains = null;
       let currentSettings = null;
+      let currentGrainExposureMap = null;
 
       // Update intensity display
       document
@@ -1130,6 +1161,83 @@
         );
       }
 
+      function visualizeExposure(exposureMap) {
+        clearStats('exposureStats');
+        clearCanvas('exposureCanvas');
+
+        if (!exposureMap || exposureMap.size === 0) {
+          log('No grain exposure data available', 'exposureStats');
+          return;
+        }
+
+        const exposures = Array.from(exposureMap.values());
+        const { min: minExposure, max: maxExposure } = arrayMinMax(exposures);
+
+        // Categorize grains by exposure level
+        const lowThreshold = 0.3;
+        const highThreshold = 0.7;
+
+        const grainsWithExposure = Array.from(exposureMap.entries());
+        const noExposureGrains = grainsWithExposure.filter(
+          ([grain, exposure]) => exposure === 0
+        );
+        const lowExposureGrains = grainsWithExposure.filter(
+          ([grain, exposure]) => exposure > 0 && exposure <= lowThreshold
+        );
+        const mediumExposureGrains = grainsWithExposure.filter(
+          ([grain, exposure]) =>
+            exposure > lowThreshold && exposure <= highThreshold
+        );
+        const highExposureGrains = grainsWithExposure.filter(
+          ([grain, exposure]) => exposure > highThreshold
+        );
+
+        // Draw grains with colors based on exposure
+        drawGrains(
+          'exposureCanvas',
+          noExposureGrains.map(([grain]) => grain),
+          '#000000'
+        );
+        drawGrains(
+          'exposureCanvas',
+          lowExposureGrains.map(([grain]) => grain),
+          '#444444'
+        );
+        drawGrains(
+          'exposureCanvas',
+          mediumExposureGrains.map(([grain]) => grain),
+          '#888888'
+        );
+        drawGrains(
+          'exposureCanvas',
+          highExposureGrains.map(([grain]) => grain),
+          '#ffffff'
+        );
+
+        // Log statistics
+        log(
+          `Exposure range: ${minExposure.toFixed(3)} - ${maxExposure.toFixed(3)}`,
+          'exposureStats'
+        );
+        log(`No exposure (0.0): ${noExposureGrains.length}`, 'exposureStats');
+        log(
+          `Low exposure (0.0-${lowThreshold}): ${lowExposureGrains.length}`,
+          'exposureStats'
+        );
+        log(
+          `Medium exposure (${lowThreshold}-${highThreshold}): ${mediumExposureGrains.length}`,
+          'exposureStats'
+        );
+        log(
+          `High exposure (${highThreshold}-1.0): ${highExposureGrains.length}`,
+          'exposureStats'
+        );
+        log(
+          `Average exposure: ${(exposures.reduce((a, b) => a + b, 0) / exposures.length).toFixed(3)}`,
+          'exposureStats'
+        );
+      }
+
       window.generateDebugVisualization = function () {
         const width = parseInt(document.getElementById('width').value);
         const height = parseInt(document.getElementById('height').value);
@@ -1221,6 +1329,7 @@
         updateCanvasSize('sizesCanvas', canvasWidth, canvasHeight);
         updateCanvasSize('sensitivityCanvas', canvasWidth, canvasHeight);
         updateCanvasSize('thresholdCanvas', canvasWidth, canvasHeight);
+        updateCanvasSize('exposureCanvas', canvasWidth, canvasHeight);
         updateCanvasSize('gridCanvas', canvasWidth, canvasHeight);
 
         clearAllCanvases();
@@ -1269,6 +1378,60 @@
         // Show threshold distribution
         visualizeThreshold(currentLayers);
 
+        // Calculate and visualize grain exposures using actual GrainProcessor
+        if (currentLayers.length > 0) {
+          try {
+            // Create a test image (middle gray) for exposure calculation
+            const testImageData = new Uint8ClampedArray(
+              settings.width * settings.height * 4
+            );
+            const grayValue = Math.round(255 * 0.18); // 18% gray in sRGB
+            for (let i = 0; i < testImageData.length; i += 4) {
+              testImageData[i] = grayValue; // R
+              testImageData[i + 1] = grayValue; // G
+              testImageData[i + 2] = grayValue; // B
+              testImageData[i + 3] = 255; // A
+            }
+
+            // Convert to grayscale linear float as expected by calculateGrainExposures
+            const linearFloatData = convertSrgbToLinearFloat(testImageData);
+
+            // Create a GrainProcessor instance to access calculateGrainExposures
+            const testProcessor = new GrainProcessor(
+              settings.width,
+              settings.height,
+              {
+                iso: settings.iso,
+                filmType: settings.filmType,
+                grainIntensity: settings.grainIntensity,
+              }
+            );
+
+            // Get all grains from all layers
+            const allGrains = currentLayers.flatMap((layer) => layer.grains);
+
+            // Use the actual calculateGrainExposures method via reflection
+            currentGrainExposureMap = testProcessor['calculateGrainExposures'](
+              allGrains,
+              linearFloatData
+            );
+
+            console.log(
+              'Calculated grain exposures:',
+              currentGrainExposureMap.size,
+              'exposures'
+            );
+            visualizeExposure(currentGrainExposureMap);
+          } catch (error) {
+            console.error('Error calculating grain exposures:', error);
+            clearStats('exposureStats');
+            log(
+              'Error calculating grain exposures: ' + error.message,
+              'exposureStats'
+            );
+          }
+        }
+
         // Show spatial grid
         visualizeSpatialGrid(currentLayers);
       }
@@ -1280,6 +1443,7 @@
           'sizesCanvas',
           'sensitivityCanvas',
           'thresholdCanvas',
+          'exposureCanvas',
           'gridCanvas',
         ].forEach(clearCanvas);
         [
@@ -1288,6 +1452,7 @@
           'sizesStats',
           'sensitivityStats',
           'thresholdStats',
+          'exposureStats',
           'gridStats',
         ].forEach(clearStats);
       };
