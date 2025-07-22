@@ -7,6 +7,7 @@
 - [x] Try disabling the kernel sampling and just use center sampling, to see if that affects the stripes.
   Didn't help :(
 - [x] Add test for GrainProcessor.calculateGrainExposures that uses custom uniform grains on a dense grid, with imageData as middle gray. The output exposures should all be almost the same.
+- [x] Write test for GrainDensityCalculator.calculateIntrinsicGrainDensities that uses custom uniform grains on a dense grid and uniform exposures in grainExposureMap. The result should have the same densities for all grains.
 - [ ] Examine why the algorithm introduces striped patterns. Look at gray.png grain-processed-image.png
 - [ ] Write test of processImage with a testpattern with the left side fully white and the right side fully black. Use a low iso. The output image should be almost completely white on the left side and almost completely black on the right side
 - [ ] Reenable these tests and make sure they pass
