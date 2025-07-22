@@ -209,7 +209,9 @@ export class GrainDensityCalculator {
       exposure = createGrainExposure(0);
     }
 
-    // Implementation of development threshold system as designed
+    // Two-stage grain activation system:
+    // Stage 1: Check if grain activates (developmentThreshold - binary on/off gate)
+    // Stage 2: Apply grain intensity multiplier (sensitivity - continuous scaling)
     // Formula: grain_activation = (local_exposure + random_sensitivity) > development_threshold
 
     // Calculate random sensitivity variation for this grain
@@ -224,7 +226,7 @@ export class GrainDensityCalculator {
     // Calculate activation strength
     const activationStrength = exposure + randomSensitivity;
 
-    // Check if grain is activated (above development threshold)
+    // STAGE 1: Check if grain is activated (developmentThreshold acts as binary gate)
     if (activationStrength <= grain.developmentThreshold) {
       return createGrainIntrinsicDensity(0); // Grain not developed - no visible effect
     }
@@ -240,7 +242,8 @@ export class GrainDensityCalculator {
     // Base grain density from sigmoid response
     let grainDensity = sigmoidResponse;
 
-    // Apply grain sensitivity for individual grain variation
+    // STAGE 2: Apply grain sensitivity multiplier for individual grain intensity variation
+    // This scales the density of grains that have already passed the activation threshold
     grainDensity *= grain.sensitivity;
 
     // Ensure grainDensity is within [0,1] range before applying film curve
@@ -254,7 +257,9 @@ export class GrainDensityCalculator {
 
     // Apply film characteristic curve for density response
     const filmResponse = this.filmCurve(grainDensity);
-    return createGrainIntrinsicDensity(filmResponse * FILM_RESPONSE_VISIBILITY_MULTIPLIER);
+    return createGrainIntrinsicDensity(
+      filmResponse * FILM_RESPONSE_VISIBILITY_MULTIPLIER
+    );
   }
 
   /**

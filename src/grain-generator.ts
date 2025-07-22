@@ -588,7 +588,9 @@ export class GrainGenerator {
           x: point.x,
           y: point.y,
           size: grainSize,
+          // Sensitivity: multiplier (0.4-1.2) that scales grain density AFTER activation
           sensitivity: 0.8 + sensitivityVariation * 0.4,
+          // Development threshold: minimum exposure needed to activate grain (make it visible)
           developmentThreshold,
         };
       });
@@ -771,7 +773,9 @@ export class GrainGenerator {
           x,
           y,
           size: grainSize,
+          // Sensitivity: multiplier (0.4-1.2) that scales grain density AFTER activation
           sensitivity: 0.8 + sensitivityVariation * 0.4,
+          // Development threshold: minimum exposure needed to activate grain (make it visible)
           developmentThreshold,
         });
 
@@ -870,8 +874,13 @@ export class GrainGenerator {
   }
 
   /**
-   * Calculate per-grain development threshold based on grain properties and film characteristics
-   * This implements the proper development threshold system from the algorithm design
+   * Calculate per-grain development threshold based on grain properties and film characteristics.
+   *
+   * Development threshold is the minimum exposure needed to activate a grain (make it visible).
+   * This acts as a binary gate - grains below threshold produce zero density.
+   * This is separate from sensitivity, which multiplies the density of already-activated grains.
+   *
+   * This implements the proper development threshold system from the algorithm design.
    */
   private calculateDevelopmentThreshold(
     grainSize: number,

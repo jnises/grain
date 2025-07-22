@@ -37,12 +37,14 @@ export const FILM_CHARACTERISTICS = {
       toeStrength: 0.7, // Shadow compression strength
       shoulderStrength: 0.8, // Highlight compression strength
     },
-    // Development threshold characteristics for grain activation
+    // Development threshold characteristics for grain activation (binary on/off gate)
+    // This determines the minimum exposure needed to activate grains (make them visible)
+    // Separate from sensitivity which multiplies density of already-activated grains
     developmentThreshold: {
-      baseSensitivity: 0.35, // Much lower base threshold - was 0.75 (too high!)
-      sizeModifier: 0.12, // Moderate grain size effect
-      exposureWeight: 0.35, // Moderate exposure dependency
-      randomVariation: 0.2, // Lower random variation for consistency
+      baseSensitivity: 0.35, // Base threshold for grain activation (lower = more sensitive)
+      sizeModifier: 0.12, // How grain size affects threshold (larger grains = lower threshold)
+      exposureWeight: 0.35, // How local exposure affects activation
+      randomVariation: 0.2, // Random variation in threshold between grains
     },
   },
   fuji: {
@@ -57,12 +59,14 @@ export const FILM_CHARACTERISTICS = {
       toeStrength: 0.6, // Gentler shadow compression
       shoulderStrength: 0.9, // Stronger highlight protection
     },
-    // Development threshold characteristics for grain activation
+    // Development threshold characteristics for grain activation (binary on/off gate)
+    // This determines the minimum exposure needed to activate grains (make them visible)
+    // Separate from sensitivity which multiplies density of already-activated grains
     developmentThreshold: {
-      baseSensitivity: 0.4, // Medium sensitivity - was 0.80 (too high!)
-      sizeModifier: 0.1, // Lower grain size effect (smoother response)
-      exposureWeight: 0.3, // Lower exposure dependency for gentler response
-      randomVariation: 0.18, // Lower variation for smoother grain
+      baseSensitivity: 0.4, // Base threshold for grain activation (lower = more sensitive)
+      sizeModifier: 0.1, // How grain size affects threshold (larger grains = lower threshold)
+      exposureWeight: 0.3, // How local exposure affects activation
+      randomVariation: 0.18, // Random variation in threshold between grains
     },
   },
   ilford: {
@@ -77,12 +81,14 @@ export const FILM_CHARACTERISTICS = {
       toeStrength: 0.8, // Strong shadow contrast
       shoulderStrength: 0.7, // Moderate highlight protection
     },
-    // Development threshold characteristics for grain activation
+    // Development threshold characteristics for grain activation (binary on/off gate)
+    // This determines the minimum exposure needed to activate grains (make them visible)
+    // Separate from sensitivity which multiplies density of already-activated grains
     developmentThreshold: {
-      baseSensitivity: 0.85, // Base development threshold for Ilford
-      sizeModifier: 0.15, // How much grain size affects threshold (larger = more sensitive)
-      exposureWeight: 0.4, // How much local exposure affects threshold
-      randomVariation: 0.25, // Random threshold variation range
+      baseSensitivity: 0.85, // Base threshold for grain activation (lower = more sensitive)
+      sizeModifier: 0.15, // How grain size affects threshold (larger grains = lower threshold)
+      exposureWeight: 0.4, // How local exposure affects activation
+      randomVariation: 0.25, // Random variation in threshold between grains
     },
   },
 } as const;

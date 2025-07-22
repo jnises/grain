@@ -69,9 +69,9 @@ export interface GrainPoint {
   y: number;
   /** Grain size in pixels */
   size: number;
-  /** Grain sensitivity coefficient affecting light response */
+  /** Grain sensitivity multiplier (0.4-1.2) - scales grain density AFTER activation */
   sensitivity: number;
-  /** Development threshold for activation (0-1 range) */
+  /** Development threshold (0.1-1.5) - minimum exposure needed to activate grain (make it visible) */
   developmentThreshold: number;
 }
 
@@ -104,7 +104,9 @@ export type GrainExposureMap = Map<GrainPoint, GrainExposure>;
  * Represents the intrinsic optical density of a single developed grain.
  * This is a unitless value representing light absorption, typically in the range [0, 1].
  */
-export type GrainIntrinsicDensity = number & { __brand: 'GrainIntrinsicDensity' };
+export type GrainIntrinsicDensity = number & {
+  __brand: 'GrainIntrinsicDensity';
+};
 
 /**
  * A map from each grain point to its intrinsic density after the development phase.
@@ -122,7 +124,9 @@ export function createGrainExposure(value: number): GrainExposure {
   return value as GrainExposure;
 }
 
-export function createGrainIntrinsicDensity(value: number): GrainIntrinsicDensity {
+export function createGrainIntrinsicDensity(
+  value: number
+): GrainIntrinsicDensity {
   return value as GrainIntrinsicDensity;
 }
 

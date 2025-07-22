@@ -118,9 +118,9 @@ interface GrainPoint {
   x: number; // Grain center X position
   y: number; // Grain center Y position
   size: number; // Grain radius in pixels
-  sensitivity: number; // Individual grain sensitivity (0.4-1.2)
+  sensitivity: number; // Grain sensitivity multiplier (0.4-1.2) - scales grain density AFTER activation
   shape: number; // Grain shape factor (0-1, affects elliptical distortion)
-  developmentThreshold: number; // Activation threshold (0.1-1.5)
+  developmentThreshold: number; // Development threshold (0.1-1.5) - minimum exposure needed to activate grain (make it visible)
 }
 
 interface GrainSettings {
