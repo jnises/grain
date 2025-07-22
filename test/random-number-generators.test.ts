@@ -3,7 +3,7 @@ import {
   DefaultRandomNumberGenerator,
   SeededRandomNumberGenerator,
 } from '../src/grain-generator';
-// SEEDED_RANDOM_MULTIPLIER no longer used with Wang hash
+// SEEDED_RANDOM_MULTIPLIER no longer used with Squirrel Noise 5
 
 describe('Random Number Generators', () => {
   describe('DefaultRandomNumberGenerator', () => {
@@ -96,7 +96,7 @@ describe('Random Number Generators', () => {
         expect(sequence1).toEqual(sequence2);
       });
 
-      it('should use Wang hash algorithm correctly', () => {
+      it('should use Squirrel Noise 5 algorithm correctly', () => {
         // Test that the algorithm produces values in correct range
         const seed = 100;
         const rng = new SeededRandomNumberGenerator(seed);

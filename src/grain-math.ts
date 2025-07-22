@@ -11,8 +11,8 @@ import {
 } from './utils';
 
 /**
- * Wang hash 32-bit integer hash function
- * Based on Thomas Wang's integer hash algorithm for uniform distribution
+ * Squirrel Noise 5 algorithm for pseudorandom number generation
+ * Based on Squirrel Eiserloh's noise function for uniform distribution
  * Pure function for deterministic hash generation
  * Exported for use by other modules to avoid duplication
  */
@@ -78,15 +78,12 @@ function hashSeed(seed: number, salt: number = 0x9e3779b9): number {
     () => salt >= 0,
     `salt must be unsigned (non-negative), got ${salt}`
   );
-  // Combine seed with salt using addition and XOR
-  const intSeed = seed;
-  const intSalt = salt;
-  const combined = (intSeed + intSalt) ^ (intSeed >>> 16);
-  return squirrelNoise5(combined, 0);
+  // Use squirrelNoise5's seed argument directly for mixing
+  return squirrelNoise5(seed, salt);
 }
 
 /**
- * Generate pseudorandom number with seed using Wang hash
+ * Generate pseudorandom number with seed using Squirrel Noise 5
  * Pure function for deterministic random number generation
  * Returns a value in [0, 1) range
  */
