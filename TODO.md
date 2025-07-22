@@ -27,6 +27,7 @@
   - [x] Since the hashing functions are likely to be quite hot, they should use devAssert rather than a normal assert
 - [x] make sure devAsserts work in tests. make sure they are enabled and that they properly fail the test
 - [ ] wanghash and xorshift made the visual patters even more prominent unfortunately. try something like squirrel3?
+- [ ] The rng algorithms operate on integers, but the code just does Math.floor on the input. This silently throws away the fraction. The current code asserts that the input is finite, which isn't enough. If an algorithm requires an integer you MUST assert (devAssert) that it is actually an integer.
 - [ ] reenable and fix these tests:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
   - [ ] Fix and re-enable test: "should generate minimum viable grain count" in test/grain-distribution.test.ts (timeout issue)
