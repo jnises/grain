@@ -8,11 +8,7 @@ import type {
   RandomNumberGenerator,
 } from './types';
 import { FILM_CHARACTERISTICS } from './constants';
-import {
-  seededRandom,
-  seededRandomForGrain,
-  squirrelNoise5,
-} from './grain-math';
+import { squirrelNoise5 } from './grain-math';
 import { SpatialLookupGrid } from './spatial-lookup-grid';
 import {
   assertPositiveInteger,
@@ -578,17 +574,12 @@ export class GrainGenerator {
       );
 
       // Convert fallback grains to variable-size grains
-      return fallbackGrains.map((point, index) => {
-        const sensitivityVariation = seededRandomForGrain(index, 'sensitivity');
+      return fallbackGrains.map((point) => {
+        const sensitivityVariation = this.rng.random();
 
-        const grainSize = this.generateVariableGrainSize(
-          params.baseGrainSize,
-          index
-        );
-        const developmentThreshold = this.calculateDevelopmentThreshold(
-          grainSize,
-          index
-        );
+        const grainSize = this.generateVariableGrainSize(params.baseGrainSize);
+        const developmentThreshold =
+          this.calculateDevelopmentThreshold(grainSize);
 
         return {
           x: point.x,
@@ -752,12 +743,11 @@ export class GrainGenerator {
       consecutiveFailures < maxConsecutiveFailures
     ) {
       // Generate random position using integer seeds
-      const x = seededRandom(attempts * 32452843 + 1) * this.width; // 32452843 is a large prime
-      const y = seededRandom(attempts * 49979687 + 2) * this.height; // 49979687 is a large prime
+      const x = this.rng.random() * this.width;
+      const y = this.rng.random() * this.height;
 
-       
       // Generate variable size for this grain
-      const grainSize = this.generateVariableGrainSize(baseSize, attempts);
+      const grainSize = this.generateVariableGrainSize(baseSize);
 
       // Check if this position is valid (not too close to existing grains)
       const minDistance = this.calculateMinDistanceForGrain(
@@ -768,14 +758,9 @@ export class GrainGenerator {
       );
 
       if (this.isValidGrainPosition(x, y, minDistance, grains)) {
-        const sensitivityVariation = seededRandomForGrain(
-          attempts,
-          'sensitivity'
-        );
-        const developmentThreshold = this.calculateDevelopmentThreshold(
-          grainSize,
-          attempts
-        );
+        const sensitivityVariation = this.rng.random();
+        const developmentThreshold =
+          this.calculateDevelopmentThreshold(grainSize);
 
         grains.push({
           x,
@@ -809,8 +794,8 @@ export class GrainGenerator {
   }
 
   // Generate variable grain size with distribution bias towards smaller grains
-  private generateVariableGrainSize(baseSize: number, index: number): number {
-    const sizeVariation = seededRandomForGrain(index, 'size');
+  private generateVariableGrainSize(baseSize: number): number {
+    const sizeVariation = this.rng.random();
 
     // Apply distribution bias (more small grains than large ones)
     const biasedVariation =
@@ -888,10 +873,7 @@ export class GrainGenerator {
    *
    * This implements the proper development threshold system from the algorithm design.
    */
-  private calculateDevelopmentThreshold(
-    grainSize: number,
-    seedIndex: number
-  ): number {
+  private calculateDevelopmentThreshold(grainSize: number): number {
     const filmCharacteristics = FILM_CHARACTERISTICS[this.settings.filmType];
     const thresholdConfig = filmCharacteristics.developmentThreshold;
 
@@ -909,7 +891,7 @@ export class GrainGenerator {
     threshold -= sizeEffect; // Larger grains = lower threshold = more sensitive
 
     // Random variation per grain using seeded random
-    const randomVariation = seededRandomForGrain(seedIndex, 'threshold');
+    const randomVariation = this.rng.random();
     const variationRange = thresholdConfig.randomVariation;
     const randomOffset = (randomVariation - 0.5) * variationRange; // Range: [-variation/2, +variation/2]
     threshold += randomOffset;
