@@ -1,18 +1,3 @@
-- [x] Refactor GrainProcessor to allow us to specify the exact grains to use for processImage. Write a test that generates uniform grains on a dense grid and use those along with a middle gray test image for processImage. Test that the output is mostly uniform gray without much structure.
-- [x] Change the grain debug drawing to show the size of the grains using color.
-- [x] Do we have a test that checks the density of points generated using poisson disk sampling vs fallback? If not create one. The densities should be mostly the same.
-- [x] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
-- [x] Keep track of the largest grain in SpatialLookupGrid and use that radius in getGrainsNear instead of specifying a custom one. Also make sure getGrainsNear with that radius would be sure to pick up all grains that could affect the requested position.
-- [x] write an eslint rule to disallow raw Math.random instead RandomNumberGenerator should be dependency injected. The only allowed Math.random is in DefaultRandomNumberGenerator, and in test code.
-- [x] Try disabling the kernel sampling and just use center sampling, to see if that affects the stripes.
-      Didn't help :(
-- [x] Add test for GrainProcessor.calculateGrainExposures that uses custom uniform grains on a dense grid, with imageData as middle gray. The output exposures should all be almost the same.
-- [x] Write test for GrainDensityCalculator.calculateIntrinsicGrainDensities that uses custom uniform grains on a dense grid and uniform exposures in grainExposureMap. The result should have the same densities for all grains.
-- [x] Write test for GrainProcessor.processPixelEffects that takes a uniform dense grid of grains as its grainIntrinsicDensityMap with a grainGrid to match. Check that the output does not have any stripes or other anisotropic effects.
-- [x] Make sure there are tests that ensures that the grains generateGrainStructure returns don't have anisotropic structure. I'm currently seeing some diagonal stripes in the ouput. Perhaps this function could be the culprit..
-      Created comprehensive anisotropy tests in `grain-structure-anisotropy.test.ts`. Found minor directional bias at low ISO (ratio ~2.2) due to Poisson generation limitations, but acceptable levels overall. Fallback grid method shows excellent isotropy (ratio ~1.06).
-- [x] Also write tests to make sure the sensitivity and developmentThreshold of the grains don't have a directional bias. Don't just check for horizontal, vertical or diagonal. The strips I'm seeing is somewhere between horizontal and diagonal.
-- [x] Update grain-debug.html to also visualize grain sensitivity and developmentThreshold
 - [x] grainGenerators use of seededRandom looks problematic. use a better prng algorithm than just Math.sin. wanghash perhaps? or perhaps just an off the shelf cryptographic random generator?
   when using grain index as input I wouldn't be surprised if you get patterns in the output with the current bad rng.
   - [x] Research and implement better PRNG algorithm (Wang hash, xorshift, or similar)
@@ -30,7 +15,6 @@
       Implemented Squirrel Noise 5 algorithm to replace Wang Hash. Updated grain-math.ts with squirrelNoise5() function, updated all references in grain-generator.ts, and renamed/updated test file to squirrel-noise-properties.test.ts. All tests pass and the new PRNG is now active in the grain generation system.
 - [x] The rng algorithms operate on integers, but the code just does Math.floor on the input. This silently throws away the fraction. The current code asserts that the input is finite, which isn't enough. If an algorithm requires an integer you MUST assert (devAssert) that it is actually an integer. Also, update your instructions to make sure you do this properly in the future.
       Added proper integer assertions to squirrelNoise5(), hashSeed(), and seededRandom() functions. Replaced Math.floor() conversions with devAssert(() => Number.isInteger(value)) to prevent silent data loss. Fixed grain-generator.ts to use integer arithmetic (attempts * 1234 + 1) instead of decimal multipliers (attempts * 12.34). Updated tests to expect integer assertion failures for non-integer inputs. The guidance was already present in copilot-instructions.md.
-- [ ] 
 - [ ] reenable and fix these tests:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
   - [ ] Fix and re-enable test: "should generate minimum viable grain count" in test/grain-distribution.test.ts (timeout issue)
