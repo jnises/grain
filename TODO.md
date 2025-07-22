@@ -13,7 +13,23 @@
       Created comprehensive anisotropy tests in `grain-structure-anisotropy.test.ts`. Found minor directional bias at low ISO (ratio ~2.2) due to Poisson generation limitations, but acceptable levels overall. Fallback grid method shows excellent isotropy (ratio ~1.06).
 - [x] Also write tests to make sure the sensitivity and developmentThreshold of the grains don't have a directional bias. Don't just check for horizontal, vertical or diagonal. The strips I'm seeing is somewhere between horizontal and diagonal.
 - [x] Update grain-debug.html to also visualize grain sensitivity and developmentThreshold
+- [ ] grainGenerators use of seededRandom looks problematic. use a better prng algorithm than just Math.sin. wanghash perhaps? or perhaps just an off the shelf cryptographic random generator?
+  when using grain index as input I wouldn't be surprised if you get patterns in the output with the current bad rng.
+  - [ ] Improve the prng algo
+  - [ ] Check if the input to the rng could be improved from just the grain index?
 - [ ] Examine why the algorithm introduces striped patterns. Look at gray.png grain-processed-image.png
+  - [x] Create a visual analysis tool to examine stripe patterns in processed images
+  - [x] Investigate Poisson disk sampling for directional bias in grain placement
+    - Found critical issues: density ratio >1.0 causes algorithm failure and safety breaks
+    - Performance problems at ISO 400+ (density ratio 1.465) and ISO 800+ (2.930)
+    - Base grain size clamping at 0.5 for low ISO removes variation
+    - Very small cell sizes (0.42) create oversized grids with 222k+ cells
+    - Large excluded border area (60%) may create center-heavy distribution
+    - Analysis tools created: src/debug/poisson-bias-analysis.ts and scripts/temp/analyze-poisson-issues.ts
+  - [ ] Analyze spatial processing algorithms for anisotropic effects
+  - [ ] Test grain application methods for systematic pixel processing artifacts
+  - [ ] Compare stripe patterns across different ISO levels and film types
+  - [ ] Document findings and propose algorithmic fixes
 - [ ] Write test of processImage with a testpattern with the left side fully white and the right side fully black. Use a low iso. The output image should be almost completely white on the left side and almost completely black on the right side
 - [ ] Reenable these tests and make sure they pass
   - [ ] Reenable `test/grain-processor-integration.test.ts` > "should process gradient patterns correctly" and investigate why it outputs black.
