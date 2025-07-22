@@ -2,7 +2,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it, test, expect } from 'vitest';
-import { GrainGenerator } from '../src/grain-generator';
+import {
+  GrainGenerator,
+  SeededRandomNumberGenerator,
+} from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
 import { assert, assertObject, arrayMinMax } from '../src/utils';
 
@@ -12,19 +15,42 @@ describe('Variable Grain Size Generation', () => {
     filmType: 'kodak',
   };
 
-  const generator = new GrainGenerator(400, 300, settings); // Reduced from 800x600
+  const generator = new GrainGenerator(
+    400,
+    300,
+    settings,
+    new SeededRandomNumberGenerator(12345)
+  ); // Reduced from 800x600
 
   describe('Error Handling', () => {
     it('should validate generator construction', () => {
-      expect(() => new GrainGenerator(0, 600, settings)).toThrow(
-        /width must be a positive integer/
-      );
-      expect(() => new GrainGenerator(800, 0, settings)).toThrow(
-        /height must be a positive integer/
-      );
-      expect(() => new GrainGenerator(800, 600, null as any)).toThrow(
-        /settings must be.*object/
-      );
+      expect(
+        () =>
+          new GrainGenerator(
+            0,
+            600,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/width must be a positive integer/);
+      expect(
+        () =>
+          new GrainGenerator(
+            800,
+            0,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/height must be a positive integer/);
+      expect(
+        () =>
+          new GrainGenerator(
+            800,
+            600,
+            null as any,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/settings must be.*object/);
     });
   });
 
@@ -120,7 +146,12 @@ describe('Grain Structure Properties', () => {
       filmType: 'kodak',
     };
 
-    const generator = new GrainGenerator(800, 600, settings);
+    const generator = new GrainGenerator(
+      800,
+      600,
+      settings,
+      new SeededRandomNumberGenerator(12345)
+    );
     const grains = generator.generateGrainStructure();
 
     // Validate result structure

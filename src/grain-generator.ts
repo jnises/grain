@@ -90,7 +90,7 @@ export class GrainGenerator {
     width: number,
     height: number,
     settings: GrainSettings,
-    rng?: RandomNumberGenerator
+    rng: RandomNumberGenerator
   ) {
     // Validate input parameters with custom assertions that provide type narrowing
     assertPositiveInteger(width, 'width');
@@ -110,7 +110,7 @@ export class GrainGenerator {
     this.width = width;
     this.height = height;
     this.settings = settings;
-    this.rng = rng || new DefaultRandomNumberGenerator();
+    this.rng = rng;
   }
 
   // Generate Poisson disk sampling for grain placement

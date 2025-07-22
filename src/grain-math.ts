@@ -54,78 +54,7 @@ export function squirrelNoise5(positionX: number, seed: number = 0): number {
   return mangledBits;
 }
 
-/**
- * Hash a seed to improve distribution and avoid systematic patterns
- * Combines the input with a prime number before hashing to break up regular patterns
- * Pure function for deterministic seed transformation
- */
-function hashSeed(seed: number, salt: number = 0x9e3779b9): number {
-  devAssert(() => Number.isFinite(seed), `seed must be finite, got ${seed}`);
-  devAssert(
-    () => Number.isInteger(seed),
-    `seed must be an integer, got ${seed}`
-  );
-  devAssert(() => Number.isFinite(salt), `salt must be finite, got ${salt}`);
-  devAssert(
-    () => Number.isInteger(salt),
-    `salt must be an integer, got ${salt}`
-  );
-  devAssert(
-    () => seed >= 0,
-    `seed must be unsigned (non-negative), got ${seed}`
-  );
-  devAssert(
-    () => salt >= 0,
-    `salt must be unsigned (non-negative), got ${salt}`
-  );
-  // Use squirrelNoise5's seed argument directly for mixing
-  return squirrelNoise5(seed, salt);
-}
 
-/**
- * Generate pseudorandom number with seed using Squirrel Noise 5
- * Pure function for deterministic random number generation
- * Returns a value in [0, 1) range
- */
-export function seededRandom(seed: number): number {
-  devAssert(() => Number.isFinite(seed), `seed must be finite, got ${seed}`);
-  devAssert(
-    () => Number.isInteger(seed),
-    `seed must be an integer, got ${seed}`
-  );
-
-  // Hash the integer seed
-  const hashedSeed = hashSeed(seed);
-
-  // Convert to [0, 1) range by dividing by 2^32
-  return hashedSeed / 0x100000000;
-}
-
-/**
- * Generate pseudorandom number with improved seeding for grain properties
- * Combines index with a property-specific salt to avoid systematic patterns
- * Pure function for deterministic random number generation
- */
-export function seededRandomForGrain(
-  index: number,
-  property: 'size' | 'sensitivity' | 'threshold'
-): number {
-  devAssert(() => Number.isFinite(index), `index must be finite, got ${index}`);
-  devAssert(
-    () => Number.isInteger(index),
-    `index must be an integer, got ${index}`
-  );
-
-  // Use different salts for different grain properties to ensure independence
-  const salts = {
-    size: 0x456789ab,
-    sensitivity: 0x789012cd,
-    threshold: 0x234567ef,
-  };
-
-  const hashedSeed = hashSeed(index, salts[property]);
-  return hashedSeed / 0x100000000;
-}
 
 /**
  * Calculates grain falloff weight using Gaussian distribution

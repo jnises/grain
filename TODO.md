@@ -17,7 +17,14 @@
       Added proper integer assertions to squirrelNoise5(), hashSeed(), and seededRandom() functions. Replaced Math.floor() conversions with devAssert(() => Number.isInteger(value)) to prevent silent data loss. Fixed grain-generator.ts to use integer arithmetic (attempts _ 1234 + 1) instead of decimal multipliers (attempts _ 12.34). Updated tests to expect integer assertion failures for non-integer inputs. The guidance was already present in copilot-instructions.md.
 - [x] Replace the squirrelNoise5-based rng with a dependency-injected RandomNumberGenerator as is done in for example GrainGenerator
       Completed proper dependency injection: squirrelNoise5 is now only used within SeededRandomNumberGenerator class. All other code (GrainGenerator, GrainProcessor, KernelGenerator) uses the RandomNumberGenerator interface through dependency injection. Removed all direct calls to seededRandom() and seededRandomForGrain() from application code. Tests use SeededRandomNumberGenerator for determinism while production code uses DefaultRandomNumberGenerator by default.
-- [ ] Remove seededRandomForGrain, seededRandom and hashSeed
+- [x] Remove seededRandomForGrain, seededRandom and hashSeed
+- [ ] grain-properties-directional-bias.test.ts has the code ```
+  // Diagonal threshold variations should not be extreme
+      expect(thresholdDiagonalBias.ratio).toBeLessThan(25.0);
+    ```
+    That doesn't sound right. Isn't 25 quite extreme?
+- [ ] Try reversing the pixel processing order in processPixelEffects to check if the stripes change behavior.
+- [ ] Add a section visualizing the output of calculateGrainExposures in grain-test.html
 - [ ] reenable and fix these tests:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
   - [ ] Fix and re-enable test: "should generate minimum viable grain count" in test/grain-distribution.test.ts (timeout issue)

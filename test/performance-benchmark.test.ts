@@ -2,6 +2,10 @@
 // Pure benchmarks for tracking performance over time and profiling
 
 import { describe, it } from 'vitest';
+import {
+  GrainGenerator,
+  SeededRandomNumberGenerator,
+} from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
 
 interface BenchmarkResult {
@@ -39,13 +43,17 @@ async function benchmarkConfiguration(
   console.log(`\n🔍 Benchmarking ISO ${iso} mode...`);
   console.log(`Image size: ${width}x${height} (${width * height} pixels)`);
 
-  // Import grain processor dynamically to avoid module loading issues
-  const { GrainGenerator } = await import('../src/grain-generator');
+  // Use the already imported GrainGenerator
 
   const startTime = performance.now();
 
   // Create processor instance
-  const processor = new GrainGenerator(width, height, settings);
+  const processor = new GrainGenerator(
+    width,
+    height,
+    settings,
+    new SeededRandomNumberGenerator(12345)
+  );
 
   // Generate grain structure
   const grainStructure = processor.generateGrainStructure();

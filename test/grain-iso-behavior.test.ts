@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { GrainGenerator } from '../src/grain-generator';
+import {
+  GrainGenerator,
+  SeededRandomNumberGenerator,
+} from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
 import { arrayMinMax } from '../src/utils';
 
@@ -16,12 +19,14 @@ describe('Grain Generator ISO Behavior', () => {
       const lowIsoGenerator = new GrainGenerator(
         testImageDimensions.width,
         testImageDimensions.height,
-        createTestSettings(100)
+        createTestSettings(100),
+        new SeededRandomNumberGenerator(12345)
       );
       const highIsoGenerator = new GrainGenerator(
         testImageDimensions.width,
         testImageDimensions.height,
-        createTestSettings(1600)
+        createTestSettings(1600),
+        new SeededRandomNumberGenerator(12345)
       );
 
       const lowIsoParams = lowIsoGenerator.calculateGrainParameters();
@@ -40,7 +45,8 @@ describe('Grain Generator ISO Behavior', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const params = generator.calculateGrainParameters();
         grainSizes.push(params.baseGrainSize);
@@ -72,7 +78,8 @@ describe('Grain Generator ISO Behavior', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const params = generator.calculateGrainParameters();
 
@@ -108,12 +115,14 @@ describe('Grain Generator ISO Behavior', () => {
       const lowIsoGenerator = new GrainGenerator(
         testImageDimensions.width,
         testImageDimensions.height,
-        createTestSettings(100)
+        createTestSettings(100),
+        new SeededRandomNumberGenerator(12345)
       );
       const highIsoGenerator = new GrainGenerator(
         testImageDimensions.width,
         testImageDimensions.height,
-        createTestSettings(1600)
+        createTestSettings(1600),
+        new SeededRandomNumberGenerator(12345)
       );
 
       const lowIsoGrains = lowIsoGenerator.generateGrainStructure();
@@ -159,7 +168,8 @@ describe('Grain Generator ISO Behavior', () => {
       const generator = new GrainGenerator(
         testImageDimensions.width,
         testImageDimensions.height,
-        createTestSettings(400)
+        createTestSettings(400),
+        new SeededRandomNumberGenerator(12345)
       );
       const grains = generator.generateGrainStructure();
 

@@ -19,19 +19,42 @@ describe('Grain Distribution Bug Tests', () => {
 
   describe('Error Handling and Validation', () => {
     it('should validate generator construction parameters', () => {
-      expect(() => new GrainGenerator(0, 300, settings)).toThrow(
-        /width must be a positive integer/
-      );
-      expect(() => new GrainGenerator(400, 0, settings)).toThrow(
-        /height must be a positive integer/
-      );
-      expect(() => new GrainGenerator(400, 300, null as any)).toThrow(
-        /settings must be.*object/
-      );
+      expect(
+        () =>
+          new GrainGenerator(
+            0,
+            300,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/width must be a positive integer/);
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            0,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/height must be a positive integer/);
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            300,
+            null as any,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/settings must be.*object/);
     });
 
     it('should validate analysis method inputs', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      const generator = new GrainGenerator(
+        400,
+        300,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
 
       expect(() => generator.analyzeDistribution(null as any)).toThrow(
         /grains.*array/
@@ -43,7 +66,12 @@ describe('Grain Distribution Bug Tests', () => {
     });
 
     it('should validate fallback grain generation parameters', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      const generator = new GrainGenerator(
+        400,
+        300,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
 
       expect(() => generator.generateFallbackGrains(null as any, 100)).toThrow(
         /existinggrains.*array/i
@@ -60,7 +88,12 @@ describe('Grain Distribution Bug Tests', () => {
     });
 
     it('should validate grain structure in analysis', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      const generator = new GrainGenerator(
+        400,
+        300,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
 
       // The analyzeDistribution method operates on Point2D[] not full GrainPoint[]
       // so it doesn't validate grain structure extensively like createGrainGrid does
@@ -71,7 +104,12 @@ describe('Grain Distribution Bug Tests', () => {
 
   describe('Distribution Coverage Tests', () => {
     it('should distribute grains across entire image area', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      const generator = new GrainGenerator(
+        400,
+        300,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const grains = generator.generateGrainStructure();
 
       // Validate the grain generation result
@@ -144,7 +182,12 @@ describe('Grain Distribution Bug Tests', () => {
     });
 
     it('should not cluster grains in corner or edge areas', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      const generator = new GrainGenerator(
+        400,
+        300,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const grains = generator.generateGrainStructure();
 
       // Validate grain generation result
@@ -210,7 +253,8 @@ describe('Grain Distribution Bug Tests', () => {
           const generator = new GrainGenerator(
             size.width,
             size.height,
-            settings
+            settings,
+            new SeededRandomNumberGenerator(12345)
           );
           const grains = generator.generateGrainStructure();
           return grains.length / (size.width * size.height);
@@ -235,10 +279,15 @@ describe('Grain Distribution Bug Tests', () => {
       ];
 
       for (const testCase of testCases) {
-        const generator = new GrainGenerator(400, 300, {
-          ...settings,
-          iso: testCase.iso,
-        });
+        const generator = new GrainGenerator(
+          400,
+          300,
+          {
+            ...settings,
+            iso: testCase.iso,
+          },
+          new SeededRandomNumberGenerator(12345)
+        );
         const grains = generator.generateGrainStructure();
 
         console.log(`ISO ${testCase.iso}: Generated ${grains.length} grains`);
@@ -353,7 +402,12 @@ describe('Grain Distribution Bug Tests', () => {
     });
 
     it('should maintain Poisson minimum distance constraints', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      const generator = new GrainGenerator(
+        400,
+        300,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const params = generator.calculateGrainParameters();
 
       const poissonPoints = generator.generatePoissonDiskSampling(
@@ -412,7 +466,12 @@ describe('Grain Distribution Bug Tests', () => {
     });
 
     it('should not cluster Poisson samples in corner or edge areas', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      const generator = new GrainGenerator(
+        400,
+        300,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const params = generator.calculateGrainParameters();
 
       const poissonPoints = generator.generatePoissonDiskSampling(
@@ -484,7 +543,12 @@ describe('Grain Distribution Bug Tests', () => {
       ];
 
       const results = testParams.map((params) => {
-        const generator = new GrainGenerator(400, 300, settings);
+        const generator = new GrainGenerator(
+          400,
+          300,
+          settings,
+          new SeededRandomNumberGenerator(12345)
+        );
         const poissonPoints = generator.generatePoissonDiskSampling(
           params.minDistance,
           params.maxSamples
@@ -526,10 +590,15 @@ describe('Grain Distribution Bug Tests', () => {
   describe('Poisson vs Fallback Behavior', () => {
     it('should trigger fallback when Poisson sampling is insufficient', () => {
       // Create conditions where Poisson sampling will struggle
-      const generator = new GrainGenerator(100, 100, {
-        ...settings,
-        iso: 1600,
-      });
+      const generator = new GrainGenerator(
+        100,
+        100,
+        {
+          ...settings,
+          iso: 1600,
+        },
+        new SeededRandomNumberGenerator(12345)
+      );
       const params = generator.calculateGrainParameters();
 
       console.log('Test parameters:', params);
@@ -561,7 +630,12 @@ describe('Grain Distribution Bug Tests', () => {
     });
 
     it('should test fallback grid generation specifically', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      const generator = new GrainGenerator(
+        400,
+        300,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const targetCount = 1000;
 
       // Test fallback with no existing grains
@@ -611,10 +685,15 @@ describe('Grain Distribution Bug Tests', () => {
           `Testing density comparison for ${testCase.width}x${testCase.height}, ISO ${testCase.iso}`
         );
 
-        const generator = new GrainGenerator(testCase.width, testCase.height, {
-          ...settings,
-          iso: testCase.iso,
-        });
+        const generator = new GrainGenerator(
+          testCase.width,
+          testCase.height,
+          {
+            ...settings,
+            iso: testCase.iso,
+          },
+          new SeededRandomNumberGenerator(12345)
+        );
         const params = generator.calculateGrainParameters();
         const imageArea = testCase.width * testCase.height;
 
@@ -682,10 +761,15 @@ describe('Grain Distribution Bug Tests', () => {
       ];
 
       for (const testCase of testCases) {
-        const generator = new GrainGenerator(testCase.width, testCase.height, {
-          ...settings,
-          iso: testCase.iso,
-        });
+        const generator = new GrainGenerator(
+          testCase.width,
+          testCase.height,
+          {
+            ...settings,
+            iso: testCase.iso,
+          },
+          new SeededRandomNumberGenerator(12345)
+        );
         const params = generator.calculateGrainParameters();
 
         console.log(
@@ -702,7 +786,12 @@ describe('Grain Distribution Bug Tests', () => {
     });
 
     it('should have reasonable grain densities', () => {
-      const generator = new GrainGenerator(400, 300, settings);
+      const generator = new GrainGenerator(
+        400,
+        300,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const params = generator.calculateGrainParameters();
 
       console.log('Grain density parameters:', params);
@@ -713,10 +802,15 @@ describe('Grain Distribution Bug Tests', () => {
       expect(densityPercentage).toBeLessThan(0.2); // No more than 20% (increased from 10% to account for higher density)
 
       // Higher ISO should produce FEWER grains (physically accurate behavior)
-      const highIsoGenerator = new GrainGenerator(400, 300, {
-        ...settings,
-        iso: 800,
-      });
+      const highIsoGenerator = new GrainGenerator(
+        400,
+        300,
+        {
+          ...settings,
+          iso: 800,
+        },
+        new SeededRandomNumberGenerator(12345)
+      );
       const highIsoParams = highIsoGenerator.calculateGrainParameters();
 
       // Physical behavior: higher ISO = fewer but larger grains

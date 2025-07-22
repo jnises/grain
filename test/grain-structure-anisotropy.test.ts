@@ -1,4 +1,7 @@
-import { GrainGenerator } from '../src/grain-generator';
+import {
+  GrainGenerator,
+  SeededRandomNumberGenerator,
+} from '../src/grain-generator';
 import { GrainSettings } from '../src/types';
 
 describe('GrainStructure Anisotropy Tests', () => {
@@ -13,7 +16,12 @@ describe('GrainStructure Anisotropy Tests', () => {
       const height = 200;
       const settings = createTestSettings(400);
 
-      const generator = new GrainGenerator(width, height, settings);
+      const generator = new GrainGenerator(
+        width,
+        height,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const grains = generator.generateGrainStructure();
 
       console.log(`Generated ${grains.length} grains for anisotropy analysis`);
@@ -63,7 +71,12 @@ describe('GrainStructure Anisotropy Tests', () => {
       const height = 150;
       const settings = createTestSettings(800);
 
-      const generator = new GrainGenerator(width, height, settings);
+      const generator = new GrainGenerator(
+        width,
+        height,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
 
       const runs = 3;
       const results = [];
@@ -111,7 +124,12 @@ describe('GrainStructure Anisotropy Tests', () => {
 
       for (const iso of isoSettings) {
         const settings = createTestSettings(iso);
-        const generator = new GrainGenerator(width, height, settings);
+        const generator = new GrainGenerator(
+          width,
+          height,
+          settings,
+          new SeededRandomNumberGenerator(12345)
+        );
         const grains = generator.generateGrainStructure();
 
         const diagonalBias = analyzeDiagonalBias(grains, width, height);
@@ -133,7 +151,12 @@ describe('GrainStructure Anisotropy Tests', () => {
       const width = 150;
       const height = 150;
       const settings = createTestSettings(400);
-      const generator = new GrainGenerator(width, height, settings);
+      const generator = new GrainGenerator(
+        width,
+        height,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
 
       // Force fallback generation by using empty existing grains
       const params = generator.calculateGrainParameters();

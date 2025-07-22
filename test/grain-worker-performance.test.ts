@@ -21,15 +21,22 @@ const mockPostMessage = (message: any) => {
 (globalThis as any).self = { onmessage: null };
 
 // Import the worker class after setting up mocks
-async function createGrainProcessor(
+async function createGrainGenerator(
   width: number,
   height: number,
   settings: GrainSettings
 ) {
   // Dynamically import to avoid module loading issues
-  const { GrainGenerator } = await import('../src/grain-generator');
+  const { GrainGenerator, SeededRandomNumberGenerator } = await import(
+    '../src/grain-generator'
+  );
 
-  return new GrainGenerator(width, height, settings);
+  return new GrainGenerator(
+    width,
+    height,
+    settings,
+    new SeededRandomNumberGenerator(12345)
+  );
 }
 
 describe('Grain Generation Performance Integration Benchmarks', () => {
@@ -47,7 +54,7 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
       filmType: 'kodak',
     };
 
-    const lowISOProcessor = await createGrainProcessor(
+    const lowISOProcessor = await createGrainGenerator(
       width,
       height,
       lowISOSettings
@@ -64,7 +71,7 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
       filmType: 'kodak',
     };
 
-    const highISOProcessor = await createGrainProcessor(
+    const highISOProcessor = await createGrainGenerator(
       width,
       height,
       highISOSettings
@@ -124,7 +131,7 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
         filmType: 'kodak',
       };
 
-      const processor = await createGrainProcessor(
+      const processor = await createGrainGenerator(
         size.width,
         size.height,
         settings
@@ -190,7 +197,7 @@ describe('Grain Generation Performance Integration Benchmarks', () => {
       `\n🎯 Variable Grain Size Generation Analysis (ISO ${settings.iso}):`
     );
 
-    const processor = await createGrainProcessor(width, height, settings);
+    const processor = await createGrainGenerator(width, height, settings);
 
     const start = performance.now();
     const grains = processor.generateGrainStructure();

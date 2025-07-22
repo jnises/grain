@@ -119,7 +119,10 @@
       }
 
       // Import the actual GrainGenerator class to avoid code duplication
-      import { GrainGenerator } from '../src/grain-generator.js';
+      import {
+        GrainGenerator,
+        SeededRandomNumberGenerator,
+      } from '../src/grain-generator.js';
 
       console.log('GrainGenerator imported:', GrainGenerator);
 
@@ -129,11 +132,16 @@
           this.width = width;
           this.height = height;
           this.iso = iso;
-          this.grainGenerator = new GrainGenerator(width, height, {
-            iso: iso,
-            filmType: 'kodak',
-            grainIntensity: 1.0,
-          });
+          this.grainGenerator = new GrainGenerator(
+            width,
+            height,
+            {
+              iso: iso,
+              filmType: 'kodak',
+              grainIntensity: 1.0,
+            },
+            new SeededRandomNumberGenerator(12345)
+          );
         }
 
         generateGrains() {

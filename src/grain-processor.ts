@@ -20,6 +20,7 @@ import type {
   GrainExposureMap,
   GrainIntrinsicDensityMap,
 } from './types';
+import { DefaultRandomNumberGenerator } from './grain-generator';
 import {
   assertPositiveInteger,
   assertObject,
@@ -97,9 +98,16 @@ export class GrainProcessor {
     this.width = width;
     this.height = height;
     this.settings = settings;
-    this.grainGenerator = new GrainGenerator(width, height, settings, rng);
+    this.grainGenerator = new GrainGenerator(
+      width,
+      height,
+      settings,
+      rng || new DefaultRandomNumberGenerator()
+    );
     this.performanceTracker = new PerformanceTracker();
-    this.kernelGenerator = new KernelGenerator(rng);
+    this.kernelGenerator = new KernelGenerator(
+      rng || new DefaultRandomNumberGenerator()
+    );
     this.grainDensityCalculator = new GrainDensityCalculator(settings);
   }
 

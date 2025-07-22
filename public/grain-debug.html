@@ -404,7 +404,10 @@
       }
 
       // Import the actual GrainGenerator class to avoid code duplication
-      import { GrainGenerator } from '../src/grain-generator.js';
+      import {
+        GrainGenerator,
+        SeededRandomNumberGenerator,
+      } from '../src/grain-generator.js';
 
       console.log(
         'GrainGenerator imported for debug visualization:',
@@ -430,7 +433,12 @@
           this.width = width;
           this.height = height;
           this.settings = settings;
-          this.grainGenerator = new GrainGenerator(width, height, settings);
+          this.grainGenerator = new GrainGenerator(
+            width,
+            height,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          );
         }
 
         // Analyze area coverage by checking how well grains cover the image

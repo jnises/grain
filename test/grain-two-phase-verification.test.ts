@@ -31,14 +31,14 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
 
       // Grain positions should be deterministic for same seed
       if (grains1.length > 0 && grains2.length > 0) {
-        expect(grains1[0].x).toBe(1.640779198677539);
+        expect(grains1[0].x).toBe(grains2[0].x);
         expect(grains1[0].y).toBe(grains2[0].y);
         expect(grains1[0].size).toBe(grains2[0].size);
       }
     });
 
     it('should maintain grain properties independent of image content', () => {
-      const generator = new GrainGenerator(50, 50, grainSettings);
+      const generator = new GrainGenerator(50, 50, grainSettings, new SeededRandomNumberGenerator(12345));
       const grains = generator.generateGrainStructure();
 
       // Verify grain properties are within expected ranges

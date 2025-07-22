@@ -16,62 +16,144 @@ describe('GrainGenerator', () => {
       iso: 400,
       filmType: 'kodak',
     };
-    generator = new GrainGenerator(400, 300, settings);
+    generator = new GrainGenerator(
+      400,
+      300,
+      settings,
+      new SeededRandomNumberGenerator(12345)
+    );
   });
 
   describe('Constructor Error Handling', () => {
     it('should throw on invalid width', () => {
-      expect(() => new GrainGenerator(0, 300, settings)).toThrow(
-        /width must be a positive integer/
-      );
-      expect(() => new GrainGenerator(-10, 300, settings)).toThrow(
-        /width must be a positive integer/
-      );
-      expect(() => new GrainGenerator(1.5, 300, settings)).toThrow(
-        /width must be a positive integer/
-      );
+      expect(
+        () =>
+          new GrainGenerator(
+            0,
+            300,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/width must be a positive integer/);
+      expect(
+        () =>
+          new GrainGenerator(
+            -10,
+            300,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/width must be a positive integer/);
+      expect(
+        () =>
+          new GrainGenerator(
+            1.5,
+            300,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/width must be a positive integer/);
     });
 
     it('should throw on invalid height', () => {
-      expect(() => new GrainGenerator(400, 0, settings)).toThrow(
-        /height must be a positive integer/
-      );
-      expect(() => new GrainGenerator(400, -10, settings)).toThrow(
-        /height must be a positive integer/
-      );
-      expect(() => new GrainGenerator(400, 1.5, settings)).toThrow(
-        /height must be a positive integer/
-      );
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            0,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/height must be a positive integer/);
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            -10,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/height must be a positive integer/);
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            1.5,
+            settings,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/height must be a positive integer/);
     });
 
     it('should throw on null/undefined settings', () => {
-      expect(() => new GrainGenerator(400, 300, null as any)).toThrow(
-        /settings must be.*object/
-      );
-      expect(() => new GrainGenerator(400, 300, undefined as any)).toThrow(
-        /settings must be.*object/
-      );
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            300,
+            null as any,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/settings must be.*object/);
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            300,
+            undefined as any,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/settings must be.*object/);
     });
 
     it('should throw on invalid settings object', () => {
-      expect(() => new GrainGenerator(400, 300, 'invalid' as any)).toThrow(
-        /settings must be.*object/
-      );
-      expect(() => new GrainGenerator(400, 300, 123 as any)).toThrow(
-        /settings must be.*object/
-      );
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            300,
+            'invalid' as any,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/settings must be.*object/);
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            300,
+            123 as any,
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/settings must be.*object/);
     });
 
     it('should throw on invalid ISO values', () => {
       expect(
-        () => new GrainGenerator(400, 300, { ...settings, iso: 0 })
-      ).toThrow(/iso.*positive.*finite.*number/i);
-      expect(
-        () => new GrainGenerator(400, 300, { ...settings, iso: -100 })
+        () =>
+          new GrainGenerator(
+            400,
+            300,
+            { ...settings, iso: 0 },
+            new SeededRandomNumberGenerator(12345)
+          )
       ).toThrow(/iso.*positive.*finite.*number/i);
       expect(
         () =>
-          new GrainGenerator(400, 300, { ...settings, iso: 'invalid' as any })
+          new GrainGenerator(
+            400,
+            300,
+            { ...settings, iso: -100 },
+            new SeededRandomNumberGenerator(12345)
+          )
+      ).toThrow(/iso.*positive.*finite.*number/i);
+      expect(
+        () =>
+          new GrainGenerator(
+            400,
+            300,
+            { ...settings, iso: 'invalid' as any },
+            new SeededRandomNumberGenerator(12345)
+          )
       ).toThrow(/iso.*positive.*finite.*number/i);
     });
 
@@ -82,14 +164,24 @@ describe('GrainGenerator', () => {
     it('should throw on invalid film type', () => {
       expect(
         () =>
-          new GrainGenerator(400, 300, {
-            ...settings,
-            filmType: 'invalid' as any,
-          })
+          new GrainGenerator(
+            400,
+            300,
+            {
+              ...settings,
+              filmType: 'invalid' as any,
+            },
+            new SeededRandomNumberGenerator(12345)
+          )
       ).toThrow(/filmtype.*kodak.*fuji.*ilford/i);
       expect(
         () =>
-          new GrainGenerator(400, 300, { ...settings, filmType: 123 as any })
+          new GrainGenerator(
+            400,
+            300,
+            { ...settings, filmType: 123 as any },
+            new SeededRandomNumberGenerator(12345)
+          )
       ).toThrow(/filmtype.*kodak.*fuji.*ilford/i);
     });
   });
@@ -230,10 +322,15 @@ describe('GrainGenerator', () => {
     });
 
     it('should handle low ISO values correctly', () => {
-      const lowIsoGenerator = new GrainGenerator(400, 300, {
-        ...settings,
-        iso: 100,
-      });
+      const lowIsoGenerator = new GrainGenerator(
+        400,
+        300,
+        {
+          ...settings,
+          iso: 100,
+        },
+        new SeededRandomNumberGenerator(12345)
+      );
       const params = lowIsoGenerator.calculateGrainParameters();
 
       // Validate all parameters are reasonable
@@ -257,10 +354,15 @@ describe('GrainGenerator', () => {
     });
 
     it('should handle high ISO values correctly', () => {
-      const highIsoGenerator = new GrainGenerator(400, 300, {
-        ...settings,
-        iso: 1600,
-      });
+      const highIsoGenerator = new GrainGenerator(
+        400,
+        300,
+        {
+          ...settings,
+          iso: 1600,
+        },
+        new SeededRandomNumberGenerator(12345)
+      );
       const params = highIsoGenerator.calculateGrainParameters();
 
       // Validate high ISO doesn't produce unreasonable values
@@ -282,7 +384,12 @@ describe('GrainGenerator', () => {
     });
 
     it('should scale with image size', () => {
-      const largeGenerator = new GrainGenerator(800, 600, settings);
+      const largeGenerator = new GrainGenerator(
+        800,
+        600,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const params = largeGenerator.calculateGrainParameters();
 
       // Validate scaling behavior
@@ -462,10 +569,15 @@ describe('GrainGenerator', () => {
 
     it('should use fallback when Poisson sampling fails', () => {
       // Create conditions where Poisson sampling will likely fail
-      const smallGenerator = new GrainGenerator(50, 50, {
-        ...settings,
-        iso: 1600,
-      });
+      const smallGenerator = new GrainGenerator(
+        50,
+        50,
+        {
+          ...settings,
+          iso: 1600,
+        },
+        new SeededRandomNumberGenerator(12345)
+      );
       const grains = smallGenerator.generateGrainStructure();
 
       // Should still generate some grains via fallback
@@ -473,8 +585,18 @@ describe('GrainGenerator', () => {
     });
 
     it('should scale grain count with image size', { timeout: 15000 }, () => {
-      const smallGenerator = new GrainGenerator(200, 150, settings);
-      const largeGenerator = new GrainGenerator(800, 600, settings);
+      const smallGenerator = new GrainGenerator(
+        200,
+        150,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
+      const largeGenerator = new GrainGenerator(
+        800,
+        600,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
 
       const smallGrains = smallGenerator.generateGrainStructure();
       const largeGrains = largeGenerator.generateGrainStructure();
@@ -594,7 +716,12 @@ describe('GrainGenerator', () => {
 
   describe('Edge Cases and Error Handling', () => {
     it('should handle very small images', () => {
-      const tinyGenerator = new GrainGenerator(10, 10, settings);
+      const tinyGenerator = new GrainGenerator(
+        10,
+        10,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const grains = tinyGenerator.generateGrainStructure();
 
       expect(grains.length).toBeGreaterThan(0);
@@ -633,10 +760,15 @@ describe('GrainGenerator', () => {
     it.each(testISOs)(
       'should generate appropriate grain density for ISO %d',
       (iso) => {
-        const testGenerator = new GrainGenerator(400, 300, {
-          ...settings,
-          iso,
-        });
+        const testGenerator = new GrainGenerator(
+          400,
+          300,
+          {
+            ...settings,
+            iso,
+          },
+          new SeededRandomNumberGenerator(12345)
+        );
         const grains = testGenerator.generateGrainStructure();
         const analysis = testGenerator.analyzeDistribution(grains);
 
@@ -655,14 +787,24 @@ describe('GrainGenerator', () => {
     );
 
     it('should show grain size correlation with ISO', () => {
-      const lowIsoGenerator = new GrainGenerator(400, 300, {
-        ...settings,
-        iso: 100,
-      });
-      const highIsoGenerator = new GrainGenerator(400, 300, {
-        ...settings,
-        iso: 1600,
-      });
+      const lowIsoGenerator = new GrainGenerator(
+        400,
+        300,
+        {
+          ...settings,
+          iso: 100,
+        },
+        new SeededRandomNumberGenerator(12345)
+      );
+      const highIsoGenerator = new GrainGenerator(
+        400,
+        300,
+        {
+          ...settings,
+          iso: 1600,
+        },
+        new SeededRandomNumberGenerator(12345)
+      );
 
       const lowIsoGrains = lowIsoGenerator.generateGrainStructure();
       const highIsoGrains = highIsoGenerator.generateGrainStructure();
@@ -730,7 +872,12 @@ describe('GrainGenerator', () => {
     });
 
     it('should use default RNG when no RNG is provided', () => {
-      const defaultGenerator = new GrainGenerator(100, 100, settings);
+      const defaultGenerator = new GrainGenerator(
+        100,
+        100,
+        settings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const points = defaultGenerator.generatePoissonDiskSampling(5, 20);
 
       expect(points.length).toBeGreaterThan(0);

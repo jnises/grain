@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { GrainGenerator } from '../src/grain-generator';
+import {
+  GrainGenerator,
+  SeededRandomNumberGenerator,
+} from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
 
 describe('Grain Density Fixes', () => {
@@ -9,7 +12,12 @@ describe('Grain Density Fixes', () => {
       filmType: 'kodak',
     };
 
-    const generator = new GrainGenerator(400, 300, settings);
+    const generator = new GrainGenerator(
+      400,
+      300,
+      settings,
+      new SeededRandomNumberGenerator(12345)
+    );
     const params = generator.calculateGrainParameters();
 
     // Should have reasonable grain count (not 18k+)
@@ -36,7 +44,12 @@ describe('Grain Density Fixes', () => {
       filmType: 'kodak',
     };
 
-    const generator = new GrainGenerator(400, 300, settings);
+    const generator = new GrainGenerator(
+      400,
+      300,
+      settings,
+      new SeededRandomNumberGenerator(12345)
+    );
     const startTime = Date.now();
 
     const grains = generator.generateGrainStructure();
@@ -58,7 +71,12 @@ describe('Grain Density Fixes', () => {
       filmType: 'kodak',
     };
 
-    const generator = new GrainGenerator(400, 300, settings);
+    const generator = new GrainGenerator(
+      400,
+      300,
+      settings,
+      new SeededRandomNumberGenerator(12345)
+    );
     const grains = generator.generateGrainStructure();
 
     // All grains should have reasonable sizes

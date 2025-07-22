@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { GrainGenerator } from '../src/grain-generator';
+import {
+  GrainGenerator,
+  SeededRandomNumberGenerator,
+} from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
 import { arrayMinMax, arrayMax } from '../src/utils';
 
@@ -29,7 +32,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const grains = generator.generateGrainStructure();
         results.push({ iso, grainCount: grains.length });
@@ -76,7 +80,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const grains = generator.generateGrainStructure();
         grainCounts.push(grains.length);
@@ -121,7 +126,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const grains = generator.generateGrainStructure();
         const sizes = grains.map((g) => g.size);
@@ -164,7 +170,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
       const baselineGenerator = new GrainGenerator(
         testImageDimensions.width,
         testImageDimensions.height,
-        createTestSettings(baselineIso)
+        createTestSettings(baselineIso),
+        new SeededRandomNumberGenerator(12345)
       );
       const baselineGrains = baselineGenerator.generateGrainStructure();
       const baselineAvgSize =
@@ -179,7 +186,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const grains = generator.generateGrainStructure();
         const avgSize =
@@ -212,7 +220,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const grains = generator.generateGrainStructure();
 
@@ -284,12 +293,14 @@ describe('Grain Generator Physical Behavior Validation', () => {
       const lowIsoGenerator = new GrainGenerator(
         testImageDimensions.width,
         testImageDimensions.height,
-        createTestSettings(lowIso)
+        createTestSettings(lowIso),
+        new SeededRandomNumberGenerator(12345)
       );
       const highIsoGenerator = new GrainGenerator(
         testImageDimensions.width,
         testImageDimensions.height,
-        createTestSettings(highIso)
+        createTestSettings(highIso),
+        new SeededRandomNumberGenerator(12345)
       );
 
       const lowIsoGrains = lowIsoGenerator.generateGrainStructure();
@@ -341,7 +352,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
       const iso400Generator = new GrainGenerator(
         testImageDimensions.width,
         testImageDimensions.height,
-        createTestSettings(400)
+        createTestSettings(400),
+        new SeededRandomNumberGenerator(12345)
       );
       const grains = iso400Generator.generateGrainStructure();
       const sizes = grains.map((g) => g.size);
@@ -409,7 +421,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const grains = generator.generateGrainStructure();
         const sizes = grains.map((g) => g.size);
@@ -470,7 +483,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const grains = generator.generateGrainStructure();
 
@@ -508,7 +522,8 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const generator = new GrainGenerator(
           testImageDimensions.width,
           testImageDimensions.height,
-          createTestSettings(iso)
+          createTestSettings(iso),
+          new SeededRandomNumberGenerator(12345)
         );
         const grains = generator.generateGrainStructure();
 
