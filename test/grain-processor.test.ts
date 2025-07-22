@@ -4,6 +4,8 @@ import { GrainProcessor } from '../src/grain-processor';
 import type { GrainSettings, GrainPoint, GrainExposureMap } from '../src/types';
 import { createGrainExposure } from '../src/types';
 import { createMockImageData, createTestGrainProcessor } from './test-utils';
+import { convertImageDataToGrayscale } from '../src/color-space';
+import { convertSrgbToLinearFloat } from '../src/grain-math';
 
 // Test helper class to access GrainProcessor private static methods
 class TestGrainProcessor extends GrainProcessor {
@@ -12,6 +14,13 @@ class TestGrainProcessor extends GrainProcessor {
     adjustmentFactor: number
   ): GrainExposureMap {
     return (this as any).adjustGrainExposures(originalExposureMap, adjustmentFactor);
+  }
+  
+  public testCalculateGrainExposures(
+    grains: GrainPoint[],
+    imageData: Float32Array
+  ): GrainExposureMap {
+    return (this as any).calculateGrainExposures(grains, imageData);
   }
 }
 
@@ -597,6 +606,87 @@ describe('GrainProcessor', () => {
         expect(result.data[i + 2]).toBe(0); // B
         expect(result.data[i + 3]).toBe(255); // A (alpha should remain opaque)
       }
+    });
+  });
+
+  describe('calculateGrainExposures', () => {
+    it('should produce uniform exposures for uniform grains on middle gray image', () => {
+      const width = 64;
+      const height = 64;
+      const settings: GrainSettings = {
+        iso: 100,
+        filmType: 'kodak',
+      };
+
+      // Create uniform grains on a dense grid (4x4 pixel spacing)
+      const uniformGrains: GrainPoint[] = [];
+      const grainSpacing = 4;
+      const grainSize = 2.0;
+      const uniformSensitivity = 0.5;
+      const uniformThreshold = 0.1;
+
+      for (let y = grainSpacing; y < height; y += grainSpacing) {
+        for (let x = grainSpacing; x < width; x += grainSpacing) {
+          uniformGrains.push({
+            x,
+            y,
+            size: grainSize,
+            sensitivity: uniformSensitivity,
+            developmentThreshold: uniformThreshold,
+          });
+        }
+      }
+
+      // Create middle gray test image (18% gray ≈ 128 in 8-bit)
+      const middleGrayValue = 128;
+      const testImage = createMockImageData(width, height, middleGrayValue);
+      
+      // Convert to grayscale and then to linear float format (as done in GrainProcessor)
+      const grayscaleImageData = convertImageDataToGrayscale(testImage);
+      const linearFloatData = convertSrgbToLinearFloat(grayscaleImageData.data);
+
+      // Create processor and test the calculateGrainExposures method directly
+      const processor = new TestGrainProcessor(width, height, settings);
+      const exposureMap = processor.testCalculateGrainExposures(uniformGrains, linearFloatData);
+
+      // Verify that all grains have exposure values
+      expect(exposureMap.size).toBe(uniformGrains.length);
+      
+      // Collect all exposure values
+      const exposureValues: number[] = [];
+      exposureMap.forEach(exposure => {
+        exposureValues.push(exposure); // GrainExposure is a branded number type
+      });
+
+      // Calculate statistics for the exposures
+      const mean = exposureValues.reduce((sum, val) => sum + val, 0) / exposureValues.length;
+      const variance = exposureValues.reduce((sum, val) => sum + (val - mean) ** 2, 0) / exposureValues.length;
+      const stdDev = Math.sqrt(variance);
+      
+      // Find min and max values
+      let minExposure = exposureValues[0];
+      let maxExposure = exposureValues[0];
+      for (let i = 1; i < exposureValues.length; i++) {
+        if (exposureValues[i] < minExposure) minExposure = exposureValues[i];
+        if (exposureValues[i] > maxExposure) maxExposure = exposureValues[i];
+      }
+
+      // Debug output to understand the actual values
+      console.log(`Debug - Exposure Mean: ${mean.toFixed(4)}, StdDev: ${stdDev.toFixed(4)}, Min: ${minExposure.toFixed(4)}, Max: ${maxExposure.toFixed(4)}`);
+
+      // With uniform grains on uniform middle gray image, all exposures should be almost the same
+      // The standard deviation should be very small
+      expect(stdDev).toBeLessThan(0.01); // Very tight tolerance for uniform input
+      
+      // All individual exposures should be close to the mean
+      exposureValues.forEach(exposure => {
+        expect(Math.abs(exposure - mean)).toBeLessThan(0.02); // Small deviation from mean
+      });
+      
+      // The mean exposure should be reasonable for middle gray
+      // Middle gray (128/255 ≈ 0.5) converted to linear is approximately 0.52 based on actual results
+      expect(mean).toBeGreaterThan(0.4);
+      expect(mean).toBeLessThan(0.6);
     });
   });
 });

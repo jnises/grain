@@ -1,35 +1,12 @@
-- [x] Go through the code and apply the rules around constants from the instructions
-- [x] Go through the code and check for types that can be made more descriptive. Either by creating a new class, or just us a type alias. For example things like `Map<GrainPoint, number>`. What does `number` represent there? If a non-bespoke type is used, make sure to document what it represents in a doc comment. For example is a `number` that represents a color in srgb or linear?
-- [x] Add section about using descriptive types or aliases where it makes sense to your instructions.
-- [x] Add a code formatting configuration to the project. And apply it to all source code.
-- [x] Go through the code and make sure we are using idiomatic modern typescript. For example use \*\* instead of Math.pow. Update your instructions to make sure you use modern idiomatic typescript in the future. Also add eslint checks where applicable. Start by running a test to make sure your changes does not add new ones. Keep going until the tests and `npm run check` passes.
-  - [x] Replace all instances of `Math.pow(a, b)` with `a ** b`.
-  - [x] Research and apply other modern idiomatic TypeScript features where applicable.
-  - [x] Update GEMINI.md to instruct the use of modern idiomatic TypeScript, including the `**` operator.
-  - [x] Run tests and `npm run check` to ensure all changes are safe.
-- [x] Apply the rules from "Static Methods and Free Functions" from your instructions to grain-processor.ts
-- [x] Write testcases for GrainProcessor.adjustGrainExposures
-- [x] Write unit tests for calculateLightnessFactor
-- [x] Write test that ensures that the lightness iteration converges. Specifically that the individual components behave.
- - [x] Make sure the value returned by calculateLightnessFactor behaves correctly when applied by adjustGrainExposures
-- [x] Apply the instructions from the "Descriptive Types and Type Aliases" section on the types in types.ts
-- [x] Implement sampling estimation for the iterative lightness compensation in processImage.
-  - [x] Extract core pixel processing logic from `processPixelEffects` into a reusable function
-  - [x] Create a sampling-based estimation function that processes a subset of pixels
-  - [x] Implement grid-based or random sampling strategy for representative pixel selection
-  - [x] Replace the full `processPixelEffects` call in the iteration loop with the sampling estimation
-  - [x] Add configuration options for sampling density/strategy
-  - [x] Profile to make sure it improves performance
-  - [x] Add tests to ensure sampling estimation provides reasonable accuracy vs full processing
-- [x] Clean up comments like ```// See ALGORITHM_DESIGN.md: "Darkroom Printing Phase"``` that are no longer valid with the updated ALGORITHM_DESIGN.md
-- [x] disable the test "should produce LARGER average grain sizes as ISO increases" and move "should provide significant performance improvement over full processing" to benchmarking
 - [x] Refactor GrainProcessor to allow us to specify the exact grains to use for processImage. Write a test that generates uniform grains on a dense grid and use those along with a middle gray test image for processImage. Test that the output is mostly uniform gray without much structure.
 - [x] Change the grain debug drawing to show the size of the grains using color.
 - [x] Do we have a test that checks the density of points generated using poisson disk sampling vs fallback? If not create one. The densities should be mostly the same.
 - [x] Write a test of processImage supplying customGrains as an empty array. The output image should be completely black.
 - [x] Keep track of the largest grain in SpatialLookupGrid and use that radius in getGrainsNear instead of specifying a custom one. Also make sure getGrainsNear with that radius would be sure to pick up all grains that could affect the requested position.
 - [x] write an eslint rule to disallow raw Math.random instead RandomNumberGenerator should be dependency injected. The only allowed Math.random is in DefaultRandomNumberGenerator, and in test code.
-- [ ] Try disabling the kernel sampling and just use center sampling, to see if that affects the stripes.
+- [x] Try disabling the kernel sampling and just use center sampling, to see if that affects the stripes.
+  Didn't help :(
+- [x] Add test for GrainProcessor.calculateGrainExposures that uses custom uniform grains on a dense grid, with imageData as middle gray. The output exposures should all be almost the same.
 - [ ] Examine why the algorithm introduces striped patterns. Look at gray.png grain-processed-image.png
 - [ ] Write test of processImage with a testpattern with the left side fully white and the right side fully black. Use a low iso. The output image should be almost completely white on the left side and almost completely black on the right side
 - [ ] Reenable these tests and make sure they pass
