@@ -24,7 +24,7 @@
     ```
     That doesn't sound right. Isn't 25 quite extreme?
     Fixed: Changed threshold from 25.0 to 3.0 to be consistent with other bias tests (which use 2.0-2.5). The actual measured ratio is ~2.02, so 25.0 was indeed extremely lenient and not providing meaningful validation.
-- [ ] Try reversing the pixel processing order in processPixelEffects to check if the stripes change behavior.
+- [x] Try reversing the pixel processing order in processPixelEffects to check if the stripes change behavior.
 - [ ] Add a section visualizing the output of calculateGrainExposures in grain-test.html
 - [ ] reenable and fix these tests:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
