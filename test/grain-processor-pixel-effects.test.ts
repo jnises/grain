@@ -1,7 +1,10 @@
 import { GrainProcessor } from '../src/grain-processor';
 import { GrainSettings, GrainPoint } from '../src/types';
 import { SpatialLookupGrid } from '../src/spatial-lookup-grid';
-import { GrainIntrinsicDensityMap } from '../src/grain-density-calculator';
+import {
+  GrainIntrinsicDensityMap,
+  createGrainIntrinsicDensity,
+} from '../src/types';
 
 // Helper function to create test settings
 const createTestSettings = (iso: number): GrainSettings => ({
@@ -59,7 +62,10 @@ describe('GrainProcessor processPixelEffects', () => {
       const grainIntrinsicDensityMap: GrainIntrinsicDensityMap = new Map();
       const uniformDensity = 0.5; // Moderate density
       for (const grain of uniformGrains) {
-        grainIntrinsicDensityMap.set(grain, uniformDensity);
+        grainIntrinsicDensityMap.set(
+          grain,
+          createGrainIntrinsicDensity(uniformDensity)
+        );
       }
 
       // Create processor and test the protected method
@@ -188,10 +194,10 @@ describe('GrainProcessor processPixelEffects', () => {
       const densityMap: GrainIntrinsicDensityMap = new Map();
 
       // Assign different densities to grains
-      densityMap.set(grains[0], 0.1); // Low density
-      densityMap.set(grains[1], 0.5); // Medium density
-      densityMap.set(grains[2], 0.9); // High density
-      densityMap.set(grains[3], 0.5); // Medium density
+      densityMap.set(grains[0], createGrainIntrinsicDensity(0.1)); // Low density
+      densityMap.set(grains[1], createGrainIntrinsicDensity(0.5)); // Medium density
+      densityMap.set(grains[2], createGrainIntrinsicDensity(0.9)); // High density
+      densityMap.set(grains[3], createGrainIntrinsicDensity(0.5)); // Medium density
 
       const processor = new TestableGrainProcessor(width, height, settings);
       const result = processor.testProcessPixelEffects(
