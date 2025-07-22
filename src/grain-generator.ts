@@ -752,9 +752,10 @@ export class GrainGenerator {
       consecutiveFailures < maxConsecutiveFailures
     ) {
       // Generate random position using integer seeds
-      const x = seededRandom(attempts * 1234 + 1) * this.width;
-      const y = seededRandom(attempts * 5678 + 2) * this.height;
+      const x = seededRandom(attempts * 32452843 + 1) * this.width; // 32452843 is a large prime
+      const y = seededRandom(attempts * 49979687 + 2) * this.height; // 49979687 is a large prime
 
+       
       // Generate variable size for this grain
       const grainSize = this.generateVariableGrainSize(baseSize, attempts);
 
