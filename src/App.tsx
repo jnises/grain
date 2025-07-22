@@ -356,6 +356,13 @@ function App() {
             >
               👁️ Grain Visualizer (Dev Mode)
             </a>
+            <a
+              href="/grain-patterns.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              🔬 Grain Patterns Test (Dev Mode)
+            </a>
           </div>
         )}
       </header>
