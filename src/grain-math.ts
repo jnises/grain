@@ -16,21 +16,42 @@ import {
  * Pure function for deterministic hash generation
  * Exported for use by other modules to avoid duplication
  */
-export function wangHash32(key: number): number {
-  devAssert(() => Number.isFinite(key), `key must be finite, got ${key}`);
-  devAssert(() => Number.isInteger(key), `key must be an integer, got ${key}`);
+export function squirrelNoise5(positionX: number, seed: number = 0): number {
+  devAssert(
+    () => Number.isFinite(positionX),
+    `positionX must be finite, got ${positionX}`
+  );
+  devAssert(
+    () => Number.isInteger(positionX),
+    `positionX must be an integer, got ${positionX}`
+  );
+  devAssert(() => Number.isFinite(seed), `seed must be finite, got ${seed}`);
+  devAssert(
+    () => Number.isInteger(seed),
+    `seed must be an integer, got ${seed}`
+  );
 
-  // Ensure we work with 32-bit unsigned integers
-  key = Math.abs(key) >>> 0;
+  // Squirrel Noise 5 constants
+  const SQ5_BIT_NOISE1 = 0xd2a80a3f; // 11010010101010000000101000111111
+  const SQ5_BIT_NOISE2 = 0xa884f197; // 10101000100001001111000110010111
+  const SQ5_BIT_NOISE3 = 0x6c736f4b; // 01101100011100110110111101001011
+  const SQ5_BIT_NOISE4 = 0xb79f3abb; // 10110111100111110011101010111011
+  const SQ5_BIT_NOISE5 = 0x1b56c4f5; // 00011011010101101100010011110101
 
-  key = (~key + (key << 15)) >>> 0; // key = (key << 15) - key - 1;
-  key = (key ^ (key >>> 12)) >>> 0;
-  key = (key + (key << 2)) >>> 0;
-  key = (key ^ (key >>> 4)) >>> 0;
-  key = (key * 2057) >>> 0; // key = (key + (key << 3)) + (key << 11);
-  key = (key ^ (key >>> 16)) >>> 0;
+  let mangledBits = positionX >>> 0; // Convert to unsigned 32-bit integer
+  mangledBits = (mangledBits * SQ5_BIT_NOISE1) >>> 0;
+  mangledBits = (mangledBits + (seed >>> 0)) >>> 0;
+  mangledBits = (mangledBits ^ (mangledBits >>> 9)) >>> 0;
+  mangledBits = (mangledBits + SQ5_BIT_NOISE2) >>> 0;
+  mangledBits = (mangledBits ^ (mangledBits >>> 11)) >>> 0;
+  mangledBits = (mangledBits * SQ5_BIT_NOISE3) >>> 0;
+  mangledBits = (mangledBits ^ (mangledBits >>> 13)) >>> 0;
+  mangledBits = (mangledBits + SQ5_BIT_NOISE4) >>> 0;
+  mangledBits = (mangledBits ^ (mangledBits >>> 15)) >>> 0;
+  mangledBits = (mangledBits * SQ5_BIT_NOISE5) >>> 0;
+  mangledBits = (mangledBits ^ (mangledBits >>> 17)) >>> 0;
 
-  return key;
+  return mangledBits;
 }
 
 /**
@@ -40,12 +61,20 @@ export function wangHash32(key: number): number {
  */
 function hashSeed(seed: number, salt: number = 0x9e3779b9): number {
   devAssert(() => Number.isFinite(seed), `seed must be finite, got ${seed}`);
+  devAssert(
+    () => Number.isInteger(seed),
+    `seed must be an integer, got ${seed}`
+  );
   devAssert(() => Number.isFinite(salt), `salt must be finite, got ${salt}`);
-  // Convert to integer and combine with salt using addition and XOR
-  const intSeed = Math.floor(Math.abs(seed));
-  const intSalt = Math.floor(Math.abs(salt));
+  devAssert(
+    () => Number.isInteger(salt),
+    `salt must be an integer, got ${salt}`
+  );
+  // Combine seed with salt using addition and XOR
+  const intSeed = Math.abs(seed);
+  const intSalt = Math.abs(salt);
   const combined = (intSeed + intSalt) ^ (intSeed >>> 16);
-  return wangHash32(combined);
+  return squirrelNoise5(combined, 0);
 }
 
 /**
@@ -55,10 +84,13 @@ function hashSeed(seed: number, salt: number = 0x9e3779b9): number {
  */
 export function seededRandom(seed: number): number {
   devAssert(() => Number.isFinite(seed), `seed must be finite, got ${seed}`);
+  devAssert(
+    () => Number.isInteger(seed),
+    `seed must be an integer, got ${seed}`
+  );
 
-  // Convert to integer before hashing
-  const intSeed = Math.floor(seed);
-  const hashedSeed = hashSeed(intSeed);
+  // Hash the integer seed
+  const hashedSeed = hashSeed(seed);
 
   // Convert to [0, 1) range by dividing by 2^32
   return hashedSeed / 0x100000000;

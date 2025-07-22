@@ -8,7 +8,11 @@ import type {
   RandomNumberGenerator,
 } from './types';
 import { FILM_CHARACTERISTICS } from './constants';
-import { seededRandom, seededRandomForGrain, wangHash32 } from './grain-math';
+import {
+  seededRandom,
+  seededRandomForGrain,
+  squirrelNoise5,
+} from './grain-math';
 import { SpatialLookupGrid } from './spatial-lookup-grid';
 import {
   assertPositiveInteger,
@@ -40,8 +44,8 @@ export class SeededRandomNumberGenerator implements RandomNumberGenerator {
   }
 
   random(): number {
-    // Use Wang hash for better distribution
-    const hashedValue = wangHash32(this.current);
+    // Use Squirrel Noise 5 for better distribution
+    const hashedValue = squirrelNoise5(this.current);
     this.current++;
 
     // Convert to [0, 1) range by dividing by 2^32
@@ -743,9 +747,9 @@ export class GrainGenerator {
       attempts < maxAttempts &&
       consecutiveFailures < maxConsecutiveFailures
     ) {
-      // Generate random position
-      const x = seededRandom(attempts * 12.34) * this.width;
-      const y = seededRandom(attempts * 56.78) * this.height;
+      // Generate random position using integer seeds
+      const x = seededRandom(attempts * 1234 + 1) * this.width;
+      const y = seededRandom(attempts * 5678 + 2) * this.height;
 
       // Generate variable size for this grain
       const grainSize = this.generateVariableGrainSize(baseSize, attempts);
