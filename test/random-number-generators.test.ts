@@ -176,7 +176,7 @@ describe('Random Number Generators', () => {
       });
 
       it('should handle edge case seeds', () => {
-        const edgeSeeds = [0, 1, -1, 0.5, -0.5, 1000000, -1000000];
+        const edgeSeeds = [0, 1, -1, 1000000, -1000000];
 
         edgeSeeds.forEach((seed) => {
           const rng = new SeededRandomNumberGenerator(seed);

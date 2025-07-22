@@ -39,6 +39,7 @@ export class SeededRandomNumberGenerator implements RandomNumberGenerator {
   private current: number;
 
   constructor(seed: number = DEFAULT_SEED) {
+    devAssert(() => Number.isInteger(seed), `seed must be an integer, got ${seed}`);
     this.seed = seed;
     this.current = seed;
   }

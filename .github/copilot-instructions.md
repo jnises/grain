@@ -75,7 +75,8 @@
   - The assertion is in performance-critical code (hot paths identified through profiling)
   - The check is expensive to perform (complex validation, deep object inspection)
   - The assertion is primarily for development debugging rather than critical safety
-- **Integer Input Validation**: When algorithms require integer inputs, use `devAssert(() => Number.isInteger(value), 'message')` instead of silent conversion with `Math.floor()`. This prevents data loss and makes requirements explicit. If conversion is intentional, do it explicitly and document why.
+- **Integer Input Validation**: When algorithms require integer inputs, use `devAssert(() => Number.isInteger(value), 'message')` instead of silent conversion with `Math.floor()`. This prevents data loss and makes requirements explicit. If conversion is intentional, do it explicitly and document why. 
+  Same for unsigned integers. Don't `Math.abs`. Assert that the incoming value is indeed >= 0.
 
 ### Doc comments
 

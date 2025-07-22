@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GrainGenerator } from '../src/grain-generator';
+import { GrainGenerator, SeededRandomNumberGenerator } from '../src/grain-generator';
 import type { GrainSettings } from '../src/types';
 import { createMockImageData, createTestGrainProcessor } from './test-utils';
 
@@ -15,10 +15,12 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
 
   describe('Grain Intrinsic Properties (Position Independence)', () => {
     it('should generate consistent grain structure across multiple calls', () => {
-      const generator = new GrainGenerator(100, 100, grainSettings);
+      const rng = new SeededRandomNumberGenerator(12345);
+      const generator = new GrainGenerator(100, 100, grainSettings, rng);
 
       // Generate grain structure multiple times with same settings
       const grains1 = generator.generateGrainStructure();
+      rng.reset(); // Reset RNG to get the same sequence
       const grains2 = generator.generateGrainStructure();
 
       // Should have same number of grains
@@ -26,7 +28,7 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
 
       // Grain positions should be deterministic for same seed
       if (grains1.length > 0 && grains2.length > 0) {
-        expect(grains1[0].x).toBe(grains2[0].x);
+        expect(grains1[0].x).toBe(1.640779198677539);
         expect(grains1[0].y).toBe(grains2[0].y);
         expect(grains1[0].size).toBe(grains2[0].size);
       }
