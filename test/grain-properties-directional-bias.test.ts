@@ -148,9 +148,8 @@ describe('Grain Properties Directional Bias Tests', () => {
         `Threshold diagonal bias - Main: ${thresholdDiagonalBias.mainDiagonal.toFixed(4)}, Anti: ${thresholdDiagonalBias.antiDiagonal.toFixed(4)}, Ratio: ${thresholdDiagonalBias.ratio.toFixed(4)}`
       );
 
-      // TODO: 25 sounds quite extreme :(
       // Diagonal threshold variations should not be extreme
-      expect(thresholdDiagonalBias.ratio).toBeLessThan(25.0);
+      expect(thresholdDiagonalBias.ratio).toBeLessThan(3.0);
 
       // Test for intermediate diagonal patterns
       const intermediateBias = analyzePropertyIntermediateBias(
