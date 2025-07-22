@@ -1,0 +1,2 @@
+- disabling poisson grains -> still stripes
+- disabling fallback grain -> still stripes
