@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import sharp from 'sharp';
+import { join } from 'path';
 import type { GrainSettings } from '../src/types';
 import { createMockImageData, createTestGrainProcessor } from './test-utils';
 
@@ -65,6 +67,85 @@ describe('GrainProcessor Integration Tests', () => {
         }
       }
     });
+
+    it('should process gray.png without directional patterns', async () => {
+      // Load the actual gray.png file
+      const originalImage = await loadImageFromFile('gray.png');
+
+      // Resize to a smaller size for faster testing while maintaining aspect ratio
+      const testSize = 128;
+      const testImage = await resizeImageData(
+        originalImage,
+        testSize,
+        testSize
+      );
+
+      // Use low ISO to minimize grain effects and make patterns more detectable
+      const lowISOSettings: GrainSettings = {
+        ...defaultSettings,
+        iso: 100,
+      };
+
+      const processor = createTestGrainProcessor(
+        testImage.width,
+        testImage.height,
+        lowISOSettings
+      );
+
+      const result = await processor.processImage(testImage);
+
+      // Basic structural validation
+      expect(result.width).toBe(testImage.width);
+      expect(result.height).toBe(testImage.height);
+      expect(result.data.length).toBe(testImage.width * testImage.height * 4);
+
+      // Verify that alpha channel is preserved
+      for (let i = 3; i < result.data.length; i += 4) {
+        expect(result.data[i]).toBe(255);
+      }
+
+      // Verify grayscale format is maintained (R=G=B for all pixels)
+      for (let i = 0; i < result.data.length; i += 4) {
+        expect(result.data[i]).toBe(result.data[i + 1]); // R should equal G
+        expect(result.data[i + 1]).toBe(result.data[i + 2]); // G should equal B
+      }
+
+      // Analyze for directional patterns
+      const bias = analyzeImageDirectionalPatterns(result, 10);
+
+      // Log analysis for debugging
+      console.log(`Directional bias analysis:
+        Horizontal variation: ${bias.horizontal.toFixed(4)}
+        Vertical variation: ${bias.vertical.toFixed(4)}
+        Anisotropy ratio: ${bias.ratio.toFixed(4)}`);
+
+      // Analyze for diagonal stripe patterns (1 pixel up per 4 pixels right)
+      const diagonalBias = analyzeDiagonalStripePattern(result);
+
+      console.log(`Diagonal stripe analysis:
+        Diagonal variation: ${diagonalBias.variation.toFixed(4)}
+        Stripe count estimate: ${diagonalBias.stripeCount}
+        Pattern strength: ${diagonalBias.strength.toFixed(4)}`);
+
+      // The ratio should be close to 1.0 for isotropic (non-directional) patterns
+      // Making threshold more sensitive based on visual stripe detection
+      expect(bias.ratio).toBeLessThan(1.2);
+
+      // Test for diagonal stripe patterns specifically
+      expect(diagonalBias.strength).toBeLessThan(0.5);
+
+      if (bias.ratio >= 1.1) {
+        console.warn(
+          `⚠️  Directional bias detected (ratio: ${bias.ratio.toFixed(4)})`
+        );
+      }
+
+      if (diagonalBias.strength >= 0.3) {
+        console.warn(
+          `⚠️  Diagonal stripe pattern detected (strength: ${diagonalBias.strength.toFixed(4)}, ~${diagonalBias.stripeCount} stripes)`
+        );
+      }
+    }, 15000); // 15 second timeout for this test
 
     // DISABLED: This test is currently failing because the algorithm is outputting black images.
     // The test expects gradient patterns to be preserved with some measurable trend across the full width,
@@ -652,4 +733,223 @@ function calculateRegionAverage(
   }
 
   return count > 0 ? sum / count : 0;
+}
+
+/**
+ * Load PNG file and convert to ImageData format for testing
+ */
+async function loadImageFromFile(filePath: string): Promise<ImageData> {
+  const fullPath = join(process.cwd(), filePath);
+  const { data, info } = await sharp(fullPath)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  // Convert to RGBA format if needed
+  const rgba = new Uint8ClampedArray(info.width * info.height * 4);
+
+  if (info.channels === 3) {
+    // RGB -> RGBA
+    for (let i = 0; i < info.width * info.height; i++) {
+      rgba[i * 4] = data[i * 3]; // R
+      rgba[i * 4 + 1] = data[i * 3 + 1]; // G
+      rgba[i * 4 + 2] = data[i * 3 + 2]; // B
+      rgba[i * 4 + 3] = 255; // A
+    }
+  } else if (info.channels === 4) {
+    // Already RGBA
+    rgba.set(data);
+  } else {
+    throw new Error(`Unsupported channel count: ${info.channels}`);
+  }
+
+  return {
+    data: rgba,
+    width: info.width,
+    height: info.height,
+  } as ImageData;
+}
+
+/**
+ * Analyze image for directional patterns by calculating variation
+ * in horizontal and vertical strips
+ */
+function analyzeImageDirectionalPatterns(
+  imageData: ImageData,
+  numStrips: number = 10
+): { horizontal: number; vertical: number; ratio: number } {
+  const { width, height, data } = imageData;
+
+  // Analyze horizontal strips (varying Y)
+  const horizontalValues: number[] = [];
+  const stripHeight = height / numStrips;
+
+  for (let i = 0; i < numStrips; i++) {
+    const stripTop = Math.floor(i * stripHeight);
+    const stripBottom = Math.floor((i + 1) * stripHeight);
+
+    let sum = 0;
+    let count = 0;
+
+    for (let y = stripTop; y < stripBottom; y++) {
+      for (let x = 0; x < width; x++) {
+        const index = (y * width + x) * 4;
+        // Use grayscale value (R channel since image should be grayscale)
+        sum += data[index];
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      horizontalValues.push(sum / count);
+    }
+  }
+
+  // Analyze vertical strips (varying X)
+  const verticalValues: number[] = [];
+  const stripWidth = width / numStrips;
+
+  for (let i = 0; i < numStrips; i++) {
+    const stripLeft = Math.floor(i * stripWidth);
+    const stripRight = Math.floor((i + 1) * stripWidth);
+
+    let sum = 0;
+    let count = 0;
+
+    for (let x = stripLeft; x < stripRight; x++) {
+      for (let y = 0; y < height; y++) {
+        const index = (y * width + x) * 4;
+        // Use grayscale value (R channel since image should be grayscale)
+        sum += data[index];
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      verticalValues.push(sum / count);
+    }
+  }
+
+  // Calculate standard deviation for each direction
+  const horizontalMean =
+    horizontalValues.reduce((a, b) => a + b, 0) / horizontalValues.length;
+  const verticalMean =
+    verticalValues.reduce((a, b) => a + b, 0) / verticalValues.length;
+
+  const horizontalVariance =
+    horizontalValues.reduce(
+      (sum, val) => sum + Math.pow(val - horizontalMean, 2),
+      0
+    ) / horizontalValues.length;
+  const verticalVariance =
+    verticalValues.reduce(
+      (sum, val) => sum + Math.pow(val - verticalMean, 2),
+      0
+    ) / verticalValues.length;
+
+  const horizontalStdDev = Math.sqrt(horizontalVariance);
+  const verticalStdDev = Math.sqrt(verticalVariance);
+
+  // Calculate anisotropy ratio
+  const ratio =
+    Math.max(horizontalStdDev, verticalStdDev) /
+    (Math.min(horizontalStdDev, verticalStdDev) || 1e-6);
+
+  return {
+    horizontal: horizontalStdDev,
+    vertical: verticalStdDev,
+    ratio: ratio,
+  };
+}
+
+/**
+ * Resize ImageData to specified dimensions using simple nearest neighbor sampling
+ */
+async function resizeImageData(
+  source: ImageData,
+  newWidth: number,
+  newHeight: number
+): Promise<ImageData> {
+  const resized = new Uint8ClampedArray(newWidth * newHeight * 4);
+
+  const xRatio = source.width / newWidth;
+  const yRatio = source.height / newHeight;
+
+  for (let y = 0; y < newHeight; y++) {
+    for (let x = 0; x < newWidth; x++) {
+      const srcX = Math.floor(x * xRatio);
+      const srcY = Math.floor(y * yRatio);
+
+      const srcIndex = (srcY * source.width + srcX) * 4;
+      const destIndex = (y * newWidth + x) * 4;
+
+      resized[destIndex] = source.data[srcIndex]; // R
+      resized[destIndex + 1] = source.data[srcIndex + 1]; // G
+      resized[destIndex + 2] = source.data[srcIndex + 2]; // B
+      resized[destIndex + 3] = source.data[srcIndex + 3]; // A
+    }
+  }
+
+  return {
+    data: resized,
+    width: newWidth,
+    height: newHeight,
+  } as ImageData;
+}
+
+/**
+ * Analyze for diagonal stripe patterns (like 1 pixel up per 4 pixels right)
+ */
+function analyzeDiagonalStripePattern(imageData: ImageData): {
+  variation: number;
+  stripeCount: number;
+  strength: number;
+} {
+  const { width, height, data } = imageData;
+
+  // Sample diagonal lines with 1:4 slope (1 pixel up per 4 pixels right)
+  const diagonalValues: number[] = [];
+  const numSamples = Math.min(width / 4, height); // Number of diagonal lines we can sample
+
+  for (let startY = 0; startY < numSamples; startY++) {
+    let sum = 0;
+    let count = 0;
+
+    // Follow diagonal line: y = startY + x/4
+    for (let x = 0; x < width; x += 4) {
+      const y = Math.floor(startY + x / 4);
+      if (y < height) {
+        const index = (y * width + x) * 4;
+        sum += data[index]; // Use R channel (grayscale)
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      diagonalValues.push(sum / count);
+    }
+  }
+
+  // Calculate variation in diagonal averages
+  if (diagonalValues.length < 2) {
+    return { variation: 0, stripeCount: 0, strength: 0 };
+  }
+
+  const mean =
+    diagonalValues.reduce((a, b) => a + b, 0) / diagonalValues.length;
+  const variance =
+    diagonalValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+    diagonalValues.length;
+  const variation = Math.sqrt(variance);
+
+  // Estimate stripe count (number of distinct diagonal bands)
+  const stripeCount = Math.round(diagonalValues.length);
+
+  // Calculate pattern strength (normalized variation)
+  const strength = variation / (mean + 1e-6); // Normalize by mean brightness
+
+  return {
+    variation,
+    stripeCount,
+    strength,
+  };
 }
