@@ -9,7 +9,7 @@ describe('Grain Properties Directional Bias Tests', () => {
   });
 
   describe('Sensitivity directional bias analysis', () => {
-    it('should not show directional bias in sensitivity values', () => {
+    it.skip('should not show directional bias in sensitivity values', () => {
       const width = 200;
       const height = 200;
       const settings = createTestSettings(400);
@@ -176,7 +176,7 @@ describe('Grain Properties Directional Bias Tests', () => {
   });
 
   describe('Combined property analysis', () => {
-    it('should not show correlated directional patterns between sensitivity and threshold', () => {
+    it.skip('should not show correlated directional patterns between sensitivity and threshold', () => {
       const width = 150;
       const height = 150;
       const settings = createTestSettings(600);

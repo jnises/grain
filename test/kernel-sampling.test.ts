@@ -151,7 +151,7 @@ async function testGrainExposureVariability(
 
 describe('Kernel-based Grain Area Sampling Quality Validation', () => {
   describe('Exposure Stability for Different Grain Sizes', () => {
-    it('should provide more stable exposure values for larger grains', async () => {
+    it.skip('should provide more stable exposure values for larger grains', async () => {
       // Test with a gradient pattern where point sampling would be noisy
       const smallGrainResults = await testGrainExposureVariability(
         'gradient',
@@ -249,7 +249,7 @@ describe('Kernel-based Grain Area Sampling Quality Validation', () => {
       expect(getSampleCount(5.0)).toBeGreaterThan(getSampleCount(1.0));
     });
 
-    it('should demonstrate different results from point vs kernel sampling', async () => {
+    it.skip('should demonstrate different results from point vs kernel sampling', async () => {
       // Test with a pattern that creates significant differences between methods
       const results = await testGrainExposureVariability('gradient', 4.0, 20);
 

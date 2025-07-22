@@ -25,6 +25,18 @@
   - [x] Update constants and remove SEEDED_RANDOM_MULTIPLIER if no longer needed
   - [x] assert that the wanghash input is indeed an integer
   - [x] Since the hashing functions are likely to be quite hot, they should use devAssert rather than a normal assert
+- [ ] make sure devAsserts work in tests. make sure they are enabled and that they properly fail the test
+- [ ] wanghash and xorshift made the visual patters even more prominent unfortunately. try something like squirrel3?
+- [ ] reenable and fix these tests:
+  - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
+  - [ ] Fix and re-enable test: "should generate minimum viable grain count" in test/grain-distribution.test.ts (timeout issue)
+  - [ ] Fix and re-enable test: "should distribute Poisson samples across entire image area" in test/grain-distribution.test.ts (assertion failure)
+  - [ ] Fix and re-enable test: "should produce GREATER total grain coverage area as ISO increases" in test/grain-physical-behavior.test.ts (timeout issue)
+  - [ ] Fix and re-enable test: "should handle very low ISO values (25-50) correctly" in test/grain-physical-behavior.test.ts (timeout issue)
+  - [ ] Fix and re-enable test: "should not show correlated directional patterns between sensitivity and threshold" in test/grain-properties-directional-bias.test.ts (assertion failure)
+  - [ ] Fix and re-enable test: "should provide more stable exposure values for larger grains" in test/kernel-sampling.test.ts (assertion failure)
+  - [ ] Fix and re-enable test: "should demonstrate different results from point vs kernel sampling" in test/kernel-sampling.test.ts (assertion failure)
+  - [ ] Fix and re-enable test: "should not show directional bias in sensitivity values" in test/grain-properties-directional-bias.test.ts (assertion failure)
 - [ ] Examine why the algorithm introduces striped patterns. Look at gray.png grain-processed-image.png
   - [x] Create a visual analysis tool to examine stripe patterns in processed images
   - [x] Investigate Poisson disk sampling for directional bias in grain placement

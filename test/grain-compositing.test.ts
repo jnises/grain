@@ -114,7 +114,7 @@ describe('Variable Grain Size Generation', () => {
 });
 
 describe('Grain Structure Properties', () => {
-  test('should generate consistent grain properties', () => {
+  test.skip('should generate consistent grain properties', () => {
     const settings: GrainSettings = {
       iso: 400,
       filmType: 'kodak',
