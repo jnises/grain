@@ -266,10 +266,23 @@ export function sampleGrainAreaExposure(
   devAssert(imageData.length > 0, 'imageData must not be empty', {
     length: imageData.length,
   });
+
+  // Determine if this is single-channel or 4-channel data
+  const expectedSingleChannelLength = width * height;
+  const expectedFourChannelLength = width * height * 4;
+  const isSingleChannel = imageData.length === expectedSingleChannelLength;
+  const isFourChannel = imageData.length === expectedFourChannelLength;
+
   devAssert(
-    imageData.length % 4 === 0,
-    'imageData length must be divisible by 4 (RGBA format)',
-    { length: imageData.length }
+    isSingleChannel || isFourChannel,
+    'imageData length must match either single-channel (width * height) or 4-channel RGBA (width * height * 4) format',
+    {
+      length: imageData.length,
+      expectedSingleChannel: expectedSingleChannelLength,
+      expectedFourChannel: expectedFourChannelLength,
+      width,
+      height,
+    }
   );
   devAssert(Number.isFinite(grainX), 'grainX must be a finite number', {
     grainX,
@@ -312,9 +325,17 @@ export function sampleGrainAreaExposure(
 
     // Check bounds
     if (sampleX >= 0 && sampleX < width && sampleY >= 0 && sampleY < height) {
-      const pixelIndex = (sampleY * width + sampleX) * 4;
-      // For grayscale data, all RGB channels have the same value, so we only need the red channel
-      const grayscaleValue = imageData[pixelIndex];
+      let grayscaleValue: number;
+
+      if (isSingleChannel) {
+        // Single-channel data: direct pixel access
+        const pixelIndex = sampleY * width + sampleX;
+        grayscaleValue = imageData[pixelIndex];
+      } else {
+        // 4-channel RGBA data: use red channel (which equals green and blue in grayscale)
+        const pixelIndex = (sampleY * width + sampleX) * 4;
+        grayscaleValue = imageData[pixelIndex];
+      }
 
       const exposure = grayscaleToExposure(grayscaleValue);
 
@@ -330,9 +351,18 @@ export function sampleGrainAreaExposure(
     const centerY = Math.round(grainY);
 
     if (centerX >= 0 && centerX < width && centerY >= 0 && centerY < height) {
-      const pixelIndex = (centerY * width + centerX) * 4;
-      // For grayscale data, all RGB channels have the same value, so we only need the red channel
-      const grayscaleValue = imageData[pixelIndex];
+      let grayscaleValue: number;
+
+      if (isSingleChannel) {
+        // Single-channel data: direct pixel access
+        const pixelIndex = centerY * width + centerX;
+        grayscaleValue = imageData[pixelIndex];
+      } else {
+        // 4-channel RGBA data: use red channel (which equals green and blue in grayscale)
+        const pixelIndex = (centerY * width + centerX) * 4;
+        grayscaleValue = imageData[pixelIndex];
+      }
+
       return grayscaleToExposure(grayscaleValue);
     }
 

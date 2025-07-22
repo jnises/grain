@@ -54,8 +54,6 @@ export function squirrelNoise5(positionX: number, seed: number = 0): number {
   return mangledBits;
 }
 
-
-
 /**
  * Calculates grain falloff weight using Gaussian distribution
  * Shared function used for both exposure sampling and pixel effects
@@ -132,6 +130,31 @@ export function convertSrgbToLinearFloat(
     }
   }
   return floatData;
+}
+
+/**
+ * Convert 4-channel grayscale linear data to single-channel Float32Array
+ * Takes RGBA linear data where R=G=B (grayscale) and extracts just the luminance channel
+ * This is more memory efficient for grayscale processing
+ */
+export function convertGrayscaleLinearToSingleChannel(
+  linearData: Float32Array
+): Float32Array {
+  assert(linearData.length > 0, 'linearData must not be empty', {
+    length: linearData.length,
+  });
+  assert(
+    linearData.length % 4 === 0,
+    'linearData length must be divisible by 4 (RGBA format)',
+    { length: linearData.length }
+  );
+
+  const singleChannelData = new Float32Array(linearData.length / 4);
+  for (let i = 0; i < singleChannelData.length; i++) {
+    // Extract red channel (which equals green and blue in grayscale)
+    singleChannelData[i] = linearData[i * 4];
+  }
+  return singleChannelData;
 }
 
 /**

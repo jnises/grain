@@ -9,6 +9,7 @@ import { GrainDensityCalculator } from './grain-density';
 import {
   convertSrgbToLinearFloat,
   convertLinearFloatToSrgb,
+  convertGrayscaleLinearToSingleChannel,
   applyBeerLambertCompositingGrayscale,
 } from './grain-math';
 import { convertImageDataToGrayscale } from './color-space';
@@ -251,8 +252,13 @@ export class GrainProcessor {
     const grayscaleImageData = convertImageDataToGrayscale(imageData);
 
     // Convert input to linear floating-point for precision preservation and gamma correctness
-    const incomingImageLinear = convertSrgbToLinearFloat(
+    const incomingImageLinear4Channel = convertSrgbToLinearFloat(
       grayscaleImageData.data
+    );
+
+    // Convert to single-channel for more efficient grain exposure calculations
+    const incomingImageLinear = convertGrayscaleLinearToSingleChannel(
+      incomingImageLinear4Channel
     );
 
     const totalImagePixels = this.width * this.height;
@@ -731,9 +737,9 @@ export class GrainProcessor {
 
         // Ensure coordinates are within bounds
         if (x >= 0 && x < outputWidth && y >= 0 && y < outputHeight) {
-          const pixelIndex = (y * outputWidth + x) * 4;
+          const pixelIndex = y * outputWidth + x;
 
-          // Get original pixel value (using red channel since image is grayscale)
+          // Get original pixel value from single-channel data
           const originalLuminance = originalImageData[pixelIndex];
 
           // Calculate processed pixel value using the extracted logic
