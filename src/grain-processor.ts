@@ -243,7 +243,9 @@ export class GrainProcessor {
     const grayscaleImageData = convertImageDataToGrayscale(imageData);
 
     // Convert input to linear floating-point for precision preservation and gamma correctness
-    const incomingImageLinear = convertSrgbToLinearFloat(grayscaleImageData.data);
+    const incomingImageLinear = convertSrgbToLinearFloat(
+      grayscaleImageData.data
+    );
 
     const totalImagePixels = this.width * this.height;
 
@@ -524,7 +526,12 @@ export class GrainProcessor {
         'Drawing debug grain centers...'
       );
       console.log('Debug mode: Drawing grain center points');
-      GrainProcessor.drawGrainCenters(result, grainStructure, this.width, this.height);
+      GrainProcessor.drawGrainCenters(
+        result,
+        grainStructure,
+        this.width,
+        this.height
+      );
     }
 
     this.reportProgress(PROGRESS_PERCENTAGES.COMPLETE, 'Complete!');
@@ -573,9 +580,9 @@ export class GrainProcessor {
    * Calculate the grain effect for a single pixel at the given coordinates.
    * This is the core pixel processing logic extracted into a pure function
    * for reuse in both full processing and sampling estimation.
-   * 
+   *
    * @param x - Pixel x coordinate
-   * @param y - Pixel y coordinate  
+   * @param y - Pixel y coordinate
    * @param grainGrid - Spatial lookup grid for efficient grain queries
    * @param grainIntrinsicDensityMap - Pre-calculated grain densities from development phase
    * @returns Object with finalGrayscale value and whether grains affected this pixel
@@ -592,7 +599,11 @@ export class GrainProcessor {
 
     // Get grains from nearby grid cells
     // Get all nearby grains using the efficient spatial lookup
-    const nearbyGrains = grainGrid.getGrainsNear(x, y, grainGrid.getGrainLookupRadius());
+    const nearbyGrains = grainGrid.getGrainsNear(
+      x,
+      y,
+      grainGrid.getGrainLookupRadius()
+    );
 
     // Process nearby grains directly (already filtered by spatial grid)
     for (const grain of nearbyGrains) {
@@ -665,7 +676,7 @@ export class GrainProcessor {
   /**
    * Estimate lightness factor by sampling a subset of pixels instead of processing the entire image.
    * This provides a significant performance improvement during iterative lightness compensation.
-   * 
+   *
    * @param originalImageData - Original image data in linear RGB format
    * @param grainGrid - Spatial lookup grid for efficient grain queries
    * @param grainIntrinsicDensityMap - Pre-calculated grain densities from development phase
@@ -747,7 +758,8 @@ export class GrainProcessor {
     }
 
     // For normal images, calculate correction factor with reasonable bounds
-    const lightnessDeviationFactor = originalAverage / Math.max(processedAverage, 0.001);
+    const lightnessDeviationFactor =
+      originalAverage / Math.max(processedAverage, 0.001);
     return Math.max(0.01, Math.min(100.0, lightnessDeviationFactor));
   }
 
@@ -761,7 +773,7 @@ export class GrainProcessor {
    *
    * See ALGORITHM_DESIGN.md: "Critical Implementation Rule: Film Negative Behavior"
    */
-  private processPixelEffects(
+  protected processPixelEffects(
     grainGrid: SpatialLookupGrid,
     grainIntrinsicDensityMap: GrainIntrinsicDensityMap, // Grain densities from development phase
     outputWidth: number,
@@ -791,12 +803,13 @@ export class GrainProcessor {
         processedPixels++;
 
         // Use the extracted pixel processing logic
-        const { finalGrayscale, hasGrainEffect } = this.calculatePixelGrainEffect(
-          x,
-          y,
-          grainGrid,
-          grainIntrinsicDensityMap
-        );
+        const { finalGrayscale, hasGrainEffect } =
+          this.calculatePixelGrainEffect(
+            x,
+            y,
+            grainGrid,
+            grainIntrinsicDensityMap
+          );
 
         if (hasGrainEffect) {
           grainEffectCount++;
@@ -828,7 +841,7 @@ export class GrainProcessor {
     if (grainStructure.length === 0) return;
 
     // Calculate size range for color coding
-    const sizes = grainStructure.map(g => g.size);
+    const sizes = grainStructure.map((g) => g.size);
     let minSize = sizes[0];
     let maxSize = sizes[0];
     for (const size of sizes) {
@@ -847,7 +860,7 @@ export class GrainProcessor {
       // Draw a small cross at the grain center
       // Color-code by grain size: small=red, medium=orange, large=yellow
       const crossSize = Math.max(1, Math.floor(grain.size * 0.3)); // Scale cross size with grain size
-      
+
       let color: { r: number; g: number; b: number };
       if (grain.size <= smallThreshold) {
         color = { r: 255, g: 68, b: 0 }; // Red-orange (#ff4400)
@@ -882,6 +895,8 @@ export class GrainProcessor {
       }
     }
 
-    console.log(`Debug: Drew ${grainStructure.length} grain center markers color-coded by size`);
+    console.log(
+      `Debug: Drew ${grainStructure.length} grain center markers color-coded by size`
+    );
   }
 }
