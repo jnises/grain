@@ -32,7 +32,7 @@ export function assert(
  * eliminated by the bundler's dead code elimination and tree shaking.
  * Use this for expensive assertions in hot code paths that should not impact production performance.
  *
- * @param condition The condition to assert (only checked in development)
+ * @param condition The condition to assert (only checked in development). Can be a boolean value or a function that returns a boolean.
  * @param message Error message to display if assertion fails
  * @param context Optional context object to include in error logging
  */
@@ -46,7 +46,9 @@ export const devAssert: (
       message: string,
       context?: Record<string, unknown>
     ): asserts condition => {
-      if (!condition) {
+      // Handle function conditions by calling them
+      const result = typeof condition === 'function' ? condition() : condition;
+      if (!result) {
         // Log error with context for debugging
         console.error('Dev assertion failed:', message);
         if (context) {
@@ -137,7 +139,8 @@ export const devAssertInRange: (
       max: number,
       name: string
     ): asserts value is number => {
-      if (!(value >= min && value <= max)) {
+      const inRange = value >= min && value <= max;
+      if (!inRange) {
         console.error(
           'Dev assertion failed:',
           `${name} must be between ${min} and ${max}`
@@ -146,7 +149,7 @@ export const devAssertInRange: (
           [name]: value,
           min,
           max,
-          inRange: value >= min && value <= max,
+          inRange,
         });
         throw new Error(
           `Dev assertion failed: ${name} must be between ${min} and ${max}`

@@ -25,7 +25,7 @@
   - [x] Update constants and remove SEEDED_RANDOM_MULTIPLIER if no longer needed
   - [x] assert that the wanghash input is indeed an integer
   - [x] Since the hashing functions are likely to be quite hot, they should use devAssert rather than a normal assert
-- [ ] make sure devAsserts work in tests. make sure they are enabled and that they properly fail the test
+- [x] make sure devAsserts work in tests. make sure they are enabled and that they properly fail the test
 - [ ] wanghash and xorshift made the visual patters even more prominent unfortunately. try something like squirrel3?
 - [ ] reenable and fix these tests:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)

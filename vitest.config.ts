@@ -2,6 +2,10 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  define: {
+    // Explicitly enable DEV mode in tests to ensure devAssert works
+    'import.meta.env.DEV': true,
+  },
   test: {
     environment: 'jsdom',
     globals: true,
