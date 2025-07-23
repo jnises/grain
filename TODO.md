@@ -8,8 +8,18 @@
   - [x] Fix type safety in App.tsx handleCustomSettingChange - use `GrainSettings[keyof GrainSettings]` instead of `any` ✅ **COMPLETED**
   - [x] Add explicit type annotations in test files as suggested by copilot-pull-request-reviewer ✅ **COMPLETED**
   - [ ] Consider extracting image difference calculation into helper function to reduce duplication in test files
+    - **PR Comment ID**: copilot-pull-request-reviewer comment on `test/grain-processor.test.ts`
+    - **Context**: Image difference calculation is duplicated across multiple test cases
+    - **Suggestion**: Extract into `calculateImageDifference(originalImage.data, processedImage.data)` helper function
   - [ ] Extract large test case arrays into separate data structures or factory functions for better readability
+    - **PR Comment ID**: copilot-pull-request-reviewer comment on `test/grain-generator.test.ts`
+    - **Context**: Large array of invalid grain test cases could be better organized
+    - **Suggestion**: Extract into separate data structure like `getInvalidGrains()` factory function
   - [ ] Review inconsistent grain influence falloff calculation in grain-processor.ts (combining Gaussian and exponential falloffs)
+    - **PR Comment ID**: gemini-code-assist high priority comment on `src/grain-processor.ts`
+    - **Context**: `pixelGrainEffect` uses Gaussian falloff in `GrainDensityCalculator`, then multiplied by exponential falloff weight (`Math.exp(-distance / grain.size)`)
+    - **Issue**: Combining two different falloff models is unusual and may not be physically accurate; introduces redundant sqrt calculation
+    - **Suggestion**: Use single Gaussian falloff or document physical reasoning for combining falloffs
   - [x] Fix cross-platform compatibility issue in `scripts/stop-dev-server.js` - use fkill-cli or find-process instead of Unix-only lsof/kill commands ✅ **COMPLETED**
 - [ ] Profile the code and try to optimize.
   - [x] Optimize grain generation performance (biggest bottleneck - 70% of CPU time) ✅ **COMPLETED** - 8x faster!
