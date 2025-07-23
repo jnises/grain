@@ -733,6 +733,13 @@ export class GrainGenerator {
     let consecutiveFailures = 0;
     const maxConsecutiveFailures = 1000; // Stop if we can't place any grains for 1000 attempts
 
+    // Use incremental spatial grid for fast nearest neighbor lookup during generation
+    const incrementalGrid = new GrainGenerator.IncrementalSpatialGrid(
+      this.width,
+      this.height,
+      baseSize
+    );
+
     console.log(
       `Generating variable size grains: target=${targetCount}, maxAttempts=${maxAttempts}`
     );
@@ -749,20 +756,13 @@ export class GrainGenerator {
       // Generate variable size for this grain
       const grainSize = this.generateVariableGrainSize(baseSize);
 
-      // Check if this position is valid (not too close to existing grains)
-      const minDistance = this.calculateMinDistanceForGrain(
-        grainSize,
-        grains,
-        x,
-        y
-      );
-
-      if (this.isValidGrainPosition(x, y, minDistance, grains)) {
+      // Check if this position is valid using incremental spatial grid
+      if (incrementalGrid.isValidGrainPosition(x, y, grainSize)) {
         const sensitivityVariation = this.rng.random();
         const developmentThreshold =
           this.calculateDevelopmentThreshold(grainSize);
 
-        grains.push({
+        const newGrain: GrainPoint = {
           x,
           y,
           size: grainSize,
@@ -770,7 +770,12 @@ export class GrainGenerator {
           sensitivity: 0.8 + sensitivityVariation * 0.4,
           // Development threshold: minimum exposure needed to activate grain (make it visible)
           developmentThreshold,
-        });
+        };
+
+        grains.push(newGrain);
+
+        // Add to incremental spatial grid
+        incrementalGrid.addGrain(newGrain);
 
         consecutiveFailures = 0; // Reset failure counter on success
       } else {
@@ -812,58 +817,6 @@ export class GrainGenerator {
     return Math.max(MIN_GRAIN_SIZE, baseSize * sizeMultiplier);
   }
 
-  // Calculate minimum distance for a grain based on its size and nearby grains
-  private calculateMinDistanceForGrain(
-    grainSize: number,
-    existingGrains: GrainPoint[],
-    x: number,
-    y: number
-  ): number {
-    // Base minimum distance based on grain size
-    let minDistance = Math.max(
-      MIN_GRAIN_DISTANCE,
-      grainSize * GRAIN_DISTANCE_MULTIPLIER
-    );
-
-    // Find nearby grains and adjust distance based on their sizes
-    const NEARBY_GRAIN_RADIUS = grainSize * 3; // Reduced from 4x to 3x for less strict checking
-
-    for (const grain of existingGrains) {
-      const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
-
-      if (distance < NEARBY_GRAIN_RADIUS) {
-        // Adjust minimum distance based on nearby grain size (more relaxed)
-        const combinedSizeDistance = (grainSize + grain.size) * 0.6; // Reduced from 0.8 to 0.6
-        minDistance = Math.max(minDistance, combinedSizeDistance);
-      }
-    }
-
-    return minDistance;
-  }
-
-  // Check if a position is valid for placing a grain
-  private isValidGrainPosition(
-    x: number,
-    y: number,
-    minDistance: number,
-    existingGrains: GrainPoint[]
-  ): boolean {
-    // Check bounds
-    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
-      return false;
-    }
-
-    // Check distance to existing grains
-    for (const grain of existingGrains) {
-      const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
-      if (distance < minDistance) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   /**
    * Calculate per-grain development threshold based on grain properties and film characteristics.
    *
@@ -899,4 +852,115 @@ export class GrainGenerator {
     // Ensure threshold stays in reasonable bounds [0.1, 1.5]
     return Math.max(0.1, Math.min(1.5, threshold));
   }
+
+  /**
+   * Incremental spatial grid for grain generation that supports adding grains one at a time.
+   *
+   * This class uses similar design patterns to SpatialLookupGrid but is optimized for incremental
+   * building during grain generation. The main SpatialLookupGrid requires all grains upfront,
+   * but during generation we need to check positions against a growing set of grains.
+   *
+   * Design similarities with SpatialLookupGrid:
+   * - Same grid sizing logic (max(16, baseGrainSize * 2))
+   * - 1D array with index calculation for better performance
+   * - Same grid coordinate calculation approach
+   *
+   * Key differences:
+   * - Supports addGrain() for incremental building
+   * - Includes grain validation logic during placement
+   * - Optimized for the specific needs of grain generation
+   */
+  private static IncrementalSpatialGrid = class {
+    private grid: GrainPoint[][];
+    private readonly gridWidth: number;
+    private readonly gridHeight: number;
+    private readonly gridSize: number;
+    private readonly imageWidth: number;
+    private readonly imageHeight: number;
+
+    constructor(
+      imageWidth: number,
+      imageHeight: number,
+      baseGrainSize: number
+    ) {
+      this.imageWidth = imageWidth;
+      this.imageHeight = imageHeight;
+
+      // Use similar grid sizing logic as SpatialLookupGrid
+      this.gridSize = Math.max(16, Math.floor(baseGrainSize * 2));
+      this.gridWidth = Math.ceil(imageWidth / this.gridSize);
+      this.gridHeight = Math.ceil(imageHeight / this.gridSize);
+
+      // Use 1D array with index calculation for better performance (like SpatialLookupGrid TODO)
+      this.grid = Array(this.gridWidth * this.gridHeight)
+        .fill(null)
+        .map(() => []);
+    }
+
+    addGrain(grain: GrainPoint): void {
+      const gridX = Math.floor(grain.x / this.gridSize);
+      const gridY = Math.floor(grain.y / this.gridSize);
+      const gridIndex = gridY * this.gridWidth + gridX;
+
+      if (gridIndex >= 0 && gridIndex < this.grid.length) {
+        this.grid[gridIndex].push(grain);
+      }
+    }
+
+    isValidGrainPosition(x: number, y: number, grainSize: number): boolean {
+      // Check bounds
+      if (x < 0 || x >= this.imageWidth || y < 0 || y >= this.imageHeight) {
+        return false;
+      }
+
+      // Calculate minimum distance using same logic as original implementation
+      const minDistance = Math.max(
+        MIN_GRAIN_DISTANCE,
+        grainSize * GRAIN_DISTANCE_MULTIPLIER
+      );
+
+      // Get grid coordinates
+      const gridX = Math.floor(x / this.gridSize);
+      const gridY = Math.floor(y / this.gridSize);
+
+      // Check neighboring grid cells
+      const searchRadius = Math.ceil(minDistance / this.gridSize) + 1;
+
+      for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+        for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+          const checkX = gridX + dx;
+          const checkY = gridY + dy;
+
+          if (
+            checkX >= 0 &&
+            checkX < this.gridWidth &&
+            checkY >= 0 &&
+            checkY < this.gridHeight
+          ) {
+            const gridIndex = checkY * this.gridWidth + checkX;
+            const cellGrains = this.grid[gridIndex];
+
+            for (const grain of cellGrains) {
+              const distance = Math.sqrt(
+                (x - grain.x) ** 2 + (y - grain.y) ** 2
+              );
+
+              // Calculate adjusted minimum distance for this specific grain pair
+              const combinedSizeDistance = (grainSize + grain.size) * 0.6;
+              const adjustedMinDistance = Math.max(
+                minDistance,
+                combinedSizeDistance
+              );
+
+              if (distance < adjustedMinDistance) {
+                return false;
+              }
+            }
+          }
+        }
+      }
+
+      return true;
+    }
+  };
 }

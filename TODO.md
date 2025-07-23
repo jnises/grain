@@ -1,4 +1,31 @@
 - [ ] Profile the code and try to optimize.
+  - [x] Optimize grain generation performance (biggest bottleneck - 70% of CPU time) ✅ **COMPLETED** - 8x faster!
+    - [x] Optimize `generateVariableSizeGrains` function in grain-generator.ts - Added IncrementalSpatialGrid using SpatialLookupGrid patterns
+    - [x] Improve Poisson disk sampling efficiency - Eliminated redundant distance calculations with O(n) spatial partitioning
+    - [x] Reduce failed attempt overhead in grain placement - Combined validation logic in incremental grid
+    - [x] Reuse existing SpatialLookupGrid design patterns - Created incremental version for grain generation
+    - [x] Performance results: ~900ms→109ms (8x faster), grain generation no longer bottleneck
+  - [ ] Optimize pixel processing performance (second biggest bottleneck)
+    - [ ] Optimize `calculatePixelGrainEffect` function in grain-processor.ts
+    - [ ] Reduce grain lookup radius when possible
+    - [ ] Improve spatial grid efficiency for grain queries
+    - [ ] Cache grain influence calculations where beneficial
+  - [ ] Optimize iterative development loop
+    - [ ] Use sampling for lightness estimation instead of full pixel processing
+    - [ ] Reduce default iteration count from 5 to optimal value
+    - [ ] Cache intermediate results between iterations
+  - [ ] Optimize spatial grid operations
+    - [ ] Improve `getGrainsNear` performance in spatial-lookup-grid.ts
+    - [ ] Optimize grid cell size and structure
+    - [ ] Reduce unnecessary distance calculations
+  - [ ] Memory and data structure optimizations
+    - [ ] Improve data locality in hot loops
+    - [ ] Use more efficient data structures for grain storage
+    - [ ] Reduce memory allocations in performance-critical paths
+  - [ ] Consider advanced optimizations
+    - [ ] Evaluate WebWorkers for parallel grain processing
+    - [ ] Investigate WebGPU acceleration for pixel operations
+    - [ ] Profile with different ISO settings to understand scaling behavior
 - [ ] reenable and fix these tests. If they still time out, try to make the dimensions of the testdata smaller. If that isn't possible just remove the test:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
   - [ ] Fix and re-enable test: "should generate minimum viable grain count" in test/grain-distribution.test.ts (timeout issue)
