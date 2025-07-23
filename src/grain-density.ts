@@ -22,7 +22,6 @@ import type {
   RandomNumberGenerator,
 } from './types';
 import { assert, devAssert, assertArray, devAssertInRange } from './utils';
-import { DefaultRandomNumberGenerator } from './grain-generator';
 
 /**
  * Handles grain density calculations and film physics simulation
@@ -31,7 +30,7 @@ export class GrainDensityCalculator {
   private settings: GrainSettings;
   private rng: RandomNumberGenerator;
 
-  constructor(settings: GrainSettings, rng?: RandomNumberGenerator) {
+  constructor(settings: GrainSettings, rng: RandomNumberGenerator) {
     assert(
       settings && typeof settings === 'object',
       'settings must be a valid settings object',
@@ -49,7 +48,7 @@ export class GrainDensityCalculator {
     );
 
     this.settings = settings;
-    this.rng = rng || new DefaultRandomNumberGenerator();
+    this.rng = rng;
   }
 
   /**

@@ -4,7 +4,6 @@
 import { calculateSampleWeight, grayscaleToExposure } from './grain-math';
 import { devAssert } from './utils';
 import type { RandomNumberGenerator } from './types';
-import { DefaultRandomNumberGenerator } from './grain-generator';
 
 // Sampling kernel constants
 export const KERNEL_SAMPLE_COUNT_SMALL = 4; // For grains < 1.5px radius
@@ -33,8 +32,8 @@ export class KernelGenerator {
   private kernelCache: Map<string, SamplingKernel> = new Map();
   private rng: RandomNumberGenerator;
 
-  constructor(rng?: RandomNumberGenerator) {
-    this.rng = rng || new DefaultRandomNumberGenerator();
+  constructor(rng: RandomNumberGenerator) {
+    this.rng = rng;
   }
 
   /**

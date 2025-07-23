@@ -8,6 +8,7 @@ import {
   sampleGrainAreaExposure,
   KernelGenerator,
 } from '../src/grain-sampling';
+import { SeededRandomNumberGenerator } from '../src/grain-generator';
 import { grayscaleToExposure, rgbToExposureFloat } from '../src/grain-math';
 
 // Mock image data creation utilities for testing
@@ -33,7 +34,9 @@ describe('Grain Area Sampling with Grayscale', () => {
   let kernelGenerator: KernelGenerator;
 
   beforeEach(() => {
-    kernelGenerator = new KernelGenerator();
+    kernelGenerator = new KernelGenerator(
+      new SeededRandomNumberGenerator(12345)
+    );
   });
 
   it('should sample grayscale values correctly for uniform images', () => {
@@ -300,7 +303,9 @@ describe('KernelGenerator Integration with Grayscale Sampling', () => {
   let kernelGenerator: KernelGenerator;
 
   beforeEach(() => {
-    kernelGenerator = new KernelGenerator();
+    kernelGenerator = new KernelGenerator(
+      new SeededRandomNumberGenerator(12345)
+    );
   });
 
   it('should generate consistent kernels for repeated calls', () => {

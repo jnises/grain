@@ -9,6 +9,10 @@ import { FILM_CHARACTERISTICS } from '../src/constants';
 
 // Test helper class to access GrainDensityCalculator methods
 class TestGrainDensityCalculator extends GrainDensityCalculator {
+  constructor(settings: any, rng?: any) {
+    super(settings, rng || new SeededRandomNumberGenerator(12345));
+  }
+
   public testCalculateIntrinsicGrainDensity(
     exposure: number,
     grain: any

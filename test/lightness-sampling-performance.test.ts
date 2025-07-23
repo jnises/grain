@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GrainProcessor } from '../src/grain-processor';
-import { createTestImageData } from './test-utils';
+import { createTestImageData, createTestGrainProcessor } from './test-utils';
 import type { GrainSettings } from '../src/types';
 
 describe('Lightness Sampling Performance', () => {
@@ -36,12 +35,12 @@ describe('Lightness Sampling Performance', () => {
       lightnessEstimationSamplingDensity: 0.02, // 2% sampling
     };
 
-    const highSamplingProcessor = new GrainProcessor(
+    const highSamplingProcessor = createTestGrainProcessor(
       width,
       height,
       highSamplingSettings
     );
-    const lowSamplingProcessor = new GrainProcessor(
+    const lowSamplingProcessor = createTestGrainProcessor(
       width,
       height,
       lowSamplingSettings
