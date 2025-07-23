@@ -6,7 +6,7 @@
     - [x] Reuse existing SpatialLookupGrid design patterns - Created incremental version for grain generation
     - [x] Performance results: ~900ms→109ms (8x faster), grain generation no longer bottleneck
   - [ ] Optimize pixel processing performance (second biggest bottleneck)
-    - [ ] Optimize `calculatePixelGrainEffect` function in grain-processor.ts
+    - [x] Optimize `calculatePixelGrainEffect` function in grain-processor.ts ✅ **COMPLETED** - 14% performance improvement for small images, 12.5% improvement in pixel processing speed
     - [ ] Reduce grain lookup radius when possible
     - [ ] Improve spatial grid efficiency for grain queries. Perhaps grains can be added to all the cells they overlap and grainsNear could just need to look up a single cell?
     - [ ] Cache grain influence calculations where beneficial
@@ -68,9 +68,11 @@
 - [ ] Update the grain generation logic to do a full 3d emulsion simulation.
   - In real film grains are suspended at multiple depths, and can overlap.
   - In the current implementation we don't support overlapping.
-  - Could just take the current grain generation and just have multiple at different depths?
+  - This should solve the issue with being unable to get proper coverage for high iso.
+  - Could just take the current grain generation and just have multiple at different depths? Perhaps 2 or 3 layers?
   - refer to GRAIN_OVERLAPPING.md for some notes on the issue
   - Update ALGORITHM_DESIGN.md with the new functionality
+- [ ] Write a test that runs a smooth gradient through processImage. When lowpassing the resulting image the values should stay mostly the same as the input. That is, the algorithm should have a mostly linear lightness mapping.
 - [ ] Add support for lower iso than 50
 - [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)

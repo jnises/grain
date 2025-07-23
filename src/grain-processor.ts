@@ -622,13 +622,23 @@ export class GrainProcessor {
       grainGrid.getGrainLookupRadius()
     );
 
+    // Constant for grain influence radius
+    const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
+
     // Process nearby grains directly (already filtered by spatial grid)
     for (const grain of nearbyGrains) {
-      const distance = Math.sqrt((x - grain.x) ** 2 + (y - grain.y) ** 2);
+      // Calculate squared distance first to avoid expensive sqrt
+      const dx = x - grain.x;
+      const dy = y - grain.y;
+      const distanceSquared = dx * dx + dy * dy;
 
-      // Constant for grain influence radius
-      const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
-      if (distance < grain.size * GRAIN_INFLUENCE_RADIUS_FACTOR) {
+      // Check influence radius using squared distance to avoid sqrt
+      const influenceRadius = grain.size * GRAIN_INFLUENCE_RADIUS_FACTOR;
+      const influenceRadiusSquared = influenceRadius * influenceRadius;
+
+      if (distanceSquared < influenceRadiusSquared) {
+        // Only calculate sqrt when we know the grain is within influence radius
+        const distance = Math.sqrt(distanceSquared);
         const weight = Math.exp(-distance / grain.size);
 
         // Use pre-calculated intrinsic grain density

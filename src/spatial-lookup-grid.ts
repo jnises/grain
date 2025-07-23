@@ -5,8 +5,8 @@ import type { GrainPoint } from './types';
 import { devAssert } from './utils';
 
 export class SpatialLookupGrid {
-  // TODO: Better to do a `GrainPoint[][]` using `grid[y * this.gridWidth + x]` for lookup instead of the nested approach?
-  private grid: GrainPoint[][][];
+  // Use flatter array structure for better performance - each cell is accessed via grid[y * gridWidth + x]
+  private grid: GrainPoint[][];
   private readonly gridWidth: number;
   private readonly gridHeight: number;
   private readonly gridSize: number;
@@ -27,13 +27,11 @@ export class SpatialLookupGrid {
     this.gridWidth = Math.ceil(imageWidth / this.gridSize);
     this.gridHeight = Math.ceil(imageHeight / this.gridSize);
 
-    // Initialize 2D array grid
-    this.grid = Array(this.gridWidth);
-    for (let x = 0; x < this.gridWidth; x++) {
-      this.grid[x] = Array(this.gridHeight);
-      for (let y = 0; y < this.gridHeight; y++) {
-        this.grid[x][y] = [];
-      }
+    // Initialize flatter array grid for better performance
+    const totalCells = this.gridWidth * this.gridHeight;
+    this.grid = Array(totalCells);
+    for (let i = 0; i < totalCells; i++) {
+      this.grid[i] = [];
     }
 
     // Populate grid with grains
@@ -55,7 +53,8 @@ export class SpatialLookupGrid {
         `Grain at position (${grain.x}, ${grain.y}) is outside image bounds. Grid coordinates: (${gridX}, ${gridY}), Grid dimensions: ${this.gridWidth}x${this.gridHeight}`
       );
 
-      this.grid[gridX][gridY].push(grain);
+      const cellIndex = gridY * this.gridWidth + gridX;
+      this.grid[cellIndex].push(grain);
     }
   }
 
@@ -97,7 +96,8 @@ export class SpatialLookupGrid {
       gridY >= 0 &&
       gridY < this.gridHeight
     ) {
-      return this.grid[gridX][gridY];
+      const cellIndex = gridY * this.gridWidth + gridX;
+      return this.grid[cellIndex];
     }
 
     return [];
@@ -122,10 +122,11 @@ export class SpatialLookupGrid {
       Math.floor((y + radius) / this.gridSize)
     );
 
-    // Collect grains from all relevant cells
-    for (let gridX = minGridX; gridX <= maxGridX; gridX++) {
-      for (let gridY = minGridY; gridY <= maxGridY; gridY++) {
-        result.push(...this.grid[gridX][gridY]);
+    // Collect grains from all relevant cells using flatter array access
+    for (let gridY = minGridY; gridY <= maxGridY; gridY++) {
+      for (let gridX = minGridX; gridX <= maxGridX; gridX++) {
+        const cellIndex = gridY * this.gridWidth + gridX;
+        result.push(...this.grid[cellIndex]);
       }
     }
 
@@ -149,9 +150,10 @@ export class SpatialLookupGrid {
     let totalGrainReferences = 0;
     let maxGrainsPerCell = 0;
 
-    for (let x = 0; x < this.gridWidth; x++) {
-      for (let y = 0; y < this.gridHeight; y++) {
-        const cellCount = this.grid[x][y].length;
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        const cellIndex = y * this.gridWidth + x;
+        const cellCount = this.grid[cellIndex].length;
         if (cellCount > 0) {
           nonEmptyCells++;
           totalGrainReferences += cellCount;
