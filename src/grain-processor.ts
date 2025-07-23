@@ -653,12 +653,14 @@ export class GrainProcessor {
         );
 
         // Calculate pixel-level grain effects using pre-calculated intrinsic density
+        // Pass the already-calculated distanceSquared to avoid redundant calculation
         const pixelGrainEffect =
           this.grainDensityCalculator.calculatePixelGrainEffect(
             intrinsicDensity,
             grain,
             x,
-            y
+            y,
+            distanceSquared
           );
 
         // For monochrome processing, use simple grayscale density accumulation

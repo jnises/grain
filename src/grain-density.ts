@@ -5,7 +5,7 @@
 // Only truly shared constants should remain here. Function-specific and single-use constants are moved into their respective functions.
 
 import { FILM_CHARACTERISTICS } from './constants';
-import { calculateGrainFalloff } from './grain-math';
+import { calculateGrainFalloffFromSquaredDistance } from './grain-math';
 import {
   createGrainExposure,
   createGrainIntrinsicDensity,
@@ -276,7 +276,8 @@ export class GrainDensityCalculator {
     intrinsicDensity: GrainIntrinsicDensity,
     grain: GrainPoint,
     pixelX: number,
-    pixelY: number
+    pixelY: number,
+    distanceSquared?: number
   ): PixelGrainEffect {
     // Function-specific constants
     const GRAIN_FALLOFF_RADIUS_MULTIPLIER = 2;
@@ -286,21 +287,27 @@ export class GrainDensityCalculator {
       return createPixelGrainEffect(0);
     }
 
-    // Calculate offset from grain center
-    const offsetX = pixelX - grain.x;
-    const offsetY = pixelY - grain.y;
-
-    // Calculate distance from grain center
-    const distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
+    // Use provided squared distance if available, otherwise calculate it
+    const distanceSquaredValue =
+      distanceSquared ??
+      (() => {
+        const offsetX = pixelX - grain.x;
+        const offsetY = pixelY - grain.y;
+        return offsetX * offsetX + offsetY * offsetY;
+      })();
 
     // Add distance falloff calculation based on grain position and radius
     const falloffRadius = grain.size * GRAIN_FALLOFF_RADIUS_MULTIPLIER; // Grain influence extends to 2x grain size
-    if (distance >= falloffRadius) {
+    const falloffRadiusSquared = falloffRadius * falloffRadius;
+    if (distanceSquaredValue >= falloffRadiusSquared) {
       return createPixelGrainEffect(0); // No effect beyond falloff radius
     }
 
     // Apply distance-based falloff using shared Gaussian function for consistency with exposure sampling
-    const falloffFactor = calculateGrainFalloff(distance, grain.size);
+    const falloffFactor = calculateGrainFalloffFromSquaredDistance(
+      distanceSquaredValue,
+      grain.size
+    );
 
     // Apply the intrinsic density with consistent falloff
     const pixelEffect = intrinsicDensity * falloffFactor;

@@ -67,14 +67,39 @@ export function calculateGrainFalloff(
   devAssert(Number.isFinite(distance), 'distance must be finite', { distance });
   devAssert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
 
+  // Use the optimized squared distance version internally
+  const distanceSquared = distance * distance;
+  return calculateGrainFalloffFromSquaredDistance(distanceSquared, grainRadius);
+}
+
+/**
+ * Calculates grain falloff using squared distance to avoid redundant sqrt operations
+ * Pure function for calculating falloff weights based on squared distance and grain properties
+ */
+export function calculateGrainFalloffFromSquaredDistance(
+  distanceSquared: number,
+  grainRadius: number
+): number {
+  // Validate input parameters (dev-only for performance)
+  devAssert(
+    Number.isFinite(distanceSquared),
+    'distanceSquared must be finite',
+    { distanceSquared }
+  );
+  devAssert(distanceSquared >= 0, 'distanceSquared must be non-negative', {
+    distanceSquared,
+  });
+  devAssert(grainRadius > 0, 'grainRadius must be positive', { grainRadius });
+
   // Constants for grain falloff calculation
   const GAUSSIAN_SIGMA_FACTOR = 0.7; // Controls spread of Gaussian based on grain radius
   const MIN_FALLOFF_WEIGHT = 0.0; // No minimum weight for falloff (unlike sampling)
 
   // Gaussian falloff for consistent behavior between sampling and rendering
+  // Using distanceSquared directly eliminates the need for sqrt followed by squaring
   const gaussianSigma = grainRadius * GAUSSIAN_SIGMA_FACTOR;
   const gaussianWeight = Math.exp(
-    -(distance * distance) / (2 * gaussianSigma * gaussianSigma)
+    -distanceSquared / (2 * gaussianSigma * gaussianSigma)
   );
 
   return Math.max(gaussianWeight, MIN_FALLOFF_WEIGHT);
