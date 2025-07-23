@@ -19,16 +19,19 @@ import type {
   GrainExposure,
   GrainIntrinsicDensity,
   PixelGrainEffect,
+  RandomNumberGenerator,
 } from './types';
 import { assert, devAssert, assertArray, devAssertInRange } from './utils';
+import { DefaultRandomNumberGenerator } from './grain-generator';
 
 /**
  * Handles grain density calculations and film physics simulation
  */
 export class GrainDensityCalculator {
   private settings: GrainSettings;
+  private rng: RandomNumberGenerator;
 
-  constructor(settings: GrainSettings) {
+  constructor(settings: GrainSettings, rng?: RandomNumberGenerator) {
     assert(
       settings && typeof settings === 'object',
       'settings must be a valid settings object',
@@ -46,6 +49,7 @@ export class GrainDensityCalculator {
     );
 
     this.settings = settings;
+    this.rng = rng || new DefaultRandomNumberGenerator();
   }
 
   /**
@@ -196,9 +200,6 @@ export class GrainDensityCalculator {
     );
 
     // Function-specific constants
-    const GRAIN_RANDOM_SEED_X = 12345;
-    const GRAIN_RANDOM_SEED_Y = 67890;
-    const GRAIN_RANDOM_SEED_MOD = 1000000;
     const GRAIN_RANDOM_SENSITIVITY_RANGE = 0.3;
     const GRAIN_RANDOM_SENSITIVITY_OFFSET = 0.15;
     const GRAIN_SIGMOID_STEEPNESS = 8.0;
@@ -215,12 +216,9 @@ export class GrainDensityCalculator {
     // Formula: grain_activation = (local_exposure + random_sensitivity) > development_threshold
 
     // Calculate random sensitivity variation for this grain
-    // Use grain-based randomness for consistent grain behavior (position-independent)
-    const randomSeed =
-      (grain.x * GRAIN_RANDOM_SEED_X + grain.y * GRAIN_RANDOM_SEED_Y) %
-      GRAIN_RANDOM_SEED_MOD;
+    // Use dependency-injected randomness for consistent grain behavior
     const randomSensitivity =
-      (randomSeed / GRAIN_RANDOM_SEED_MOD) * GRAIN_RANDOM_SENSITIVITY_RANGE -
+      this.rng.random() * GRAIN_RANDOM_SENSITIVITY_RANGE -
       GRAIN_RANDOM_SENSITIVITY_OFFSET;
 
     // Calculate activation strength

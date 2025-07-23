@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GrainDensityCalculator } from '../src/grain-density';
+import { SeededRandomNumberGenerator } from '../src/grain-generator';
 import {
   sampleGrainAreaExposure,
   KernelGenerator,
@@ -40,11 +41,15 @@ describe('Grain Weighting Consistency', () => {
   let kernelGenerator: KernelGenerator;
 
   beforeEach(() => {
-    grainDensityCalculator = new GrainDensityCalculator({
-      iso: 400,
-      filmType: 'kodak',
-    });
-    kernelGenerator = new KernelGenerator();
+    const rng = new SeededRandomNumberGenerator(42);
+    grainDensityCalculator = new GrainDensityCalculator(
+      {
+        iso: 400,
+        filmType: 'kodak',
+      },
+      rng
+    );
+    kernelGenerator = new KernelGenerator(rng);
   });
 
   describe('Shared falloff function consistency', () => {

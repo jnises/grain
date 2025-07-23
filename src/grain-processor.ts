@@ -109,7 +109,10 @@ export class GrainProcessor {
     this.kernelGenerator = new KernelGenerator(
       rng || new DefaultRandomNumberGenerator()
     );
-    this.grainDensityCalculator = new GrainDensityCalculator(settings);
+    this.grainDensityCalculator = new GrainDensityCalculator(
+      settings,
+      rng || new DefaultRandomNumberGenerator()
+    );
   }
 
   // Type guard for GrainSettings
