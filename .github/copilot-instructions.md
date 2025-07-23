@@ -111,6 +111,12 @@
 - When testing is difficult due to private methods or complex dependencies, refactor production code to be more testable rather than duplicating functionality in tests
 - **NEVER use `new ImageData()` in tests** - Node.js test environment doesn't have DOM ImageData. Instead, create mock objects with `{ width, height, data: new Uint8ClampedArray(width * height * 4) }` structure
 
+### Random numbers and testing
+- Make sure any random value you generate is done using the interface RandomNumberGenerator. This needs to be dependency injected to any code that needs it.
+- In order to get deterministic testing SeededRandomNumberGenerator should be used in tests.
+- Don't do position based hash type rng.
+- If you decide you really need position based rng for some reason use `squirrelNoise5`
+
 ## Development Workflow
 
 ### Server Management (CRITICAL)
