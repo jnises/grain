@@ -199,8 +199,6 @@ export class GrainDensityCalculator {
     );
 
     // Function-specific constants
-    const GRAIN_RANDOM_SENSITIVITY_RANGE = 0.3;
-    const GRAIN_RANDOM_SENSITIVITY_OFFSET = 0.15;
     const GRAIN_SIGMOID_STEEPNESS = 8.0;
     const FILM_RESPONSE_VISIBILITY_MULTIPLIER = 1.2;
     // Validate exposure input
@@ -212,16 +210,11 @@ export class GrainDensityCalculator {
     // Two-stage grain activation system:
     // Stage 1: Check if grain activates (developmentThreshold - binary on/off gate)
     // Stage 2: Apply grain intensity multiplier (sensitivity - continuous scaling)
-    // Formula: grain_activation = (local_exposure + random_sensitivity) > development_threshold
+    // Formula: grain_activation = exposure > development_threshold
+    // Note: Random variation is already built into developmentThreshold when grains are created
 
-    // Calculate random sensitivity variation for this grain
-    // Use dependency-injected randomness for consistent grain behavior
-    const randomSensitivity =
-      this.rng.random() * GRAIN_RANDOM_SENSITIVITY_RANGE -
-      GRAIN_RANDOM_SENSITIVITY_OFFSET;
-
-    // Calculate activation strength
-    const activationStrength = exposure + randomSensitivity;
+    // Calculate activation strength using exposure directly
+    const activationStrength = exposure;
 
     // STAGE 1: Check if grain is activated (developmentThreshold acts as binary gate)
     if (activationStrength <= grain.developmentThreshold) {

@@ -190,15 +190,15 @@ describe('Development Threshold System', () => {
     });
 
     it('should show sigmoid activation behavior', () => {
-      // Use a grain at position (0,0) to get predictable random sensitivity
-      // At (0,0), randomSeed = 0, so randomSensitivity = -0.15
+      // Test grain with threshold set to demonstrate sigmoid behavior
+      // Random sensitivity is now built into developmentThreshold during grain creation
       const testGrain = {
         x: 0,
         y: 0,
         size: 2,
         sensitivity: 1.0,
         shape: 0.5,
-        developmentThreshold: 0.3, // Lower threshold to account for negative random sensitivity
+        developmentThreshold: 0.45, // Threshold adjusted for direct exposure comparison
       };
 
       const testCalculator = new TestGrainDensityCalculator(settings);
@@ -215,13 +215,13 @@ describe('Development Threshold System', () => {
       );
 
       // Should show sigmoid-like behavior:
-      // With randomSensitivity = -0.15 and threshold = 0.3
-      // Activation strength = exposure - 0.15
-      // So we need exposure >= 0.45 to activate (0.45 - 0.15 = 0.3)
+      // With threshold = 0.45, direct exposure comparison
+      // Activation strength = exposure (no random sensitivity added during calculation)
+      // So we need exposure >= 0.45 to activate
 
-      expect(strengths[0]).toBeLessThan(0.1); // 0.3 - below activation (0.3 - 0.15 = 0.15 < 0.3)
-      expect(strengths[1]).toBeLessThan(0.1); // 0.4 - below activation (0.4 - 0.15 = 0.25 < 0.3)
-      expect(strengths[2]).toBeGreaterThan(0); // 0.5 - above activation (0.5 - 0.15 = 0.35 > 0.3)
+      expect(strengths[0]).toBeLessThan(0.1); // 0.3 - below activation (0.3 < 0.45)
+      expect(strengths[1]).toBeLessThan(0.1); // 0.4 - below activation (0.4 < 0.45)
+      expect(strengths[2]).toBeGreaterThan(0); // 0.5 - above activation (0.5 > 0.45)
       expect(strengths[3]).toBeGreaterThan(strengths[2]); // 0.6 - higher activation
       expect(strengths[4]).toBeGreaterThan(strengths[3]); // 0.7 - even higher
       expect(strengths[5]).toBeGreaterThan(strengths[4]); // 0.8 - highest
