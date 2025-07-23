@@ -1,6 +1,6 @@
 - [ ] Run the tests and fix the issues. It looks like some tests aren't deterministic. In order to make things deterministic the tests need to provide a seeded random number generator, make sure that this generator is used everywhere. Specifically make the rng argument required everywhere except in GrainProcessor. Never default to the DefaultRandomNumberGenerator except for in GrainProcessor.
   - [x] Make RNG argument required in GrainGenerator constructor (remove default) ✅ **COMPLETED** - was already required
-  - [x] Make RNG argument required in KernelGenerator constructor (remove default) ✅ **COMPLETED** 
+  - [x] Make RNG argument required in KernelGenerator constructor (remove default) ✅ **COMPLETED**
   - [x] Make RNG argument required in GrainDensityCalculator constructor (remove default) ✅ **COMPLETED**
   - [x] Update all test files to use SeededRandomNumberGenerator consistently ✅ **COMPLETED**
     - [x] Update tests that create GrainGenerator directly to pass seeded RNG ✅ **COMPLETED** - already using SeededRandomNumberGenerator(12345)
@@ -9,7 +9,7 @@
   - [x] Run tests to verify they now pass consistently with deterministic behavior ✅ **COMPLETED** - most tests now pass consistently
   - [ ] Fix any remaining test failures caused by the RNG changes
     - [ ] Fix development-threshold.test.ts: "should show sigmoid activation behavior" - test threshold expectations may need adjustment
-    - [ ] Fix development-threshold.test.ts: "should produce consistent results for same grain and exposure" - grain density calculation uses RNG on each call, needs to be deterministic per grain
+    - [ ] Fix development-threshold.test.ts: "should produce consistent results for same grain and exposure"  - grain density calculation uses RNG on each call, would it be better to just make developmentThreshold somewhat randomized?
     - [ ] Fix grain-processor-integration.test.ts: "should process gray.png without directional patterns" - directional bias threshold may need adjustment (1.298 > 1.2)
     - [ ] Remove temp test file causing KernelGenerator error
 - [ ] Profile the code and try to optimize.
