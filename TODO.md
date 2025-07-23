@@ -8,7 +8,7 @@
   - [ ] Optimize pixel processing performance (second biggest bottleneck)
     - [ ] Optimize `calculatePixelGrainEffect` function in grain-processor.ts
     - [ ] Reduce grain lookup radius when possible
-    - [ ] Improve spatial grid efficiency for grain queries
+    - [ ] Improve spatial grid efficiency for grain queries. Perhaps grains can be added to all the cells they overlap and grainsNear could just need to look up a single cell?
     - [ ] Cache grain influence calculations where beneficial
   - [ ] Optimize iterative development loop
     - [ ] Use sampling for lightness estimation instead of full pixel processing
@@ -26,6 +26,7 @@
     - [ ] Evaluate WebWorkers for parallel grain processing
     - [ ] Investigate WebGPU acceleration for pixel operations
     - [ ] Profile with different ISO settings to understand scaling behavior
+- [ ] Merge IncrementalSpatialGrid with SpatialLookupGrid? SpatialLookupGrid requires all grain up front, but just to calculate the max size. Perhaps that could be separated out?
 - [ ] reenable and fix these tests. If they still time out, try to make the dimensions of the testdata smaller. If that isn't possible just remove the test:
   - [ ] Fix and re-enable test: "should generate consistent grain properties" in test/grain-compositing.test.ts (timeout issue)
   - [ ] Fix and re-enable test: "should generate minimum viable grain count" in test/grain-distribution.test.ts (timeout issue)
