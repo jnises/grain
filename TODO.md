@@ -1,4 +1,4 @@
-- [ ] Run the tests and fix the issues. It looks like some tests aren't deterministic. In order to make things deterministic the tests need to provide a seeded random number generator, make sure that this generator is used everywhere. Specifically make the rng argument required everywhere except in GrainProcessor. Never default to the DefaultRandomNumberGenerator except for in GrainProcessor.
+- [x] Run the tests and fix the issues. It looks like some tests aren't deterministic. In order to make things deterministic the tests need to provide a seeded random number generator, make sure that this generator is used everywhere. Specifically make the rng argument required everywhere except in GrainProcessor. Never default to the DefaultRandomNumberGenerator except for in GrainProcessor.
   - [x] Make RNG argument required in GrainGenerator constructor (remove default) ✅ **COMPLETED** - was already required
   - [x] Make RNG argument required in KernelGenerator constructor (remove default) ✅ **COMPLETED**
   - [x] Make RNG argument required in GrainDensityCalculator constructor (remove default) ✅ **COMPLETED**
