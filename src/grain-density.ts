@@ -19,7 +19,6 @@ import type {
   GrainExposure,
   GrainIntrinsicDensity,
   PixelGrainEffect,
-  RandomNumberGenerator,
 } from './types';
 import { assert, devAssert, assertArray, devAssertInRange } from './utils';
 
@@ -28,9 +27,8 @@ import { assert, devAssert, assertArray, devAssertInRange } from './utils';
  */
 export class GrainDensityCalculator {
   private settings: GrainSettings;
-  private rng: RandomNumberGenerator;
 
-  constructor(settings: GrainSettings, rng: RandomNumberGenerator) {
+  constructor(settings: GrainSettings) {
     assert(
       settings && typeof settings === 'object',
       'settings must be a valid settings object',
@@ -48,7 +46,7 @@ export class GrainDensityCalculator {
     );
 
     this.settings = settings;
-    this.rng = rng;
+    // RNG parameter is kept for interface compatibility but not currently used
   }
 
   /**

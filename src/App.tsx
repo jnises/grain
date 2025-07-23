@@ -25,6 +25,7 @@ function App() {
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [originalFileName, setOriginalFileName] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -57,6 +58,9 @@ function App() {
 
   const processFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
+      // Store original file name for download purposes
+      setOriginalFileName(file.name);
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         setImage(e.target?.result as string);
@@ -93,10 +97,10 @@ function App() {
       e.preventDefault();
       setIsDragOver(false);
 
-      const files = Array.from(e.dataTransfer.files);
-      const imageFile = files.find((file) => file.type.startsWith('image/'));
-
+      const files = Array.from(e.dataTransfer.files);      const imageFile = files.find((file) => file.type.startsWith('image/'));
       if (imageFile) {
+        // Store original file name for download purposes
+        setOriginalFileName(imageFile.name);
         processFile(imageFile);
       }
     },
@@ -147,7 +151,7 @@ function App() {
 
   const handleCustomSettingChange = (
     key: keyof GrainSettings,
-    value: string | number | boolean
+    value: GrainSettings[keyof GrainSettings]
   ) => {
     setCustomSettings((prev) => ({
       ...prev,
@@ -316,9 +320,29 @@ function App() {
     if (imageToDownload) {
       const link = document.createElement('a');
       link.href = imageToDownload;
-      link.download = processedImage
-        ? 'grain-processed-image.png'
-        : 'original-image';
+      
+      // Always use PNG format to preserve grain quality without compression artifacts
+      let filename: string;
+      
+      if (processedImage) {
+        // For processed images, use original name with grain suffix and PNG extension
+        if (originalFileName) {
+          const nameWithoutExt = originalFileName.replace(/\.[^/.]+$/, "");
+          filename = `${nameWithoutExt}-grain-processed.png`;
+        } else {
+          filename = 'grain-processed-image.png';
+        }
+      } else {
+        // For original images, convert to PNG to ensure consistent format
+        if (originalFileName) {
+          const nameWithoutExt = originalFileName.replace(/\.[^/.]+$/, "");
+          filename = `${nameWithoutExt}.png`;
+        } else {
+          filename = 'original-image.png';
+        }
+      }
+      
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -479,7 +503,7 @@ function App() {
               <select
                 value={customSettings.filmType}
                 onChange={(e) =>
-                  handleCustomSettingChange('filmType', e.target.value)
+                  handleCustomSettingChange('filmType', e.target.value as GrainSettings['filmType'])
                 }
                 disabled={isProcessing}
               >

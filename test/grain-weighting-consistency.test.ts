@@ -37,13 +37,10 @@ describe('Grain Weighting Consistency', () => {
 
   beforeEach(() => {
     const rng = new SeededRandomNumberGenerator(42);
-    grainDensityCalculator = new GrainDensityCalculator(
-      {
-        iso: 400,
-        filmType: 'kodak',
-      },
-      rng
-    );
+    grainDensityCalculator = new GrainDensityCalculator({
+      iso: 400,
+      filmType: 'kodak',
+    });
     kernelGenerator = new KernelGenerator(rng);
   });
 

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { GrainDensityCalculator } from '../src/grain-density';
-import { SeededRandomNumberGenerator } from '../src/grain-generator';
 import type { GrainSettings, GrainPoint, GrainExposureMap } from '../src/types';
 import { createGrainExposure } from '../src/types';
 
@@ -49,8 +48,7 @@ describe('GrainDensityCalculator', () => {
       });
 
       // Calculate intrinsic grain densities with seeded RNG for reproducible results
-      const rng = new SeededRandomNumberGenerator(42);
-      const calculator = new GrainDensityCalculator(settings, rng);
+      const calculator = new GrainDensityCalculator(settings);
       const densityMap = calculator.calculateIntrinsicGrainDensities(
         uniformGrains,
         exposureMap
@@ -107,8 +105,7 @@ describe('GrainDensityCalculator', () => {
     });
 
     it('should handle empty grain array', () => {
-      const rng = new SeededRandomNumberGenerator(42);
-      const calculator = new GrainDensityCalculator(defaultSettings, rng);
+      const calculator = new GrainDensityCalculator(defaultSettings);
       const emptyGrains: GrainPoint[] = [];
       const emptyExposureMap: GrainExposureMap = new Map();
 
@@ -121,8 +118,7 @@ describe('GrainDensityCalculator', () => {
     });
 
     it('should produce different densities for different exposures', () => {
-      const rng = new SeededRandomNumberGenerator(42);
-      const calculator = new GrainDensityCalculator(defaultSettings, rng);
+      const calculator = new GrainDensityCalculator(defaultSettings);
 
       // Create two identical grains at different positions
       const grains: GrainPoint[] = [

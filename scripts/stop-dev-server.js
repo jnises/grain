@@ -1,63 +1,89 @@
 #!/usr/bin/env node
 
 /**
- * Safely stops Vite development servers by targeting only processes using Vite's default ports.
- * This avoids accidentally killing other processes that might have "vite" in their command line.
+ * Safely stops Vite development servers using a robust detection method.
+ * This cross-platform script works on Windows, macOS, and Linux.
  *
- * Targets ports:
- * - 5173: Vite's default development server port
- * - 5174: Common fallback port when 5173 is in use
+ * Detection strategy:
+ * 1. First tries to find processes using Vite's default ports (5173, 5174)
+ * 2. Falls back to searching for Node.js processes running Vite binaries
+ * 3. Uses very specific command matching to avoid killing unrelated processes
  *
  * Usage: npm run dev:stop
  */
-
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
 
 const VITE_PORTS = [5173, 5174];
 
 async function stopDevServer() {
   try {
+    // Dynamic import for CommonJS module
+    const findProcess = (await import('find-process')).default.default;
     console.log('🔍 Checking for running Vite development servers...');
 
-    // Find processes using Vite ports
-    const portList = VITE_PORTS.join(',');
-    const { stdout } = await execAsync(`lsof -ti:${portList}`);
+    let processes = [];
+    
+    // First try: Search by port (preferred method)
+    for (const port of VITE_PORTS) {
+      try {
+        const portProcesses = await findProcess('port', port);
+        if (portProcesses && portProcesses.length > 0) {
+          processes.push(...portProcesses);
+          console.log(`Found process(es) on port ${port}:`, portProcesses.map(p => p.pid));
+        }
+      } catch (error) {
+        console.log(`Port ${port} search failed, will try fallback method`);
+      }
+    }
+    
+    // Fallback: If port search didn't work, search by process name but be very specific
+    if (processes.length === 0) {
+      console.log('Port search unsuccessful, trying process name search...');
+      const nodeProcesses = await findProcess('name', 'node');
+      // Be very specific: must be node running vite binary, not just containing "vite"
+      const viteProcesses = nodeProcesses.filter(proc => 
+        proc.cmd && (
+          proc.cmd.includes('node_modules/.bin/vite') ||
+          proc.cmd.includes('node_modules\\vite\\bin\\vite') ||
+          proc.cmd.endsWith('/bin/vite') ||
+          proc.cmd.endsWith('\\bin\\vite')
+        )
+      );
+      processes = viteProcesses;
+      if (viteProcesses.length > 0) {
+        console.log('Found Vite processes by command search');
+      }
+    }
 
-    if (!stdout.trim()) {
+    if (processes.length === 0) {
       console.log('✅ No Vite development servers found running.');
       return;
     }
 
-    const pids = stdout
-      .trim()
-      .split('\n')
-      .filter((pid) => pid);
     console.log(
-      `🎯 Found ${pids.length} process(es) using Vite ports: ${pids.join(', ')}`
+      `🎯 Found ${processes.length} Vite development server(s): ${processes.map(p => `${p.pid} (${p.name || 'node'})`).join(', ')}`
     );
 
-    // Kill the processes
-    for (const pid of pids) {
+    // Kill the processes using cross-platform approach
+    for (const proc of processes) {
       try {
-        await execAsync(`kill -9 ${pid}`);
-        console.log(`✅ Stopped process ${pid}`);
+        // Use process.kill which works across platforms
+        process.kill(proc.pid, 'SIGTERM');
+        console.log(`✅ Stopped process ${proc.pid} (${proc.name})`);
       } catch (error) {
-        console.log(`⚠️  Process ${pid} may have already stopped`);
+        // Try SIGKILL if SIGTERM fails
+        try {
+          process.kill(proc.pid, 'SIGKILL');
+          console.log(`✅ Force stopped process ${proc.pid} (${proc.name})`);
+        } catch (killError) {
+          console.log(`⚠️  Process ${proc.pid} may have already stopped`);
+        }
       }
     }
 
     console.log('🚀 Vite development servers stopped successfully.');
   } catch (error) {
-    // lsof returns exit code 1 when no processes are found, which is normal
-    if (error.code === 1) {
-      console.log('✅ No Vite development servers found running.');
-    } else {
-      console.error('❌ Error stopping development servers:', error.message);
-      process.exit(1);
-    }
+    console.error('❌ Error stopping development servers:', error.message);
+    process.exit(1);
   }
 }
 

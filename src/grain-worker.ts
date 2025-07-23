@@ -55,11 +55,6 @@ self.onmessage = async function (e: MessageEvent<ProcessMessage>) {
     // Validate imageData using custom assertion that provides type narrowing
     assertImageData(imageData, 'imageData');
 
-    console.log(
-      `Worker processing ${imageData.width}x${imageData.height} image with settings:`,
-      settings
-    );
-
     // Create processor with worker progress reporting
     const processor = new WorkerGrainProcessor(
       imageData.width,
@@ -79,9 +74,6 @@ self.onmessage = async function (e: MessageEvent<ProcessMessage>) {
     // Handle errors and send error message back to main thread
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error occurred';
-    const errorStack = error instanceof Error ? error.stack : undefined;
-
-    console.error('Worker error:', errorMessage, errorStack);
 
     safePostMessage({
       type: 'error',
