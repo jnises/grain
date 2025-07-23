@@ -1,3 +1,4 @@
+- [ ] Run the tests and fix the issues. It looks like some tests aren't deterministic. In order to make things deterministic the tests need to provide a seeded random number generator, make sure that this generator is used everywhere. Specifically make the rng argument required everywhere except in GrainProcessor. Never default to the DefaultRandomNumberGenerator except for in GrainProcessor.
 - [ ] Profile the code and try to optimize.
   - [x] Optimize grain generation performance (biggest bottleneck - 70% of CPU time) ✅ **COMPLETED** - 8x faster!
     - [x] Optimize `generateVariableSizeGrains` function in grain-generator.ts - Added IncrementalSpatialGrid using SpatialLookupGrid patterns
