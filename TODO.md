@@ -75,7 +75,6 @@
   - Update ALGORITHM_DESIGN.md with the new functionality
 - [ ] Write a test that runs a smooth gradient through processImage. When lowpassing the resulting image the values should stay mostly the same as the input. That is, the algorithm should have a mostly linear lightness mapping.
 - [ ] Add support for lower iso than 50
-- [ ] Make sure the tests in grain-processor-integration.test.ts are not too lenient
 - [ ] Add slider to control how large the grains are relative to the image, as if to simulate the image being a cropped version of a small sections of the negative. (Or will this have the same effect as adjusting the iso?)
 - [ ] When loading an image in the gui, adjust the zoom level to show the entire image.
 - [ ] Add support for scrolling/sliding the image in the gui. Both the unprocessed and processed images should scroll the same.

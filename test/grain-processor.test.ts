@@ -5,7 +5,10 @@ import type { GrainSettings, GrainPoint, GrainExposureMap } from '../src/types';
 import { createGrainExposure } from '../src/types';
 import { createMockImageData, createTestGrainProcessor } from './test-utils';
 import { convertImageDataToGrayscale } from '../src/color-space';
-import { convertSrgbToLinearFloat } from '../src/grain-math';
+import {
+  convertSrgbToLinearFloat,
+  convertGrayscaleLinearToSingleChannel,
+} from '../src/grain-math';
 
 // Test helper class to access GrainProcessor private static methods
 class TestGrainProcessor extends GrainProcessor {
@@ -747,7 +750,11 @@ describe('GrainProcessor', () => {
 
       // Convert to grayscale and then to linear float format (as done in GrainProcessor)
       const grayscaleImageData = convertImageDataToGrayscale(testImage);
-      const linearFloatData = convertSrgbToLinearFloat(grayscaleImageData.data);
+      const linearFloat4Channel = convertSrgbToLinearFloat(
+        grayscaleImageData.data
+      );
+      const linearFloatData =
+        convertGrayscaleLinearToSingleChannel(linearFloat4Channel);
 
       // Create processor and test the calculateGrainExposures method directly
       const processor = new TestGrainProcessor(width, height, settings);

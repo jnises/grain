@@ -18,18 +18,13 @@ function createGrayscaleImageData(
   height: number,
   luminancePattern: (x: number, y: number) => number
 ): { data: Float32Array } {
-  const data = new Float32Array(width * height * 4);
+  const data = new Float32Array(width * height);
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const pixelIndex = (y * width + x) * 4;
+      const pixelIndex = y * width + x;
       const luminance = luminancePattern(x, y);
-
-      // Set RGB channels to same luminance value (grayscale)
-      data[pixelIndex] = luminance; // R
-      data[pixelIndex + 1] = luminance; // G
-      data[pixelIndex + 2] = luminance; // B
-      data[pixelIndex + 3] = 1.0; // A
+      data[pixelIndex] = luminance;
     }
   }
 
