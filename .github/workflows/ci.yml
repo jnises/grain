@@ -11,13 +11,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 21.x]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
@@ -26,6 +29,7 @@ jobs:
       - name: Run tests
         run: npm test
       - name: Run benchmarks
+        if: github.event_name == 'push'
         run: npm run benchmark
       - name: Build
         run: npm run build
