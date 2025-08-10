@@ -1,30 +1,30 @@
-# Grain - Physically Plausible Analog Film Grain Simulation
+# Grain - Analog Film Grain Simulation
 
-> **⚠️ Prototype Notice**: This is a prototype project designed to test coding agent workflows and development processes. While it implements sophisticated grain simulation algorithms, the functionality is not yet complete and should not be expected to produce production-ready results.
+> **⚠️ Prototype Notice**: This is a prototype project designed to test coding agent workflows and development processes. The functionality is not yet complete and should not be expected to produce production-ready results.
 
-A TypeScript/React application that simulates realistic analog film grain effects for digital images. This project implements sophisticated algorithms that model the actual structure and behavior of silver halide crystals in photographic emulsion, creating grain that appears authentic even when zoomed in.
+A TypeScript/React application that simulates analog film grain effects for digital images. This project implements algorithms that attempt to model aspects of film grain structure and behavior.
 
 ## 🎯 Features
 
-- **Physically Accurate Grain**: Models real film grain characteristics based on photographic principles
-- **Variable Grain Size**: Creates realistic grain with natural size variation across the image
-- **ISO-Responsive**: Grain size and density automatically adjust based on film speed settings
-- **Luminance-Dependent Response**: Grain visibility varies realistically across shadows, mid-tones, and highlights
-- **Monochrome Processing**: Processes all input images as grayscale for authentic film grain simulation
-- **High Performance**: Optimized algorithms with Web Worker support for non-blocking processing
+- **Film Grain Simulation**: Simulates film grain characteristics based on various parameters
+- **Variable Grain Size**: Creates grain with size variation across the image
+- **ISO-Responsive**: Grain size and density adjust based on film speed settings
+- **Luminance-Dependent Response**: Grain visibility varies across shadows, mid-tones, and highlights
+- **Monochrome Processing**: Processes all input images as grayscale for film grain simulation
+- **Web Worker Support**: Includes Web Worker support for non-blocking processing
 - **Interactive Visualization**: Real-time grain preview and parameter adjustment
 
 ## 🧬 Technical Approach
 
-This project goes beyond simple noise generation to create authentic film grain through:
+This project explores film grain simulation through:
 
-- **Poisson disk sampling** for blue noise grain distribution
+- **Poisson disk sampling** for grain distribution
 - **Multi-channel color response modeling** with channel-specific grain characteristics
-- **Organic grain shapes** using 2D Perlin noise for irregular boundaries
-- **Exposure-dependent grain density** following real photographic behavior
-- **Blue noise sampling** to avoid artificial regular patterns
+- **Circular grain shapes** with variable sizes and density
+- **Exposure-dependent grain density** following photographic behavior patterns
+- **Blue noise sampling** to avoid regular patterns
 
-The algorithms are designed to be both scientifically accurate and computationally efficient.
+The algorithms aim to balance visual results with computational requirements.
 
 ## 📋 Requirements
 
@@ -86,7 +86,7 @@ This project uses Vitest for testing with separate configurations for unit tests
 
 ## ⚡ Performance Benchmarking
 
-This project includes comprehensive performance benchmarks that are separated from the regular unit tests. Benchmarks focus on measuring and reporting performance metrics for tracking performance over time and identifying optimization opportunities.
+This project includes performance benchmarks that are separated from the regular unit tests. Benchmarks measure and report performance metrics for tracking performance over time and identifying optimization opportunities.
 
 ### Running Benchmarks
 
