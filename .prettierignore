@@ -1,0 +1,11 @@
+# Ignore artifacts:
+build
+dist
+dist-ssr
+*.d.ts
+
+# Ignore vendored files:
+node_modules
+
+# Ignore misc files:
+package-lock.json

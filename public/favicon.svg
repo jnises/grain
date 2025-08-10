@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Light background for better visibility -->
+  <rect width="32" height="32" fill="#f8f8f8"/>
+  
+  <!-- Simple, larger grain dots that are visible at small sizes -->
+  <circle cx="8" cy="8" r="2.5" fill="#4a4a4a"/>
+  <circle cx="20" cy="6" r="2" fill="#666"/>
+  <circle cx="25" cy="14" r="2.5" fill="#555"/>
+  <circle cx="6" cy="18" r="2" fill="#777"/>
+  <circle cx="16" cy="20" r="2.5" fill="#4a4a4a"/>
+  <circle cx="26" cy="26" r="2" fill="#666"/>
+  <circle cx="12" cy="26" r="1.8" fill="#555"/>
+  
+  <!-- A few smaller accent dots -->
+  <circle cx="14" cy="10" r="1" fill="#888"/>
+  <circle cx="22" cy="22" r="1" fill="#888"/>
+</svg>
