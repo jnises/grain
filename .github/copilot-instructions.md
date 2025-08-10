@@ -1,3 +1,160 @@
+# GitHub Copilot Instructions for Grain Repository
+
+**Always follow these instructions first and fallback to additional search and context gathering only if the information here is incomplete or found to be in error.**
+
+## Working Effectively with the Grain Codebase
+
+### Bootstrap and Dependencies
+
+- **Prerequisites**: Node.js 18.0.0+ and npm 8.0.0+
+- **Bootstrap commands** (run in order):
+  ```bash
+  npm install    # Takes ~55 seconds, NEVER CANCEL - timeout 120+ seconds
+  ```
+
+### Build and Quality Checks
+
+- **Code quality checks**:
+  ```bash
+  npm run check  # Takes ~6 seconds - runs lint + type-check
+  npm run lint   # ESLint only
+  npm run type-check  # TypeScript compilation check only
+  ```
+
+### Testing
+
+- **Unit tests**:
+  ```bash
+  npm test       # Takes ~19 seconds, NEVER CANCEL - timeout 60+ seconds
+  ```
+- **Performance benchmarks** (separate from unit tests):
+  ```bash
+  npm run benchmark  # Takes ~4 seconds - runs performance measurements only
+  ```
+
+### Development Server
+
+- **Start development**:
+  ```bash
+  npm run dev    # Starts in ~200ms on http://localhost:5173/
+  ```
+- **Server management** (CRITICAL):
+  ```bash
+  npm run dev:stop     # Safely stops Vite dev servers on ports 5173/5174
+  npm run dev:restart  # Stops then starts fresh dev server
+  ```
+  **ALWAYS** run `npm run dev:stop` before starting new development servers to avoid port conflicts.
+
+### Build Production Version
+
+```bash
+npm run build    # Takes ~1.5 seconds - creates dist/ folder
+npm run preview  # Preview built version on http://localhost:4173/
+```
+
+### Validation Scenarios
+
+**ALWAYS test these scenarios after making changes to core functionality:**
+
+1. **Image Processing Workflow**:
+   - Upload a test image (use `gray.png` in repo root)
+   - Select a film preset (default Kodak 400 works)
+   - Click "Add Grain" and wait for processing to complete
+   - Verify grain effect is visible in processed image
+   - Expected processing time: 1-3 seconds for 512x512 images
+
+2. **Development Validation**:
+   - Start dev server with `npm run dev`
+   - Open http://localhost:5173/ and verify UI loads
+   - Test image upload and grain processing
+   - Check browser console for errors
+   - Use debug visualizers at `/grain-debug.html`, `/grain-visualizer.html`, `/grain-patterns.html`
+
+### Critical Timing and Timeout Guidelines
+
+- **npm install**: 55 seconds - Set timeout to 120+ seconds, NEVER CANCEL
+- **npm test**: 19 seconds - Set timeout to 60+ seconds, NEVER CANCEL
+- **npm run benchmark**: 4 seconds - Set timeout to 30+ seconds
+- **Image processing**: 1-3 seconds for typical images, up to 10+ seconds for large images
+
+### CI/CD Validation
+
+**Before committing, always run:**
+
+```bash
+npm run check     # Must pass - linting and type checking
+npm test          # Must pass - all unit tests
+npm run build     # Must succeed - production build
+```
+
+The CI pipeline (.github/workflows/ci.yml) runs these exact commands plus benchmarks on push to main.
+
+## Codebase Structure
+
+### Key Directories
+
+- `src/` - Main TypeScript/React source code
+  - `grain-processor.ts` - Core grain processing algorithm
+  - `grain-generator.ts` - Grain generation and sampling
+  - `grain-worker.ts` - Web Worker for non-blocking processing
+  - `App.tsx` - Main React application
+- `test/` - Unit tests and performance benchmarks
+- `scripts/` - Utility scripts and profiling tools
+- `public/` - Static assets and debug HTML files
+- `.github/workflows/` - CI/CD GitHub Actions
+
+### Important Files
+
+- `ALGORITHM_DESIGN.md` - Core algorithm documentation and implementation rules
+- `package.json` - Dependencies and scripts
+- `vite.config.ts` - Build configuration
+- `vitest.config.ts` - Test configuration (excludes benchmarks)
+- `vitest.benchmark.config.ts` - Benchmark-only test configuration
+
+### Technology Stack
+
+- **Frontend**: TypeScript, React, Vite
+- **Testing**: Vitest with jsdom environment
+- **Quality**: ESLint, TypeScript, Prettier
+- **Deployment**: GitHub Pages via GitHub Actions
+
+### Common Command Outputs (Reference)
+
+#### Repository Structure
+
+```
+.
+├── .github/           # GitHub Actions and configs
+├── .gitignore
+├── README.md
+├── package.json       # Dependencies and scripts
+├── src/              # TypeScript source code
+├── test/             # Tests and benchmarks
+├── scripts/          # Utility scripts
+├── public/           # Static assets and debug tools
+├── dist/             # Built production files (after npm run build)
+├── tsconfig.json     # TypeScript configuration
+├── vite.config.ts    # Build tool configuration
+└── vitest.config.ts  # Test configuration
+```
+
+#### package.json Scripts
+
+```json
+{
+  "dev": "vite", // Development server
+  "dev:stop": "node scripts/stop-dev-server.js", // Stop dev servers
+  "build": "vite build", // Production build
+  "test": "vitest run", // Unit tests only
+  "benchmark": "vitest run --config vitest.benchmark.config.ts", // Benchmarks only
+  "check": "npm run lint && npm run type-check", // All quality checks
+  "lint": "eslint .", // Code style check
+  "type-check": "tsc --noEmit", // TypeScript check
+  "preview": "vite preview", // Preview built version
+  "format": "prettier --write ." // Code formatting
+}
+```
+
 # Coding Guidelines
 
 - This is a prototype, no need to worry about backwards compatibility and such.
@@ -112,6 +269,7 @@
 - **NEVER use `new ImageData()` in tests** - Node.js test environment doesn't have DOM ImageData. Instead, create mock objects with `{ width, height, data: new Uint8ClampedArray(width * height * 4) }` structure
 
 ### Random numbers and testing
+
 - Make sure any random value you generate is done using the interface RandomNumberGenerator. This needs to be dependency injected to any code that needs it.
 - In order to get deterministic testing SeededRandomNumberGenerator should be used in tests.
 - Don't do position based hash type rng.
