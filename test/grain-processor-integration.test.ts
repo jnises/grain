@@ -224,7 +224,7 @@ describe('GrainProcessor Integration Tests', () => {
     // which should be true with proper film simulation, but the test may be failing due to the
     // specific grain patterns generated or the strictness of the brightness comparison. The analog
     // film process should preserve overall contrast relationships while adding natural grain texture.
-    it.skip('should process checkerboard patterns correctly', async () => {
+    it('should process checkerboard patterns correctly', async () => {
       const width = 64;
       const height = 64;
       const processor = createTestGrainProcessor(
@@ -279,7 +279,7 @@ describe('GrainProcessor Integration Tests', () => {
     // The test expects radial patterns to be preserved with center remaining brighter than edges,
     // but the grain processing is likely producing all-black output due to an issue in the core algorithm.
     // This needs to be investigated and fixed before re-enabling.
-    it.skip('should process radial patterns correctly', async () => {
+    it('should process radial patterns correctly', async () => {
       const width = 100;
       const height = 100;
       const processor = createTestGrainProcessor(
@@ -335,7 +335,7 @@ describe('GrainProcessor Integration Tests', () => {
     // The test expects different film types to produce different results, but if the processing
     // is producing all-black output, there will be no differences between film types.
     // This needs to be investigated and fixed before re-enabling.
-    it.skip('should produce different results for different film types', async () => {
+    it('should produce different results for different film types', async () => {
       const width = 50;
       const height = 50;
       const testImage = createMockImageData(width, height, 128);
