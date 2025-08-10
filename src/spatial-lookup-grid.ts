@@ -5,12 +5,16 @@ import type { GrainPoint } from './types';
 import { devAssert } from './utils';
 
 export class SpatialLookupGrid {
+  private static readonly GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
+
   // Use flatter array structure for better performance - each cell is accessed via grid[y * gridWidth + x]
   private grid: GrainPoint[][];
   private readonly gridWidth: number;
   private readonly gridHeight: number;
   private readonly gridSize: number;
   private readonly maxGrainSize: number;
+  private readonly maxGrainSizeGrid: Float32Array;
+  private readonly localRadiusCache: Float32Array;
 
   constructor(imageWidth: number, imageHeight: number, grains: GrainPoint[]) {
     // Calculate optimal grid size based on grain sizes
@@ -30,12 +34,15 @@ export class SpatialLookupGrid {
     // Initialize flatter array grid for better performance
     const totalCells = this.gridWidth * this.gridHeight;
     this.grid = Array(totalCells);
+    this.maxGrainSizeGrid = new Float32Array(totalCells); // All initialized to 0
+    this.localRadiusCache = new Float32Array(totalCells);
     for (let i = 0; i < totalCells; i++) {
       this.grid[i] = [];
     }
 
     // Populate grid with grains
     this.populateGrid(grains);
+    this.precalculateLocalRadii();
   }
 
   private populateGrid(grains: GrainPoint[]): void {
@@ -55,6 +62,11 @@ export class SpatialLookupGrid {
 
       const cellIndex = gridY * this.gridWidth + gridX;
       this.grid[cellIndex].push(grain);
+
+      // Update the max grain size for this cell
+      if (grain.size > this.maxGrainSizeGrid[cellIndex]) {
+        this.maxGrainSizeGrid[cellIndex] = grain.size;
+      }
     }
   }
 
@@ -72,15 +84,61 @@ export class SpatialLookupGrid {
     return this.maxGrainSize;
   }
 
+  private precalculateLocalRadii(): void {
+    for (let gridY = 0; gridY < this.gridHeight; gridY++) {
+      for (let gridX = 0; gridX < this.gridWidth; gridX++) {
+        let maxLocalSize = 0;
+        // Check a 3x3 grid of cells around the current cell
+        for (let dY = -1; dY <= 1; dY++) {
+          for (let dX = -1; dX <= 1; dX++) {
+            const aX = gridX + dX;
+            const aY = gridY + dY;
+
+            if (
+              aX >= 0 &&
+              aX < this.gridWidth &&
+              aY >= 0 &&
+              aY < this.gridHeight
+            ) {
+              const cellIndex = aY * this.gridWidth + aX;
+              if (this.maxGrainSizeGrid[cellIndex] > maxLocalSize) {
+                maxLocalSize = this.maxGrainSizeGrid[cellIndex];
+              }
+            }
+          }
+        }
+
+        const cellIndex = gridY * this.gridWidth + gridX;
+        if (maxLocalSize === 0) {
+          this.localRadiusCache[cellIndex] = -1; // Sentinel value
+        } else {
+          this.localRadiusCache[cellIndex] =
+            maxLocalSize * SpatialLookupGrid.GRAIN_INFLUENCE_RADIUS_FACTOR;
+        }
+      }
+    }
+  }
+
   /**
-   * Get the appropriate lookup radius that ensures all grains that could affect
-   * a position are found. Based on the largest grain size and its influence radius.
-   * This accounts for the grain influence radius factor used in grain processing.
+   * Get the appropriate lookup radius for a specific position.
+   * This is more efficient than a global lookup radius because it considers the
+   * maximum grain size only in the local neighborhood of the point.
    */
-  getGrainLookupRadius(): number {
-    // Grain influence radius factor of 2 is used in calculatePixelGrainEffect
-    const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
-    return this.maxGrainSize * GRAIN_INFLUENCE_RADIUS_FACTOR;
+  getGrainLookupRadius(x: number, y: number): number {
+    const gridX = Math.floor(x / this.gridSize);
+    const gridY = Math.floor(y / this.gridSize);
+    const cellIndex = gridY * this.gridWidth + gridX;
+    const radius = this.localRadiusCache[cellIndex];
+
+    if (radius === -1) {
+      // This fallback is unlikely with proper grain generation. If you see this warning, check grain distribution.
+      console.warn(
+        `[SpatialLookupGrid] Fallback to global max grain size at (${x}, ${y}). This may indicate unexpected grain distribution.`
+      );
+      return this.maxGrainSize * SpatialLookupGrid.GRAIN_INFLUENCE_RADIUS_FACTOR;
+    }
+
+    return radius;
   }
 
   /**
