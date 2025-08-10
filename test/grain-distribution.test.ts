@@ -290,8 +290,6 @@ describe('Grain Distribution Bug Tests', () => {
         );
         const grains = generator.generateGrainStructure();
 
-        console.log(`ISO ${testCase.iso}: Generated ${grains.length} grains`);
-
         expect(grains.length).toBeGreaterThan(testCase.expectedMinGrains);
       }
     });
