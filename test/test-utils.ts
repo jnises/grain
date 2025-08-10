@@ -136,3 +136,39 @@ export function calculateImageDifference(
 
   return totalDifference / pixelCount;
 }
+
+/**
+ * Count white pixels in an ImageData given a per-channel threshold.
+ * A pixel is considered white if R,G,B are all strictly greater than the threshold.
+ */
+export function countWhitePixels(
+  image: ImageData,
+  channelThreshold = 240
+): number {
+  let white = 0;
+  for (let i = 0; i < image.data.length; i += 4) {
+    if (
+      image.data[i] > channelThreshold &&
+      image.data[i + 1] > channelThreshold &&
+      image.data[i + 2] > channelThreshold
+    ) {
+      white++;
+    }
+  }
+  return white;
+}
+
+/**
+ * Convenience helper: returns percentage (0-100) of white pixels.
+ */
+export function whitePixelPercentage(
+  image: ImageData,
+  channelThreshold = 240
+): number {
+  if (image.width === 0 || image.height === 0) return 0;
+  return (
+    (countWhitePixels(image, channelThreshold) /
+      (image.width * image.height)) *
+    100
+  );
+}

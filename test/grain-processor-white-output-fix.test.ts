@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { createTestGrainProcessor, createMockImageData } from './test-utils.js';
+import {
+  createTestGrainProcessor,
+  createMockImageData,
+  countWhitePixels,
+  whitePixelPercentage,
+} from './test-utils.js';
 import type { GrainSettings } from '../src/types.js';
+
+// Named constants replacing prior magic numbers (per PR review feedback)
+const TOLERANCE = 30; // ± range around middle gray allowed due to grain variation
+const WHITE_PIXEL_CHANNEL_THRESHOLD = 240; // Per-channel threshold for "white" detection
+const MAX_WHITE_PIXEL_PERCENTAGE_MIDDLE_GRAY = 50; // Middle-gray test must not exceed this
+const MAX_WHITE_PIXEL_PERCENTAGE_ANY_INPUT = 80; // Any input should stay below this
 
 describe('GrainProcessor White Output Fix', () => {
   const defaultSettings: GrainSettings = {
@@ -35,32 +46,24 @@ describe('GrainProcessor White Output Fix', () => {
     const avgG = totalG / pixelCount;
     const avgB = totalB / pixelCount;
     
-    console.log(`Input: ${middleGray}, Output averages: R=${avgR.toFixed(1)}, G=${avgG.toFixed(1)}, B=${avgB.toFixed(1)}`);
-    
     // The output should be close to the input on average
     // Allow some tolerance for grain effects, but not massive deviation
-    const tolerance = 30; // Allow ±30 from middle gray (reasonable for grain effects)
-    
-    expect(avgR).toBeGreaterThan(middleGray - tolerance);
-    expect(avgR).toBeLessThan(middleGray + tolerance);
-    expect(avgG).toBeGreaterThan(middleGray - tolerance);
-    expect(avgG).toBeLessThan(middleGray + tolerance);
-    expect(avgB).toBeGreaterThan(middleGray - tolerance);
-    expect(avgB).toBeLessThan(middleGray + tolerance);
-    
-    // Also check that we're not getting mostly white output (>240)
-    let whitePixels = 0;
-    for (let i = 0; i < result.data.length; i += 4) {
-      if (result.data[i] > 240 && result.data[i + 1] > 240 && result.data[i + 2] > 240) {
-        whitePixels++;
-      }
-    }
-    
-    const whitePixelPercentage = (whitePixels / pixelCount) * 100;
-    console.log(`White pixels: ${whitePixels}/${pixelCount} (${whitePixelPercentage.toFixed(1)}%)`);
-    
+    expect(avgR).toBeGreaterThan(middleGray - TOLERANCE);
+    expect(avgR).toBeLessThan(middleGray + TOLERANCE);
+    expect(avgG).toBeGreaterThan(middleGray - TOLERANCE);
+    expect(avgG).toBeLessThan(middleGray + TOLERANCE);
+    expect(avgB).toBeGreaterThan(middleGray - TOLERANCE);
+    expect(avgB).toBeLessThan(middleGray + TOLERANCE);
+
+    // Also check that we're not getting mostly white output (> WHITE_PIXEL_CHANNEL_THRESHOLD)
+    const whitePixels = countWhitePixels(
+      result,
+      WHITE_PIXEL_CHANNEL_THRESHOLD
+    );
+    const whitePct = (whitePixels / pixelCount) * 100;
+
     // Should not have mostly white output (this was the bug)
-    expect(whitePixelPercentage).toBeLessThan(50); // Less than 50% should be white
+    expect(whitePct).toBeLessThan(MAX_WHITE_PIXEL_PERCENTAGE_MIDDLE_GRAY);
   });
 
   it('should not produce completely white output for any reasonable input', async () => {
@@ -75,23 +78,14 @@ describe('GrainProcessor White Output Fix', () => {
       
       const result = await processor.processImage(inputImage);
       
-      // Count white pixels
-      let whitePixels = 0;
-      const pixelCount = width * height;
-      
-      for (let i = 0; i < result.data.length; i += 4) {
-        if (result.data[i] > 240 && result.data[i + 1] > 240 && result.data[i + 2] > 240) {
-          whitePixels++;
-        }
-      }
-      
-      const whitePixelPercentage = (whitePixels / pixelCount) * 100;
-      
-      console.log(`Input gray level ${grayLevel}: ${whitePixelPercentage.toFixed(1)}% white pixels`);
-      
-      // For any input, we shouldn't get more than 80% white pixels
+      const whitePct = whitePixelPercentage(
+        result,
+        WHITE_PIXEL_CHANNEL_THRESHOLD
+      );
+
+      // For any input, we shouldn't get more than MAX_WHITE_PIXEL_PERCENTAGE_ANY_INPUT white pixels
       // (even light gray input should show some grain variation)
-      expect(whitePixelPercentage).toBeLessThan(80);
+      expect(whitePct).toBeLessThan(MAX_WHITE_PIXEL_PERCENTAGE_ANY_INPUT);
     }
   });
 });
