@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Test devAssert</title>
+  </head>
+  <body>
+    <h1>devAssert Test</h1>
+    <p>Check the browser console for output.</p>
+
+    <script type="module">
+      import { devAssert } from '../src/utils.js';
+
+      // This should work in dev mode and be eliminated in production builds
+      console.log('Testing devAssert from a browser context...');
+
+      // This should pass
+      devAssert(true, 'This should pass');
+      console.log('devAssert(true) passed');
+
+      // This should fail in dev mode
+      try {
+        devAssert(false, 'This should fail in dev mode');
+        console.log(
+          'devAssert(false) did not throw - likely in production mode'
+        );
+      } catch (error) {
+        console.log('devAssert(false) correctly threw error:', error.message);
+      }
+    </script>
+  </body>
+</html>
