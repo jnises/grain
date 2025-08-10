@@ -247,20 +247,7 @@ describe('GrainGenerator', () => {
 
   describe('Method Precondition Validation', () => {
     it('should validate grain objects in arrays', () => {
-      const invalidGrains = [
-        { x: 10, y: 10, size: 2 }, // missing sensitivity
-        { x: 10, y: 10, sensitivity: 1.0 }, // missing size
-        { x: 10, size: 2, sensitivity: 1.0 }, // missing y
-        { y: 10, size: 2, sensitivity: 1.0 }, // missing x
-        { x: 'invalid', y: 10, size: 2, sensitivity: 1.0 }, // invalid x type
-        { x: 10, y: 'invalid', size: 2, sensitivity: 1.0 }, // invalid y type
-        { x: 10, y: 10, size: 'invalid', sensitivity: 1.0 }, // invalid size type
-        { x: 10, y: 10, size: 2, sensitivity: 'invalid' }, // invalid sensitivity type
-        { x: -10, y: 10, size: 2, sensitivity: 1.0 }, // negative x
-        { x: 10, y: -10, size: 2, sensitivity: 1.0 }, // negative y
-        { x: 10, y: 10, size: 0, sensitivity: 1.0 }, // zero size
-        { x: 10, y: 10, size: 2, sensitivity: -1.0 }, // negative sensitivity
-      ];
+      const invalidGrains = getInvalidGrainTestCases();
 
       for (const invalidGrain of invalidGrains) {
         expect(() =>
@@ -885,3 +872,30 @@ describe('GrainGenerator', () => {
     });
   });
 });
+
+/**
+ * Factory function for generating invalid grain test cases
+ * Extracted to improve test readability and reduce code duplication
+ */
+function getInvalidGrainTestCases(): Array<Partial<{
+  x: unknown;
+  y: unknown;
+  size: unknown;
+  sensitivity: unknown;
+  developmentThreshold?: unknown;
+}>> {
+  return [
+    { x: 10, y: 10, size: 2 }, // missing sensitivity
+    { x: 10, y: 10, sensitivity: 1.0 }, // missing size
+    { x: 10, size: 2, sensitivity: 1.0 }, // missing y
+    { y: 10, size: 2, sensitivity: 1.0 }, // missing x
+    { x: 'invalid', y: 10, size: 2, sensitivity: 1.0 }, // invalid x type
+    { x: 10, y: 'invalid', size: 2, sensitivity: 1.0 }, // invalid y type
+    { x: 10, y: 10, size: 'invalid', sensitivity: 1.0 }, // invalid size type
+    { x: 10, y: 10, size: 2, sensitivity: 'invalid' }, // invalid sensitivity type
+    { x: -10, y: 10, size: 2, sensitivity: 1.0 }, // negative x
+    { x: 10, y: -10, size: 2, sensitivity: 1.0 }, // negative y
+    { x: 10, y: 10, size: 0, sensitivity: 1.0 }, // zero size
+    { x: 10, y: 10, size: 2, sensitivity: -1.0 }, // negative sensitivity
+  ];
+}

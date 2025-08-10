@@ -270,7 +270,7 @@ describe('Grain Distribution Bug Tests', () => {
       }
     );
 
-    it.skip('should generate minimum viable grain count', () => {
+    it('should generate minimum viable grain count', () => {
       const testCases = [
         { iso: 100, expectedMinGrains: 100 },
         { iso: 400, expectedMinGrains: 500 },
@@ -289,8 +289,6 @@ describe('Grain Distribution Bug Tests', () => {
           new SeededRandomNumberGenerator(12345)
         );
         const grains = generator.generateGrainStructure();
-
-        console.log(`ISO ${testCase.iso}: Generated ${grains.length} grains`);
 
         expect(grains.length).toBeGreaterThan(testCase.expectedMinGrains);
       }

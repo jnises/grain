@@ -11,7 +11,7 @@
     - **PR Comment ID**: copilot-pull-request-reviewer comment on `test/grain-processor.test.ts`
     - **Context**: Image difference calculation is duplicated across multiple test cases
     - **Suggestion**: Extract into `calculateImageDifference(originalImage.data, processedImage.data)` helper function
-  - [x] Extract large test case arrays into separate data structures or factory functions for better readability
+  - [x] Extract large test case arrays into separate data structures or factory functions for better readability ✅ **COMPLETED** - Extracted `invalidGrains` array into `getInvalidGrainTestCases()` factory function
     - **PR Comment ID**: copilot-pull-request-reviewer comment on `test/grain-generator.test.ts`
     - **Context**: Large array of invalid grain test cases could be better organized
     - **Suggestion**: Extract into separate data structure like `getInvalidGrains()` factory function

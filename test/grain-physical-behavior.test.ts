@@ -21,10 +21,7 @@ describe('Grain Generator Physical Behavior Validation', () => {
   const TEST_ISOS = [100, 200, 400, 800, 1600, 3200]; // Range covering common film ISOs
 
   describe('Physical grain count behavior (CRITICAL)', () => {
-    // DISABLED: This test is timing out (10+ seconds) due to expensive grain generation.
-    // The test generates grains for 6 different ISO values on a 200x200 image, which is
-    // computationally intensive. This needs optimization before re-enabling.
-    it.skip('should produce FEWER grains as ISO increases', () => {
+    it('should produce FEWER grains as ISO increases', () => {
       const results: Array<{ iso: number; grainCount: number }> = [];
 
       // Generate grain structures for each ISO
@@ -40,21 +37,11 @@ describe('Grain Generator Physical Behavior Validation', () => {
       }
 
       // Log results for analysis
-      console.log('Physical grain count test results:');
-      results.forEach(({ iso, grainCount }) => {
-        console.log(`ISO ${iso}: ${grainCount} grains`);
-      });
-
       // Validate that grain count DECREASES as ISO increases
       // This is the core physical requirement: higher ISO = fewer but larger grains
       for (let i = 1; i < results.length; i++) {
         const currentResult = results[i];
         const previousResult = results[i - 1];
-
-        // Log the comparison for debugging
-        console.log(
-          `  Grain count check: ISO ${previousResult.iso} (${previousResult.grainCount}) vs ISO ${currentResult.iso} (${currentResult.grainCount})`
-        );
 
         expect(currentResult.grainCount).toBeLessThan(
           previousResult.grainCount
@@ -66,13 +53,10 @@ describe('Grain Generator Physical Behavior Validation', () => {
       const highIsoCount = results[results.length - 1].grainCount;
       const reductionRatio = highIsoCount / lowIsoCount;
 
-      console.log(
-        `  Grain reduction ratio (high/low ISO): ${reductionRatio.toFixed(3)}`
-      );
       expect(reductionRatio).toBeLessThan(0.5);
     });
 
-    it.skip('should show logarithmic grain count reduction with ISO doubling', () => {
+    it('should show logarithmic grain count reduction with ISO doubling', () => {
       const doublingSeries = [100, 200, 400, 800, 1600]; // Each ISO is 2x the previous
       const grainCounts: number[] = [];
 
@@ -87,34 +71,17 @@ describe('Grain Generator Physical Behavior Validation', () => {
         grainCounts.push(grains.length);
       }
 
-      console.log('ISO doubling series grain counts:');
-      doublingSeries.forEach((iso, i) => {
-        const reductionFromPrevious =
-          i > 0
-            ? (
-                ((grainCounts[i - 1] - grainCounts[i]) / grainCounts[i - 1]) *
-                100
-              ).toFixed(1)
-            : 'N/A';
-        console.log(
-          `ISO ${iso}: ${grainCounts[i]} grains (${reductionFromPrevious}% reduction)`
-        );
-      });
-
       // Each doubling of ISO should result in measurable grain count reduction
       for (let i = 1; i < grainCounts.length; i++) {
         const reductionPercent =
           (grainCounts[i - 1] - grainCounts[i]) / grainCounts[i - 1];
-        console.log(
-          `  ISO doubling reduction: ${(reductionPercent * 100).toFixed(1)}% (should be > 10%)`
-        );
         expect(reductionPercent).toBeGreaterThan(0.1);
       }
     });
   });
 
   describe('Physical grain size behavior', () => {
-    it.skip('should produce LARGER average grain sizes as ISO increases', () => {
+    it('should produce LARGER average grain sizes as ISO increases', () => {
       const results: Array<{
         iso: number;
         averageSize: number;
@@ -141,29 +108,18 @@ describe('Grain Generator Physical Behavior Validation', () => {
         });
       }
 
-      // Log results for analysis
-      console.log('Physical grain size test results:');
-      results.forEach(({ iso, averageSize, minSize, maxSize }) => {
-        console.log(
-          `ISO ${iso}: avg=${averageSize.toFixed(3)}, min=${minSize.toFixed(3)}, max=${maxSize.toFixed(3)}`
-        );
-      });
-
       // Validate that average grain size INCREASES as ISO increases
       for (let i = 1; i < results.length; i++) {
         const currentResult = results[i];
         const previousResult = results[i - 1];
 
-        console.log(
-          `  Size check: ISO ${previousResult.iso} (${previousResult.averageSize.toFixed(3)}) vs ISO ${currentResult.iso} (${currentResult.averageSize.toFixed(3)})`
-        );
         expect(currentResult.averageSize).toBeGreaterThan(
           previousResult.averageSize
         );
       }
     });
 
-    it.skip('should show proportional grain size scaling with ISO', () => {
+    it('should show proportional grain size scaling with ISO', () => {
       const baselineIso = 100;
       const testIsos = [200, 400, 800, 1600];
 
@@ -178,10 +134,6 @@ describe('Grain Generator Physical Behavior Validation', () => {
         baselineGrains.reduce((sum, g) => sum + g.size, 0) /
         baselineGrains.length;
 
-      console.log(
-        `Baseline (ISO ${baselineIso}): ${baselineAvgSize.toFixed(3)} avg grain size`
-      );
-
       for (const iso of testIsos) {
         const generator = new GrainGenerator(
           testImageDimensions.width,
@@ -193,23 +145,15 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const avgSize =
           grains.reduce((sum, g) => sum + g.size, 0) / grains.length;
         const scalingFactor = avgSize / baselineAvgSize;
-        const expectedScaling = Math.sqrt(iso / baselineIso); // Square root scaling is common in optics
-
-        console.log(
-          `ISO ${iso}: ${avgSize.toFixed(3)} avg size, ${scalingFactor.toFixed(2)}x scaling (expected ~${expectedScaling.toFixed(2)}x)`
-        );
 
         // Grain size should scale meaningfully with ISO
-        console.log(
-          `  Scaling check: ${scalingFactor.toFixed(3)} should be > 1.0`
-        );
         expect(scalingFactor).toBeGreaterThan(1.0);
       }
     });
   });
 
   describe('Physical total coverage behavior', () => {
-    it.skip('should produce GREATER total grain coverage area as ISO increases (until geometric constraints)', () => {
+    it('should produce GREATER total grain coverage area as ISO increases (until geometric constraints)', () => {
       const results: Array<{
         iso: number;
         totalCoverage: number;
@@ -239,14 +183,6 @@ describe('Grain Generator Physical Behavior Validation', () => {
         results.push({ iso, totalCoverage, coveragePercent });
       }
 
-      // Log results for analysis
-      console.log('Physical total coverage test results:');
-      results.forEach(({ iso, totalCoverage, coveragePercent }) => {
-        console.log(
-          `ISO ${iso}: ${totalCoverage.toFixed(0)} px² total coverage (${coveragePercent.toFixed(2)}% of image)`
-        );
-      });
-
       // NOTE: Coverage should ideally increase with ISO, but geometric constraints limit this
       // At higher ISO, large grains can't pack densely enough to maintain coverage growth
       // This will be resolved with 3D grain stacking/overlapping in a future implementation
@@ -258,9 +194,6 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const currentResult = lowToMidRange[i];
         const previousResult = lowToMidRange[i - 1];
 
-        console.log(
-          `  Coverage check (low-mid range): ISO ${previousResult.iso} (${previousResult.coveragePercent.toFixed(2)}%) vs ISO ${currentResult.iso} (${currentResult.coveragePercent.toFixed(2)}%)`
-        );
         // Allow some flexibility for geometric effects
         const coverageRatio =
           currentResult.totalCoverage / previousResult.totalCoverage;
@@ -274,15 +207,6 @@ describe('Grain Generator Physical Behavior Validation', () => {
       ); // Find peak coverage in viable range
       const coverageIncrease = midIsoCoverage / lowIsoCoverage;
 
-      console.log(
-        `  Coverage increase ratio (low to peak): ${coverageIncrease.toFixed(2)}x`
-      );
-      console.log(
-        `  NOTE: Coverage may decrease at very high ISO due to geometric packing constraints`
-      );
-      console.log(
-        `  This limitation will be addressed with 3D grain stacking in future implementation`
-      );
       expect(coverageIncrease).toBeGreaterThan(1.2); // Expect at least 20% coverage increase in viable range
     });
 
@@ -515,7 +439,7 @@ describe('Grain Generator Physical Behavior Validation', () => {
       }
     });
 
-    it.skip('should handle very low ISO values (25-50) correctly', () => {
+    it('should handle very low ISO values (25-50) correctly', () => {
       const lowIsos = [25, 50];
 
       for (const iso of lowIsos) {
@@ -527,20 +451,12 @@ describe('Grain Generator Physical Behavior Validation', () => {
         );
         const grains = generator.generateGrainStructure();
 
-        console.log(
-          `Low ISO ${iso}: ${grains.length} grains, avg size ${(grains.reduce((sum, g) => sum + g.size, 0) / grains.length).toFixed(3)}`
-        );
-
         // Low ISO should produce many small grains
-        console.log(`  Should produce many grains: ${grains.length} > 100`);
         expect(grains.length).toBeGreaterThan(100);
 
         // Grains should be small at low ISO
         const avgSize =
           grains.reduce((sum, g) => sum + g.size, 0) / grains.length;
-        console.log(
-          `  Should produce small grains: ${avgSize.toFixed(3)} < 2.0`
-        );
         expect(avgSize).toBeLessThan(2.0);
       }
     });

@@ -12,7 +12,7 @@ describe('Grain Properties Directional Bias Tests', () => {
   });
 
   describe('Sensitivity directional bias analysis', () => {
-    it.skip('should not show directional bias in sensitivity values', () => {
+    it('should not show directional bias in sensitivity values', () => {
       const width = 200;
       const height = 200;
       const settings = createTestSettings(400);
@@ -25,8 +25,6 @@ describe('Grain Properties Directional Bias Tests', () => {
       );
       const grains = generator.generateGrainStructure();
 
-      console.log(`Analyzing sensitivity bias for ${grains.length} grains`);
-
       // Ensure we have enough grains to analyze
       expect(grains.length).toBeGreaterThan(100);
 
@@ -36,9 +34,6 @@ describe('Grain Properties Directional Bias Tests', () => {
         'sensitivity',
         width,
         height
-      );
-      console.log(
-        `Sensitivity directional bias - Horizontal var: ${sensitivityDirectionalBias.horizontal.toFixed(4)}, Vertical var: ${sensitivityDirectionalBias.vertical.toFixed(4)}, Ratio: ${sensitivityDirectionalBias.ratio.toFixed(4)}`
       );
 
       // Horizontal and vertical sensitivity variations should be similar
@@ -51,9 +46,6 @@ describe('Grain Properties Directional Bias Tests', () => {
         width,
         height
       );
-      console.log(
-        `Sensitivity diagonal bias - Main: ${sensitivityDiagonalBias.mainDiagonal.toFixed(4)}, Anti: ${sensitivityDiagonalBias.antiDiagonal.toFixed(4)}, Ratio: ${sensitivityDiagonalBias.ratio.toFixed(4)}`
-      );
 
       // Diagonal sensitivity variations should not be extreme
       expect(sensitivityDiagonalBias.ratio).toBeLessThan(2.0);
@@ -64,9 +56,6 @@ describe('Grain Properties Directional Bias Tests', () => {
         'sensitivity',
         width,
         height
-      );
-      console.log(
-        `Sensitivity intermediate bias - Max ratio: ${intermediateBias.maxRatio.toFixed(4)}, Angle: ${intermediateBias.maxAngle.toFixed(1)}°`
       );
 
       // Should not show strong bias at any angle
