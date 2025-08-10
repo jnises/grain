@@ -15,13 +15,14 @@
     - **PR Comment ID**: copilot-pull-request-reviewer comment on `test/grain-generator.test.ts`
     - **Context**: Large array of invalid grain test cases could be better organized
     - **Suggestion**: Extract into separate data structure like `getInvalidGrains()` factory function
-  - [x] Review inconsistent grain influence falloff calculation in grain-processor.ts (combining Gaussian and exponential falloffs)
+  - [x] Review inconsistent grain influence falloff calculation in grain-processor.ts (combining Gaussian and exponential falloffs) ✅ **INVESTIGATED** - The double falloff approach is intentional and working correctly. 
     - **PR Comment ID**: gemini-code-assist high priority comment on `src/grain-processor.ts`
     - **Context**: `pixelGrainEffect` uses Gaussian falloff in `GrainDensityCalculator`, then multiplied by exponential falloff weight (`Math.exp(-distance / grain.size)`)
     - **Issue**: Combining two different falloff models is unusual and may not be physically accurate; introduces redundant sqrt calculation
     - **Suggestion**: Use single Gaussian falloff or document physical reasoning for combining falloffs
+    - **RESOLUTION**: After investigation, the double-weighting is the original intended design and produces correct visual results. Attempts to "simplify" this broke the algorithm (see task below). The approach is now documented in code with comprehensive comments explaining why it should be preserved.
   - [x] Fix cross-platform compatibility issue in `scripts/stop-dev-server.js` - use fkill-cli or find-process instead of Unix-only lsof/kill commands ✅ **COMPLETED**
-- [ ] The commit `e5ba9db7efae6de82696f2418644d33c3b96bd72` broke the algorithm. It now results in almost completely white output. I expect it is the todo task "Review inconsistent grain influence falloff calculation in grain-processor.ts (combining Gaussian and exponential falloffs)" from above that is the culprit. Figure out what in that commit caused the issue, and fix it.
+- [x] The commit `e5ba9db7efae6de82696f2418644d33c3b96bd72` broke the algorithm. It now results in almost completely white output. I expect it is the todo task "Review inconsistent grain influence falloff calculation in grain-processor.ts (combining Gaussian and exponential falloffs)" from above that is the culprit. Figure out what in that commit caused the issue, and fix it. ✅ **COMPLETED** - Fixed by restoring original double-weighting approach (Gaussian + exponential falloffs). The "fix" in e5ba9db7 that tried to extract falloff factor caused mathematical cancellation during normalization. Original behavior restored and verified with comprehensive test.
 - [ ] Profile the code and try to optimize.
   - [x] Optimize grain generation performance (biggest bottleneck - 70% of CPU time) ✅ **COMPLETED** - 8x faster!
     - [x] Optimize `generateVariableSizeGrains` function in grain-generator.ts - Added IncrementalSpatialGrid using SpatialLookupGrid patterns
