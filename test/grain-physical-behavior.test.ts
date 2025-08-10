@@ -116,10 +116,6 @@ describe('Grain Generator Physical Behavior Validation', () => {
         expect(currentResult.averageSize).toBeGreaterThan(
           previousResult.averageSize
         );
-        );
-        expect(currentResult.averageSize).toBeGreaterThan(
-          previousResult.averageSize
-        );
       }
     });
 
@@ -138,10 +134,6 @@ describe('Grain Generator Physical Behavior Validation', () => {
         baselineGrains.reduce((sum, g) => sum + g.size, 0) /
         baselineGrains.length;
 
-      console.log(
-        `Baseline (ISO ${baselineIso}): ${baselineAvgSize.toFixed(3)} avg grain size`
-      );
-
       for (const iso of testIsos) {
         const generator = new GrainGenerator(
           testImageDimensions.width,
@@ -153,7 +145,6 @@ describe('Grain Generator Physical Behavior Validation', () => {
         const avgSize =
           grains.reduce((sum, g) => sum + g.size, 0) / grains.length;
         const scalingFactor = avgSize / baselineAvgSize;
-        const expectedScaling = Math.sqrt(iso / baselineIso); // Square root scaling is common in optics
 
         // Grain size should scale meaningfully with ISO
         expect(scalingFactor).toBeGreaterThan(1.0);
