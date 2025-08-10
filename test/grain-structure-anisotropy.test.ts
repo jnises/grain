@@ -79,11 +79,7 @@ describe('GrainStructure Anisotropy Tests', () => {
       );
 
       const runs = 3;
-      const results: Array<{
-        grainCount: number;
-        diagonalRatio: number;
-        directionalRatio: number;
-      }> = [];
+      const results: Array<{grainCount: number; diagonalRatio: number; directionalRatio: number}> = [];
 
       for (let i = 0; i < runs; i++) {
         const grains = generator.generateGrainStructure();

@@ -21,35 +21,32 @@ async function stopDevServer() {
     console.log('🔍 Checking for running Vite development servers...');
 
     let processes = [];
-
+    
     // First try: Search by port (preferred method)
     for (const port of VITE_PORTS) {
       try {
         const portProcesses = await findProcess('port', port);
         if (portProcesses && portProcesses.length > 0) {
           processes.push(...portProcesses);
-          console.log(
-            `Found process(es) on port ${port}:`,
-            portProcesses.map((p) => p.pid)
-          );
+          console.log(`Found process(es) on port ${port}:`, portProcesses.map(p => p.pid));
         }
       } catch (error) {
         console.log(`Port ${port} search failed, will try fallback method`);
       }
     }
-
+    
     // Fallback: If port search didn't work, search by process name but be very specific
     if (processes.length === 0) {
       console.log('Port search unsuccessful, trying process name search...');
       const nodeProcesses = await findProcess('name', 'node');
       // Be very specific: must be node running vite binary, not just containing "vite"
-      const viteProcesses = nodeProcesses.filter(
-        (proc) =>
-          proc.cmd &&
-          (proc.cmd.includes('node_modules/.bin/vite') ||
-            proc.cmd.includes('node_modules\\vite\\bin\\vite') ||
-            proc.cmd.endsWith('/bin/vite') ||
-            proc.cmd.endsWith('\\bin\\vite'))
+      const viteProcesses = nodeProcesses.filter(proc => 
+        proc.cmd && (
+          proc.cmd.includes('node_modules/.bin/vite') ||
+          proc.cmd.includes('node_modules\\vite\\bin\\vite') ||
+          proc.cmd.endsWith('/bin/vite') ||
+          proc.cmd.endsWith('\\bin\\vite')
+        )
       );
       processes = viteProcesses;
       if (viteProcesses.length > 0) {
@@ -63,7 +60,7 @@ async function stopDevServer() {
     }
 
     console.log(
-      `🎯 Found ${processes.length} Vite development server(s): ${processes.map((p) => `${p.pid} (${p.name || 'node'})`).join(', ')}`
+      `🎯 Found ${processes.length} Vite development server(s): ${processes.map(p => `${p.pid} (${p.name || 'node'})`).join(', ')}`
     );
 
     // Kill the processes using cross-platform approach

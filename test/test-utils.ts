@@ -104,9 +104,7 @@ export function calculateImageDifference(
     originalImage.height !== processedImage.height ||
     originalImage.data.length !== processedImage.data.length
   ) {
-    throw new Error(
-      'Image dimensions do not match for difference calculation.'
-    );
+    throw new Error('Image dimensions do not match for difference calculation.');
   }
 
   const pixelCount = originalImage.width * originalImage.height;

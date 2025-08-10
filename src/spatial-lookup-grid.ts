@@ -135,9 +135,7 @@ export class SpatialLookupGrid {
       console.warn(
         `[SpatialLookupGrid] Fallback to global max grain size at (${x}, ${y}). This may indicate unexpected grain distribution.`
       );
-      return (
-        this.maxGrainSize * SpatialLookupGrid.GRAIN_INFLUENCE_RADIUS_FACTOR
-      );
+      return this.maxGrainSize * SpatialLookupGrid.GRAIN_INFLUENCE_RADIUS_FACTOR;
     }
 
     return radius;

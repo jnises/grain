@@ -235,11 +235,7 @@ describe('Grain Properties Directional Bias Tests', () => {
       const height = 120;
       const isoSettings = [200, 800, 1600];
 
-      const results: Array<{
-        iso: number;
-        sensitivityRatio: number;
-        thresholdRatio: number;
-      }> = [];
+      const results: Array<{ iso: number; sensitivityRatio: number; thresholdRatio: number }> = [];
 
       for (const iso of isoSettings) {
         const settings = createTestSettings(iso);

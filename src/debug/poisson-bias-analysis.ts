@@ -374,11 +374,11 @@ export class PoissonBiasAnalyzer {
       for (const seed of this.testSeeds.slice(0, 3)) {
         const rng = new SeededRandomNumberGenerator(seed);
         const generator = new GrainGenerator(
-          testSize.width,
-          testSize.height,
-          settings,
-          rng
-        );
+        testSize.width,
+        testSize.height,
+        settings,
+        rng
+      );
 
         const maxSamples = 1000; // Fixed sample count for comparison
         const points = generator.generatePoissonDiskSampling(
