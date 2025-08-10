@@ -270,7 +270,7 @@ describe('Grain Distribution Bug Tests', () => {
       }
     );
 
-    it.skip('should generate minimum viable grain count', () => {
+    it('should generate minimum viable grain count', () => {
       const testCases = [
         { iso: 100, expectedMinGrains: 100 },
         { iso: 400, expectedMinGrains: 500 },
