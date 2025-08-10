@@ -19,7 +19,7 @@ A TypeScript/React application that simulates analog film grain effects for digi
 This project explores film grain simulation through:
 
 - **Poisson disk sampling** for grain distribution
-- **Multi-channel color response modeling** with channel-specific grain characteristics
+- **Physically-based grain modeling** with realistic grain characteristics
 - **Circular grain shapes** with variable sizes and density
 - **Exposure-dependent grain density** following photographic behavior patterns
 - **Blue noise sampling** to avoid regular patterns
@@ -30,8 +30,8 @@ The algorithms aim to balance visual results with computational requirements.
 
 ### System Requirements
 
-- **Node.js**: Version 18.0.0 or higher
-- **npm**: Version 8.0.0 or higher (comes with Node.js)
+- **Node.js**: Recent version with ES modules support
+- **npm**: Comes with Node.js
 
 ### Installation
 
