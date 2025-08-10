@@ -11,6 +11,7 @@ export class SpatialLookupGrid {
   private readonly gridHeight: number;
   private readonly gridSize: number;
   private readonly maxGrainSize: number;
+  private readonly maxGrainSizeGrid: Float32Array;
 
   constructor(imageWidth: number, imageHeight: number, grains: GrainPoint[]) {
     // Calculate optimal grid size based on grain sizes
@@ -30,6 +31,7 @@ export class SpatialLookupGrid {
     // Initialize flatter array grid for better performance
     const totalCells = this.gridWidth * this.gridHeight;
     this.grid = Array(totalCells);
+    this.maxGrainSizeGrid = new Float32Array(totalCells); // All initialized to 0
     for (let i = 0; i < totalCells; i++) {
       this.grid[i] = [];
     }
@@ -55,6 +57,11 @@ export class SpatialLookupGrid {
 
       const cellIndex = gridY * this.gridWidth + gridX;
       this.grid[cellIndex].push(grain);
+
+      // Update the max grain size for this cell
+      if (grain.size > this.maxGrainSizeGrid[cellIndex]) {
+        this.maxGrainSizeGrid[cellIndex] = grain.size;
+      }
     }
   }
 
@@ -73,14 +80,40 @@ export class SpatialLookupGrid {
   }
 
   /**
-   * Get the appropriate lookup radius that ensures all grains that could affect
-   * a position are found. Based on the largest grain size and its influence radius.
-   * This accounts for the grain influence radius factor used in grain processing.
+   * Get the appropriate lookup radius for a specific position.
+   * This is more efficient than a global lookup radius because it considers the
+   * maximum grain size only in the local neighborhood of the point.
    */
-  getGrainLookupRadius(): number {
+  getGrainLookupRadius(x: number, y: number): number {
+    const gridX = Math.floor(x / this.gridSize);
+    const gridY = Math.floor(y / this.gridSize);
+
+    let maxLocalSize = 0;
+
+    // Check a 3x3 grid of cells around the current cell
+    for (let dY = -1; dY <= 1; dY++) {
+      for (let dX = -1; dX <= 1; dX++) {
+        const aX = gridX + dX;
+        const aY = gridY + dY;
+
+        if (aX >= 0 && aX < this.gridWidth && aY >= 0 && aY < this.gridHeight) {
+          const cellIndex = aY * this.gridWidth + aX;
+          if (this.maxGrainSizeGrid[cellIndex] > maxLocalSize) {
+            maxLocalSize = this.maxGrainSizeGrid[cellIndex];
+          }
+        }
+      }
+    }
+
+    // Fallback to global max size if no grains are in the neighborhood,
+    // though this is unlikely with proper grain generation.
+    if (maxLocalSize === 0) {
+      maxLocalSize = this.maxGrainSize;
+    }
+
     // Grain influence radius factor of 2 is used in calculatePixelGrainEffect
     const GRAIN_INFLUENCE_RADIUS_FACTOR = 2;
-    return this.maxGrainSize * GRAIN_INFLUENCE_RADIUS_FACTOR;
+    return maxLocalSize * GRAIN_INFLUENCE_RADIUS_FACTOR;
   }
 
   /**

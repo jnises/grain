@@ -616,7 +616,7 @@ export class GrainProcessor {
     const nearbyGrains = grainGrid.getGrainsNear(
       x,
       y,
-      grainGrid.getGrainLookupRadius()
+      grainGrid.getGrainLookupRadius(x, y)
     );
 
     // Constant for grain influence radius
