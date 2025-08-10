@@ -155,7 +155,7 @@ describe('GrainProcessor Integration Tests', () => {
     // The test expects gradient patterns to be preserved with some measurable trend across the full width,
     // but the grain processing is likely producing all-black output due to an issue in the core algorithm.
     // This needs to be investigated and fixed before re-enabling.
-    it.skip('should process gradient patterns correctly', async () => {
+    it('should process gradient patterns correctly', async () => {
       const width = 100;
       const height = 100;
       const processor = createTestGrainProcessor(

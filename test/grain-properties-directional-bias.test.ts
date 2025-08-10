@@ -12,7 +12,7 @@ describe('Grain Properties Directional Bias Tests', () => {
   });
 
   describe('Sensitivity directional bias analysis', () => {
-    it.skip('should not show directional bias in sensitivity values', () => {
+    it('should not show directional bias in sensitivity values', () => {
       const width = 200;
       const height = 200;
       const settings = createTestSettings(400);
