@@ -3,7 +3,11 @@ import { describe, it, expect } from 'vitest';
 import { GrainProcessor } from '../src/grain-processor';
 import type { GrainSettings, GrainPoint, GrainExposureMap } from '../src/types';
 import { createGrainExposure } from '../src/types';
-import { createMockImageData, createTestGrainProcessor } from './test-utils';
+import {
+  createMockImageData,
+  createTestGrainProcessor,
+  calculateImageDifference,
+} from './test-utils';
 import { convertImageDataToGrayscale } from '../src/color-space';
 import {
   convertSrgbToLinearFloat,
@@ -77,31 +81,10 @@ describe('GrainProcessor', () => {
         expect(processedImage.data.length).toBe(width * height * 4);
 
         // Calculate the difference between original and processed images
-        let totalDifference = 0;
-        let pixelCount = 0;
-
-        for (let i = 0; i < originalImage.data.length; i += 4) {
-          // Compare RGB channels (skip alpha)
-          const originalR = originalImage.data[i];
-          const originalG = originalImage.data[i + 1];
-          const originalB = originalImage.data[i + 2];
-
-          const processedR = processedImage.data[i];
-          const processedG = processedImage.data[i + 1];
-          const processedB = processedImage.data[i + 2];
-
-          // Calculate per-pixel difference (using Euclidean distance)
-          const pixelDifference = Math.sqrt(
-            (processedR - originalR) ** 2 +
-              (processedG - originalG) ** 2 +
-              (processedB - originalB) ** 2
-          );
-
-          totalDifference += pixelDifference;
-          pixelCount++;
-        }
-
-        const averageDifference = totalDifference / pixelCount;
+        const averageDifference = calculateImageDifference(
+          originalImage,
+          processedImage
+        );
 
         // At low ISO, the average difference should be reasonable but not too extreme
         // Even low ISO film still has some grain character
@@ -112,6 +95,7 @@ describe('GrainProcessor', () => {
         // Additional check: ensure the processed image doesn't deviate too much
         // from the original brightness level (brightness preservation)
         let totalProcessedBrightness = 0;
+        const pixelCount = processedImage.width * processedImage.height;
         for (let i = 0; i < processedImage.data.length; i += 4) {
           // Calculate luminance using ITU-R BT.709 coefficients
           const luminance =

@@ -88,3 +88,40 @@ export function createTestGrainProcessor(
   const rng = new SeededRandomNumberGenerator(seed);
   return new GrainProcessor(width, height, settings, rng);
 }
+
+/**
+ * Calculates the average pixel difference between two ImageData objects.
+ * @param originalImage The original image.
+ * @param processedImage The processed image.
+ * @returns The average difference per pixel.
+ */
+export function calculateImageDifference(
+  originalImage: ImageData,
+  processedImage: ImageData
+): number {
+  let totalDifference = 0;
+  let pixelCount = 0;
+
+  for (let i = 0; i < originalImage.data.length; i += 4) {
+    // Compare RGB channels (skip alpha)
+    const originalR = originalImage.data[i];
+    const originalG = originalImage.data[i + 1];
+    const originalB = originalImage.data[i + 2];
+
+    const processedR = processedImage.data[i];
+    const processedG = processedImage.data[i + 1];
+    const processedB = processedImage.data[i + 2];
+
+    // Calculate per-pixel difference (using Euclidean distance)
+    const pixelDifference = Math.sqrt(
+      (processedR - originalR) ** 2 +
+        (processedG - originalG) ** 2 +
+        (processedB - originalB) ** 2
+    );
+
+    totalDifference += pixelDifference;
+    pixelCount++;
+  }
+
+  return totalDifference / pixelCount;
+}
