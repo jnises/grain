@@ -20,7 +20,7 @@ This project explores film grain simulation through:
 
 - **Poisson disk sampling** for grain distribution
 - **Multi-channel color response modeling** with channel-specific grain characteristics
-- **Grain shapes** using 2D Perlin noise for irregular boundaries
+- **Circular grain shapes** with variable sizes and density
 - **Exposure-dependent grain density** following photographic behavior patterns
 - **Blue noise sampling** to avoid regular patterns
 
