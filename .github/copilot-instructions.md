@@ -1,3 +1,7 @@
+# GitHub Copilot Instructions for Grain Repository
+
+**Always follow these instructions first and fallback to additional search and context gathering only if the information here is incomplete or found to be in error.**
+
 # Coding Guidelines
 
 - This is a prototype, no need to worry about backwards compatibility and such.
@@ -112,10 +116,91 @@
 - **NEVER use `new ImageData()` in tests** - Node.js test environment doesn't have DOM ImageData. Instead, create mock objects with `{ width, height, data: new Uint8ClampedArray(width * height * 4) }` structure
 
 ### Random numbers and testing
+
 - Make sure any random value you generate is done using the interface RandomNumberGenerator. This needs to be dependency injected to any code that needs it.
 - In order to get deterministic testing SeededRandomNumberGenerator should be used in tests.
 - Don't do position based hash type rng.
 - If you decide you really need position based rng for some reason use `squirrelNoise5`
+
+## Working Effectively with the Grain Codebase
+
+### Bootstrap and Dependencies
+
+- **Prerequisites**: Node.js 18.0.0+ and npm 8.0.0+
+- **Bootstrap commands** (run in order):
+  ```bash
+  npm install    # Takes ~55 seconds, NEVER CANCEL - timeout 120+ seconds
+  ```
+
+### Build and Quality Checks
+
+- **Code quality checks**:
+  ```bash
+  npm run check  # Takes ~6 seconds - runs lint + type-check
+  ```
+
+### Testing
+
+- **Unit tests**:
+  ```bash
+  npm test       # Takes ~19 seconds, NEVER CANCEL - timeout 60+ seconds
+  ```
+- **Performance benchmarks** (separate from unit tests):
+  ```bash
+  npm run benchmark  # Takes ~4 seconds - runs performance measurements only
+  ```
+
+### Development Server
+
+- **Start development**:
+  ```bash
+  npm run dev    # Starts in ~200ms on http://localhost:5173/
+  ```
+
+### Build Production Version
+
+```bash
+npm run build    # Takes ~1.5 seconds - creates dist/ folder
+npm run preview  # Preview built version on http://localhost:4173/
+```
+
+### Validation After Changes
+
+**ALWAYS run these automated checks after making changes to core functionality:**
+
+1. **Code Quality and Build Validation**:
+   ```bash
+   npm run check     # Must pass - linting and type checking
+   npm test          # Must pass - all unit tests
+   npm run build     # Must succeed - production build
+   ```
+
+2. **Manual Testing Instructions for Users**:
+   When changes affect image processing, ask the user to verify:
+   - Start dev server with `npm run dev`
+   - Open http://localhost:5173/ and test image upload with `gray.png`
+   - Verify grain processing works with default Kodak 400 preset
+   - Expected processing time: 1-3 seconds for 512x512 images
+   - Check debug visualizers at `/grain-debug.html`, `/grain-visualizer.html`, `/grain-patterns.html`
+
+### Critical Timing and Timeout Guidelines
+
+- **npm install**: 55 seconds - Set timeout to 120+ seconds, NEVER CANCEL
+- **npm test**: 19 seconds - Set timeout to 60+ seconds, NEVER CANCEL
+- **npm run benchmark**: 4 seconds - Set timeout to 30+ seconds
+- **Image processing**: 1-3 seconds for typical images, up to 10+ seconds for large images
+
+### CI/CD Validation
+
+**Before committing, always run:**
+
+```bash
+npm run check     # Must pass - linting and type checking
+npm test          # Must pass - all unit tests
+npm run build     # Must succeed - production build
+```
+
+The CI pipeline (.github/workflows/ci.yml) runs these exact commands plus benchmarks on push to main.
 
 ## Development Workflow
 
