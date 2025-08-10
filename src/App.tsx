@@ -329,11 +329,9 @@ function App() {
           ? 'grain-processed-image'
           : 'original-image';
 
-      const suffix = isProcessed ? '-grain-processed' : '';
+      const suffix = isProcessed && originalFileName ? '-grain-processed' : '';
 
-      const filename = originalFileName
-        ? `${baseName}${suffix}.png`
-        : `${baseName}.png`;
+      const filename = `${baseName}${suffix}.png`;
       
       link.download = filename;
       document.body.appendChild(link);

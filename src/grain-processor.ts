@@ -11,6 +11,7 @@ import {
   convertLinearFloatToSrgb,
   convertGrayscaleLinearToSingleChannel,
   applyBeerLambertCompositingGrayscale,
+  calculateGrainFalloffFromSquaredDistance,
 } from './grain-math';
 import { convertImageDataToGrayscale } from './color-space';
 import { createGrainExposure } from './types';
@@ -656,10 +657,12 @@ export class GrainProcessor {
             distanceSquared
           );
 
-        // The weight for averaging should be based on the Gaussian falloff, which is already in pixelGrainEffect.
-        // We can retrieve the falloff factor by dividing the effect by the intrinsic density.
-        const falloffFactor =
-          intrinsicDensity > 0 ? pixelGrainEffect / intrinsicDensity : 0;
+        // The weight for averaging should be based on the Gaussian falloff.
+        // Compute the Gaussian falloff factor directly.
+        const falloffFactor = calculateGrainFalloffFromSquaredDistance(
+          distanceSquared,
+          grain.size
+        );
 
         totalGrainDensity += pixelGrainEffect;
         totalWeight += falloffFactor;
