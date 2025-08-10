@@ -11,7 +11,6 @@ import {
   convertLinearFloatToSrgb,
   convertGrayscaleLinearToSingleChannel,
   applyBeerLambertCompositingGrayscale,
-  calculateGrainFalloffFromSquaredDistance,
 } from './grain-math';
 import { convertImageDataToGrayscale } from './color-space';
 import { createGrainExposure } from './types';
