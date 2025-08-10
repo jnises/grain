@@ -137,8 +137,6 @@
 - **Code quality checks**:
   ```bash
   npm run check  # Takes ~6 seconds - runs lint + type-check
-  npm run lint   # ESLint only
-  npm run type-check  # TypeScript compilation check only
   ```
 
 ### Testing
