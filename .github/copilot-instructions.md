@@ -172,23 +172,24 @@ npm run build    # Takes ~1.5 seconds - creates dist/ folder
 npm run preview  # Preview built version on http://localhost:4173/
 ```
 
-### Validation Scenarios
+### Validation After Changes
 
-**ALWAYS test these scenarios after making changes to core functionality:**
+**ALWAYS run these automated checks after making changes to core functionality:**
 
-1. **Image Processing Workflow**:
-   - Upload a test image (use `gray.png` in repo root)
-   - Select a film preset (default Kodak 400 works)
-   - Click "Add Grain" and wait for processing to complete
-   - Verify grain effect is visible in processed image
-   - Expected processing time: 1-3 seconds for 512x512 images
+1. **Code Quality and Build Validation**:
+   ```bash
+   npm run check     # Must pass - linting and type checking
+   npm test          # Must pass - all unit tests
+   npm run build     # Must succeed - production build
+   ```
 
-2. **Development Validation**:
+2. **Manual Testing Instructions for Users**:
+   When changes affect image processing, ask the user to verify:
    - Start dev server with `npm run dev`
-   - Open http://localhost:5173/ and verify UI loads
-   - Test image upload and grain processing
-   - Check browser console for errors
-   - Use debug visualizers at `/grain-debug.html`, `/grain-visualizer.html`, `/grain-patterns.html`
+   - Open http://localhost:5173/ and test image upload with `gray.png`
+   - Verify grain processing works with default Kodak 400 preset
+   - Expected processing time: 1-3 seconds for 512x512 images
+   - Check debug visualizers at `/grain-debug.html`, `/grain-visualizer.html`, `/grain-patterns.html`
 
 ### Critical Timing and Timeout Guidelines
 
