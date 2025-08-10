@@ -99,8 +99,20 @@ export function calculateImageDifference(
   originalImage: ImageData,
   processedImage: ImageData
 ): number {
+  if (
+    originalImage.width !== processedImage.width ||
+    originalImage.height !== processedImage.height ||
+    originalImage.data.length !== processedImage.data.length
+  ) {
+    throw new Error('Image dimensions do not match for difference calculation.');
+  }
+
+  const pixelCount = originalImage.width * originalImage.height;
+  if (pixelCount === 0) {
+    return 0;
+  }
+
   let totalDifference = 0;
-  let pixelCount = 0;
 
   for (let i = 0; i < originalImage.data.length; i += 4) {
     // Compare RGB channels (skip alpha)
@@ -120,7 +132,6 @@ export function calculateImageDifference(
     );
 
     totalDifference += pixelDifference;
-    pixelCount++;
   }
 
   return totalDifference / pixelCount;
