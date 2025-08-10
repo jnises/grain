@@ -169,6 +169,7 @@ npm run preview  # Preview built version on http://localhost:4173/
 **ALWAYS run these automated checks after making changes to core functionality:**
 
 1. **Code Quality and Build Validation**:
+
    ```bash
    npm run check     # Must pass - linting and type checking
    npm test          # Must pass - all unit tests

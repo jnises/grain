@@ -595,8 +595,8 @@ export class GrainProcessor {
    * This is the core pixel processing logic extracted into a pure function
    * for reuse in both full processing and sampling estimation.
    *
-   * CRITICAL FIX NOTE (Aug 2025): This function uses "double weighting" approach 
-   * that was restored after commit e5ba9db7 broke the algorithm. See detailed 
+   * CRITICAL FIX NOTE (Aug 2025): This function uses "double weighting" approach
+   * that was restored after commit e5ba9db7 broke the algorithm. See detailed
    * comments within the function about why this specific approach is necessary.
    *
    * @param x - Pixel x coordinate
@@ -639,11 +639,11 @@ export class GrainProcessor {
 
       if (distanceSquared < influenceRadiusSquared) {
         // IMPORTANT: Double-weighting approach restoration
-        // 
+        //
         // HISTORICAL CONTEXT:
-        // - Original working code used both Gaussian falloff (in pixelGrainEffect) 
+        // - Original working code used both Gaussian falloff (in pixelGrainEffect)
         //   AND exponential weight (Math.exp) for accumulation
-        // - Commit e5ba9db7 attempted to "fix inconsistent falloff calculation" 
+        // - Commit e5ba9db7 attempted to "fix inconsistent falloff calculation"
         //   by extracting falloff factor from pixelGrainEffect for normalization
         // - This caused white output bug due to mathematical cancellation:
         //   normalizedDensity = (intrinsicDensity * falloffFactor) / falloffFactor = intrinsicDensity
@@ -652,8 +652,8 @@ export class GrainProcessor {
         // SOLUTION: Restore original double-weighting approach that was working correctly
         // While theoretically "inconsistent", this was the intended design and produces
         // correct visual results (verified: input 128 → output 119.8, matches original)
-        
-        // Only calculate sqrt when we know the grain is within influence radius  
+
+        // Only calculate sqrt when we know the grain is within influence radius
         const distance = Math.sqrt(distanceSquared);
         const weight = Math.exp(-distance / grain.size); // Exponential falloff for accumulation
 

@@ -38,7 +38,12 @@ describe('Phase 4: Two-Phase Grain Processing Verification', () => {
     });
 
     it('should maintain grain properties independent of image content', () => {
-      const generator = new GrainGenerator(50, 50, grainSettings, new SeededRandomNumberGenerator(12345));
+      const generator = new GrainGenerator(
+        50,
+        50,
+        grainSettings,
+        new SeededRandomNumberGenerator(12345)
+      );
       const grains = generator.generateGrainStructure();
 
       // Verify grain properties are within expected ranges

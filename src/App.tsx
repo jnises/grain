@@ -60,7 +60,7 @@ function App() {
     if (file && file.type.startsWith('image/')) {
       // Store original file name for download purposes
       setOriginalFileName(file.name);
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setImage(e.target?.result as string);
@@ -97,7 +97,8 @@ function App() {
       e.preventDefault();
       setIsDragOver(false);
 
-      const files = Array.from(e.dataTransfer.files);      const imageFile = files.find((file) => file.type.startsWith('image/'));
+      const files = Array.from(e.dataTransfer.files);
+      const imageFile = files.find((file) => file.type.startsWith('image/'));
       if (imageFile) {
         // Store original file name for download purposes
         setOriginalFileName(imageFile.name);
@@ -320,7 +321,7 @@ function App() {
     if (imageToDownload) {
       const link = document.createElement('a');
       link.href = imageToDownload;
-      
+
       // Always use PNG format to preserve grain quality without compression artifacts
       const isProcessed = !!processedImage;
       const baseName = originalFileName
@@ -332,7 +333,7 @@ function App() {
       const suffix = isProcessed && originalFileName ? '-grain-processed' : '';
 
       const filename = `${baseName}${suffix}.png`;
-      
+
       link.download = filename;
       document.body.appendChild(link);
       link.click();
@@ -494,7 +495,10 @@ function App() {
               <select
                 value={customSettings.filmType}
                 onChange={(e) =>
-                  handleCustomSettingChange('filmType', e.target.value as GrainSettings['filmType'])
+                  handleCustomSettingChange(
+                    'filmType',
+                    e.target.value as GrainSettings['filmType']
+                  )
                 }
                 disabled={isProcessing}
               >

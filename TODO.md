@@ -15,7 +15,7 @@
     - **PR Comment ID**: copilot-pull-request-reviewer comment on `test/grain-generator.test.ts`
     - **Context**: Large array of invalid grain test cases could be better organized
     - **Suggestion**: Extract into separate data structure like `getInvalidGrains()` factory function
-  - [x] Review inconsistent grain influence falloff calculation in grain-processor.ts (combining Gaussian and exponential falloffs) ✅ **INVESTIGATED** - The double falloff approach is intentional and working correctly. 
+  - [x] Review inconsistent grain influence falloff calculation in grain-processor.ts (combining Gaussian and exponential falloffs) ✅ **INVESTIGATED** - The double falloff approach is intentional and working correctly.
     - **PR Comment ID**: gemini-code-assist high priority comment on `src/grain-processor.ts`
     - **Context**: `pixelGrainEffect` uses Gaussian falloff in `GrainDensityCalculator`, then multiplied by exponential falloff weight (`Math.exp(-distance / grain.size)`)
     - **Issue**: Combining two different falloff models is unusual and may not be physically accurate; introduces redundant sqrt calculation
@@ -97,7 +97,7 @@
   - This should solve the issue with being unable to get proper coverage for high iso.
   - Could just take the current grain generation and just have multiple at different depths? Perhaps 2 or 3 layers?
   - If we decide to just increase the size of grains, will that complicate the spatial grid acceleration structure?
-`  - refer to GRAIN_OVERLAPPING.md for some notes on the issue
+    ` - refer to GRAIN_OVERLAPPING.md for some notes on the issue
   - Update ALGORITHM_DESIGN.md with the new functionality
 - [ ] Write a test that runs a smooth gradient through processImage. When lowpassing the resulting image the values should stay mostly the same as the input. That is, the algorithm should have a mostly linear lightness mapping.
 - [ ] Add support for lower iso than 50
