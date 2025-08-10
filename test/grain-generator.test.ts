@@ -877,13 +877,15 @@ describe('GrainGenerator', () => {
  * Factory function for generating invalid grain test cases
  * Extracted to improve test readability and reduce code duplication
  */
-function getInvalidGrainTestCases(): Array<Partial<{
-  x: unknown;
-  y: unknown;
-  size: unknown;
-  sensitivity: unknown;
-  developmentThreshold?: unknown;
-}>> {
+function getInvalidGrainTestCases(): Array<
+  Partial<{
+    x: unknown;
+    y: unknown;
+    size: unknown;
+    sensitivity: unknown;
+    developmentThreshold?: unknown;
+  }>
+> {
   return [
     { x: 10, y: 10, size: 2 }, // missing sensitivity
     { x: 10, y: 10, sensitivity: 1.0 }, // missing size

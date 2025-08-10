@@ -104,7 +104,9 @@ export function calculateImageDifference(
     originalImage.height !== processedImage.height ||
     originalImage.data.length !== processedImage.data.length
   ) {
-    throw new Error('Image dimensions do not match for difference calculation.');
+    throw new Error(
+      'Image dimensions do not match for difference calculation.'
+    );
   }
 
   const pixelCount = originalImage.width * originalImage.height;
@@ -167,8 +169,7 @@ export function whitePixelPercentage(
 ): number {
   if (image.width === 0 || image.height === 0) return 0;
   return (
-    (countWhitePixels(image, channelThreshold) /
-      (image.width * image.height)) *
+    (countWhitePixels(image, channelThreshold) / (image.width * image.height)) *
     100
   );
 }
