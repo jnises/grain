@@ -657,13 +657,13 @@ export class GrainProcessor {
             distanceSquared
           );
 
-        // The weight for averaging should be based on the Gaussian falloff.
-        // Compute the Gaussian falloff factor directly.
-        const falloffFactor = calculateGrainFalloffFromSquaredDistance(
-          distanceSquared,
-          grain.size
-        );
+        // The weight for averaging should be based on the Gaussian falloff, which is already in pixelGrainEffect.
+        // We can retrieve the falloff factor by dividing the effect by the intrinsic density.
+        const falloffFactor =
+          intrinsicDensity > 0 ? pixelGrainEffect / intrinsicDensity : 0;
 
+        // Note: pixelGrainEffect is already weighted by the falloff factor,
+        // so we add it directly to totalGrainDensity.
         totalGrainDensity += pixelGrainEffect;
         totalWeight += falloffFactor;
       }
