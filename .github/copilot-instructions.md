@@ -156,12 +156,6 @@
   ```bash
   npm run dev    # Starts in ~200ms on http://localhost:5173/
   ```
-- **Server management** (CRITICAL):
-  ```bash
-  npm run dev:stop     # Safely stops Vite dev servers on ports 5173/5174
-  npm run dev:restart  # Stops then starts fresh dev server
-  ```
-  **ALWAYS** run `npm run dev:stop` before starting new development servers to avoid port conflicts.
 
 ### Build Production Version
 
