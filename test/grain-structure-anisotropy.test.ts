@@ -2,7 +2,7 @@ import {
   GrainGenerator,
   SeededRandomNumberGenerator,
 } from '../src/grain-generator';
-import { GrainSettings } from '../src/types';
+import type { GrainSettings } from '../src/types';
 
 describe('GrainStructure Anisotropy Tests', () => {
   const createTestSettings = (iso: number): GrainSettings => ({
@@ -229,15 +229,7 @@ function analyzeDiagonalBias(
   height: number
 ): { mainDiagonal: number; antiDiagonal: number; ratio: number } {
   // Input validation
-  if (!Array.isArray(grains)) {
-    throw new Error('grains must be an array');
-  }
-  if (typeof width !== 'number' || width <= 0) {
-    throw new Error('width must be a positive number');
-  }
-  if (typeof height !== 'number' || height <= 0) {
-    throw new Error('height must be a positive number');
-  }
+  validateAnalysisInputs(grains, width, height);
   const stripWidth = 20; // Width of diagonal strips to analyze
   const mainDiagonalGrains: number[] = [];
   const antiDiagonalGrains: number[] = [];
@@ -305,15 +297,7 @@ function analyzeDirectionalBias(
   height: number
 ): { horizontal: number; vertical: number; ratio: number } {
   // Input validation
-  if (!Array.isArray(grains)) {
-    throw new Error('grains must be an array');
-  }
-  if (typeof width !== 'number' || width <= 0) {
-    throw new Error('width must be a positive number');
-  }
-  if (typeof height !== 'number' || height <= 0) {
-    throw new Error('height must be a positive number');
-  }
+  validateAnalysisInputs(grains, width, height);
   const numStrips = 10;
 
   // Analyze horizontal strips (varying Y)
@@ -370,15 +354,7 @@ function analyzeSpatialUniformity(
   height: number
 ): { coefficientOfVariation: number; maxDeviationFromMean: number } {
   // Input validation
-  if (!Array.isArray(grains)) {
-    throw new Error('grains must be an array');
-  }
-  if (typeof width !== 'number' || width <= 0) {
-    throw new Error('width must be a positive number');
-  }
-  if (typeof height !== 'number' || height <= 0) {
-    throw new Error('height must be a positive number');
-  }
+  validateAnalysisInputs(grains, width, height);
   const cellSize = 30;
   const cellsX = Math.floor(width / cellSize);
   const cellsY = Math.floor(height / cellSize);
@@ -476,4 +452,23 @@ function calculateVariation(values: number[]): number {
     values.length;
 
   return Math.sqrt(variance);
+}
+
+/**
+ * Helper function to validate inputs for analysis functions
+ */
+function validateAnalysisInputs(
+  grains: { x: number; y: number }[],
+  width: number,
+  height: number
+) {
+  if (!Array.isArray(grains)) {
+    throw new Error('grains must be an array');
+  }
+  if (typeof width !== 'number' || width <= 0) {
+    throw new Error('width must be a positive number');
+  }
+  if (typeof height !== 'number' || height <= 0) {
+    throw new Error('height must be a positive number');
+  }
 }

@@ -322,25 +322,16 @@ function App() {
       link.href = imageToDownload;
       
       // Always use PNG format to preserve grain quality without compression artifacts
-      let filename: string;
-      
-      if (processedImage) {
-        // For processed images, use original name with grain suffix and PNG extension
-        if (originalFileName) {
-          const nameWithoutExt = originalFileName.replace(/\.[^/.]+$/, "");
-          filename = `${nameWithoutExt}-grain-processed.png`;
-        } else {
-          filename = 'grain-processed-image.png';
-        }
-      } else {
-        // For original images, convert to PNG to ensure consistent format
-        if (originalFileName) {
-          const nameWithoutExt = originalFileName.replace(/\.[^/.]+$/, "");
-          filename = `${nameWithoutExt}.png`;
-        } else {
-          filename = 'original-image.png';
-        }
-      }
+      const isProcessed = !!processedImage;
+      const baseName = originalFileName
+        ? originalFileName.replace(/\.[^/.]+$/, '')
+        : isProcessed
+          ? 'grain-processed-image'
+          : 'original-image';
+
+      const suffix = isProcessed && originalFileName ? '-grain-processed' : '';
+
+      const filename = `${baseName}${suffix}.png`;
       
       link.download = filename;
       document.body.appendChild(link);

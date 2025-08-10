@@ -391,37 +391,7 @@
     </div>
 
     <script type="module">
-      // Efficient array utilities to avoid spread operator performance issues
-      function arrayMax(array) {
-        if (array.length === 0) return -Infinity;
-        let max = array[0];
-        for (let i = 1; i < array.length; i++) {
-          if (array[i] > max) max = array[i];
-        }
-        return max;
-      }
-
-      function arrayMin(array) {
-        if (array.length === 0) return Infinity;
-        let min = array[0];
-        for (let i = 1; i < array.length; i++) {
-          if (array[i] < min) min = array[i];
-        }
-        return min;
-      }
-
-      function arrayMinMax(array) {
-        if (array.length === 0) return { min: Infinity, max: -Infinity };
-        let min = array[0];
-        let max = array[0];
-        for (let i = 1; i < array.length; i++) {
-          const value = array[i];
-          if (value < min) min = value;
-          else if (value > max) max = value;
-        }
-        return { min, max };
-      }
-
+      import { arrayMax, arrayMin, arrayMinMax } from './debug-utils.js';
       // Check if we're in development mode
       const isDevelopment = import.meta.env?.DEV !== false; // Default to true for this debug page
 
@@ -650,8 +620,7 @@
           maxSize = 0;
         if (colorBySize && grains.length > 0) {
           const sizes = grains.map((g) => g.size);
-          minSize = Math.min(...sizes);
-          maxSize = Math.max(...sizes);
+          ({ min: minSize, max: maxSize } = arrayMinMax(sizes));
         }
 
         // Add transparency to see overlapping grains
