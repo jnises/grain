@@ -24,7 +24,7 @@ describe('Grain Generator Physical Behavior Validation', () => {
     // DISABLED: This test is timing out (10+ seconds) due to expensive grain generation.
     // The test generates grains for 6 different ISO values on a 200x200 image, which is
     // computationally intensive. This needs optimization before re-enabling.
-    it.skip('should produce FEWER grains as ISO increases', () => {
+    it('should produce FEWER grains as ISO increases', () => {
       const results: Array<{ iso: number; grainCount: number }> = [];
 
       // Generate grain structures for each ISO
@@ -72,7 +72,7 @@ describe('Grain Generator Physical Behavior Validation', () => {
       expect(reductionRatio).toBeLessThan(0.5);
     });
 
-    it.skip('should show logarithmic grain count reduction with ISO doubling', () => {
+    it('should show logarithmic grain count reduction with ISO doubling', () => {
       const doublingSeries = [100, 200, 400, 800, 1600]; // Each ISO is 2x the previous
       const grainCounts: number[] = [];
 
@@ -114,7 +114,7 @@ describe('Grain Generator Physical Behavior Validation', () => {
   });
 
   describe('Physical grain size behavior', () => {
-    it.skip('should produce LARGER average grain sizes as ISO increases', () => {
+    it('should produce LARGER average grain sizes as ISO increases', () => {
       const results: Array<{
         iso: number;
         averageSize: number;
@@ -163,7 +163,7 @@ describe('Grain Generator Physical Behavior Validation', () => {
       }
     });
 
-    it.skip('should show proportional grain size scaling with ISO', () => {
+    it('should show proportional grain size scaling with ISO', () => {
       const baselineIso = 100;
       const testIsos = [200, 400, 800, 1600];
 
@@ -209,7 +209,7 @@ describe('Grain Generator Physical Behavior Validation', () => {
   });
 
   describe('Physical total coverage behavior', () => {
-    it.skip('should produce GREATER total grain coverage area as ISO increases (until geometric constraints)', () => {
+    it('should produce GREATER total grain coverage area as ISO increases (until geometric constraints)', () => {
       const results: Array<{
         iso: number;
         totalCoverage: number;
@@ -515,7 +515,7 @@ describe('Grain Generator Physical Behavior Validation', () => {
       }
     });
 
-    it.skip('should handle very low ISO values (25-50) correctly', () => {
+    it('should handle very low ISO values (25-50) correctly', () => {
       const lowIsos = [25, 50];
 
       for (const iso of lowIsos) {
