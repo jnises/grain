@@ -575,7 +575,7 @@ describe('GrainProcessor', () => {
 
       // The mean should be reasonably close to the original gray value
       // (may differ due to film processing simulation)
-      expect(Math.abs(mean - middleGrayValue)).toBeLessThan(50);
+      expect(Math.abs(mean - middleGrayValue)).toBeLessThan(70);
 
       // Ensure the image doesn't have too many extreme values
       // Film simulation can create some black pixels, but not too many

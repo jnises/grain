@@ -892,9 +892,10 @@ export class GrainGenerator {
       this.gridHeight = Math.ceil(imageHeight / this.gridSize);
 
       // Use 1D array with index calculation for better performance (like SpatialLookupGrid TODO)
-      this.grid = Array(this.gridWidth * this.gridHeight)
-        .fill(null)
-        .map(() => []);
+      this.grid = Array(this.gridWidth * this.gridHeight);
+      for (let i = 0; i < this.grid.length; i++) {
+        this.grid[i] = [];
+      }
     }
 
     addGrain(grain: GrainPoint): void {

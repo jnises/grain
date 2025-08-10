@@ -634,10 +634,6 @@ export class GrainProcessor {
       const influenceRadiusSquared = influenceRadius * influenceRadius;
 
       if (distanceSquared < influenceRadiusSquared) {
-        // Only calculate sqrt when we know the grain is within influence radius
-        const distance = Math.sqrt(distanceSquared);
-        const weight = Math.exp(-distance / grain.size);
-
         // Use pre-calculated intrinsic grain density
         const intrinsicDensity = grainIntrinsicDensityMap.get(grain);
         devAssert(
@@ -650,7 +646,7 @@ export class GrainProcessor {
         );
 
         // Calculate pixel-level grain effects using pre-calculated intrinsic density
-        // Pass the already-calculated distanceSquared to avoid redundant calculation
+        // This already includes the Gaussian falloff.
         const pixelGrainEffect =
           this.grainDensityCalculator.calculatePixelGrainEffect(
             intrinsicDensity,
@@ -660,12 +656,13 @@ export class GrainProcessor {
             distanceSquared
           );
 
-        // For monochrome processing, use simple grayscale density accumulation
-        // Skip color-specific effects (channel sensitivity, color shifts, chromatic aberration)
-        // pixelGrainEffect is already the final optical density contribution
-        totalGrainDensity += pixelGrainEffect * weight;
+        // The weight for averaging should be based on the Gaussian falloff, which is already in pixelGrainEffect.
+        // We can retrieve the falloff factor by dividing the effect by the intrinsic density.
+        const falloffFactor =
+          intrinsicDensity > 0 ? pixelGrainEffect / intrinsicDensity : 0;
 
-        totalWeight += weight;
+        totalGrainDensity += pixelGrainEffect;
+        totalWeight += falloffFactor;
       }
     }
 
