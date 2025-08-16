@@ -67,8 +67,10 @@ function App() {
       const containerEl = imageViewerRef.current;
 
       if (imageEl.naturalWidth > 0 && imageEl.naturalHeight > 0) {
-        const containerWidth = containerEl.clientWidth - IMAGE_CONTAINER_PADDING;
-        const containerHeight = containerEl.clientHeight - IMAGE_CONTAINER_PADDING;
+        const containerWidth =
+          containerEl.clientWidth - IMAGE_CONTAINER_PADDING;
+        const containerHeight =
+          containerEl.clientHeight - IMAGE_CONTAINER_PADDING;
         const imageWidth = imageEl.naturalWidth;
         const imageHeight = imageEl.naturalHeight;
 
@@ -102,10 +104,7 @@ function App() {
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
       }
-      resizeTimeoutRef.current = setTimeout(
-        calculateZoom,
-        RESIZE_DEBOUNCE_MS
-      );
+      resizeTimeoutRef.current = setTimeout(calculateZoom, RESIZE_DEBOUNCE_MS);
     };
 
     window.addEventListener('resize', handleResize);
@@ -409,20 +408,16 @@ function App() {
   };
 
   const handleDownload = () => {
-    const imageToDownload = processedImage || image;
-    if (imageToDownload) {
+    if (processedImage) {
       const link = document.createElement('a');
-      link.href = imageToDownload;
+      link.href = processedImage;
 
-      // Always use PNG format to preserve grain quality without compression artifacts
-      const isProcessed = !!processedImage;
+      // Use PNG format to preserve processed grain quality without compression artifacts
       const baseName = originalFileName
         ? originalFileName.replace(/\.[^/.]+$/, '')
-        : isProcessed
-          ? 'grain-processed-image'
-          : 'original-image';
+        : 'grain-processed-image';
 
-      const suffix = isProcessed && originalFileName ? '-grain-processed' : '';
+      const suffix = originalFileName ? '-grain-processed' : '';
 
       const filename = `${baseName}${suffix}.png`;
 
@@ -554,10 +549,11 @@ function App() {
               </div>
             )}
 
-            <button onClick={handleDownload} className="btn btn-success">
-              💾 Download{' '}
-              {processedImage ? (showOriginal ? 'Original' : 'Grain') : 'Image'}
-            </button>
+            {processedImage && (
+              <button onClick={handleDownload} className="btn btn-success">
+                💾 Download Grain
+              </button>
+            )}
           </>
         )}
       </div>
@@ -662,12 +658,11 @@ function App() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             style={{
-              cursor:
-                isPannable
-                  ? isDragging
-                    ? 'grabbing'
-                    : 'grab'
-                  : 'default',
+              cursor: isPannable
+                ? isDragging
+                  ? 'grabbing'
+                  : 'grab'
+                : 'default',
             }}
           >
             <img

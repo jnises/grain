@@ -1,28 +1,18 @@
 - [x] Address PR review comments:
-  - [x] Fix GrainProcessor class duplication in `src/grain-worker.ts` - remove duplicated logic from GrainGenerator and import/use GrainGenerator instead ✅ **COMPLETED** - grain-worker.ts properly imports and uses GrainProcessor, no duplication found
-  - [x] Convert `public/grain-visualizer.html` to use ES modules and import GrainGenerator from src/ instead of reimplementing grain logic ✅ **COMPLETED** - already using ES modules and importing from src/
-  - [x] Remove backup file `src/grain-worker.ts.backup` ✅ **COMPLETED**
-  - [x] Fix main.tsx import to use `./App` instead of `./App.jsx` ✅ **COMPLETED**
-  - [x] Remove hardcoded debugging logic and console.log statements from `src/grain-worker.ts` ✅ **COMPLETED**
-  - [x] Improve download functionality in App.tsx to always save as PNG for optimal grain quality (prevents compression artifacts) ✅ **COMPLETED** - Enhanced from original requirement to preserve format
-  - [x] Fix type safety in App.tsx handleCustomSettingChange - use `GrainSettings[keyof GrainSettings]` instead of `any` ✅ **COMPLETED**
-  - [x] Add explicit type annotations in test files as suggested by copilot-pull-request-reviewer ✅ **COMPLETED**
-  - [x] Consider extracting image difference calculation into helper function to reduce duplication in test files
-    - **PR Comment ID**: copilot-pull-request-reviewer comment on `test/grain-processor.test.ts`
-    - **Context**: Image difference calculation is duplicated across multiple test cases
-    - **Suggestion**: Extract into `calculateImageDifference(originalImage.data, processedImage.data)` helper function
-  - [x] Extract large test case arrays into separate data structures or factory functions for better readability ✅ **COMPLETED** - Extracted `invalidGrains` array into `getInvalidGrainTestCases()` factory function
-    - **PR Comment ID**: copilot-pull-request-reviewer comment on `test/grain-generator.test.ts`
-    - **Context**: Large array of invalid grain test cases could be better organized
-    - **Suggestion**: Extract into separate data structure like `getInvalidGrains()` factory function
-  - [x] Review inconsistent grain influence falloff calculation in grain-processor.ts (combining Gaussian and exponential falloffs) ✅ **INVESTIGATED** - The double falloff approach is intentional and working correctly.
-    - **PR Comment ID**: gemini-code-assist high priority comment on `src/grain-processor.ts`
-    - **Context**: `pixelGrainEffect` uses Gaussian falloff in `GrainDensityCalculator`, then multiplied by exponential falloff weight (`Math.exp(-distance / grain.size)`)
-    - **Issue**: Combining two different falloff models is unusual and may not be physically accurate; introduces redundant sqrt calculation
-    - **Suggestion**: Use single Gaussian falloff or document physical reasoning for combining falloffs
-    - **RESOLUTION**: After investigation, the double-weighting is the original intended design and produces correct visual results. Attempts to "simplify" this broke the algorithm (see task below). The approach is now documented in code with comprehensive comments explaining why it should be preserved.
-  - [x] Fix cross-platform compatibility issue in `scripts/stop-dev-server.js` - use fkill-cli or find-process instead of Unix-only lsof/kill commands ✅ **COMPLETED**
-- [x] The commit `e5ba9db7efae6de82696f2418644d33c3b96bd72` broke the algorithm. It now results in almost completely white output. I expect it is the todo task "Review inconsistent grain influence falloff calculation in grain-processor.ts (combining Gaussian and exponential falloffs)" from above that is the culprit. Figure out what in that commit caused the issue, and fix it. ✅ **COMPLETED** - Fixed by restoring original double-weighting approach (Gaussian + exponential falloffs). The "fix" in e5ba9db7 that tried to extract falloff factor caused mathematical cancellation during normalization. Original behavior restored and verified with comprehensive test.
+  - [x] Remove duplicated logic from `src/grain-worker.ts` by importing and using `GrainProcessor` (no duplication found)
+  - [x] Ensure `public/grain-visualizer.html` uses ES modules and imports from `src/`
+  - [x] Remove backup file `src/grain-worker.ts.backup`
+  - [x] Fix main.tsx import to use `./App`
+  - [x] Remove hardcoded debugging and console.log from `src/grain-worker.ts`
+  - [x] Improve App.tsx download to always save as PNG for optimal grain quality
+  - [x] Use `GrainSettings[keyof GrainSettings]` for type safety in App.tsx
+  - [x] Add explicit type annotations in test files
+  - [x] Extract image difference calculation into a helper function for test reuse (see `calculateImageDifference`)
+  - [x] Extract large test case arrays in tests into factory functions (e.g., `getInvalidGrainTestCases()`)
+  - [x] Investigate grain influence falloff calculation: double falloff (Gaussian + exponential) is intentional and documented; attempts to simplify broke normalization, so original approach restored and explained in code
+  - [x] Fix cross-platform compatibility in `scripts/stop-dev-server.js` (use fkill-cli/find-process)
+- [x] Fix regression from commit `e5ba9db7efae6de82696f2418644d33c3b96bd72` (almost white output): restored original double-weighting falloff, verified by test
+- [x] Don't have a button to download the original image.
 - [ ] Profile the code and try to optimize.
   - [x] Optimize grain generation performance (biggest bottleneck - 70% of CPU time) ✅ **COMPLETED** - 8x faster!
     - [x] Optimize `generateVariableSizeGrains` function in grain-generator.ts - Added IncrementalSpatialGrid using SpatialLookupGrid patterns
