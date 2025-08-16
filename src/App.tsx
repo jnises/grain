@@ -8,8 +8,7 @@ import {
 import { assertImageData, assertObject, assert } from './utils';
 import './App.css';
 
-const CONTAINER_PADDING = 32; // 2rem padding
-const RESIZE_DEBOUNCE_MS = 100;
+const IMAGE_CONTAINER_PADDING = 32; // 2rem padding
 
 function App() {
   const [image, setImage] = useState<string | null>(null);
@@ -68,8 +67,8 @@ function App() {
       const containerEl = imageViewerRef.current;
 
       if (imageEl.naturalWidth > 0 && imageEl.naturalHeight > 0) {
-        const containerWidth = containerEl.clientWidth - CONTAINER_PADDING;
-        const containerHeight = containerEl.clientHeight - CONTAINER_PADDING;
+        const containerWidth = containerEl.clientWidth - IMAGE_CONTAINER_PADDING;
+        const containerHeight = containerEl.clientHeight - IMAGE_CONTAINER_PADDING;
         const imageWidth = imageEl.naturalWidth;
         const imageHeight = imageEl.naturalHeight;
 
@@ -82,6 +81,8 @@ function App() {
       }
     }
   }, [image]);
+
+  const RESIZE_DEBOUNCE_MS = 100;
 
   // Recalculate zoom on image load and window resize
   useEffect(() => {
@@ -189,15 +190,17 @@ function App() {
     setPan({ x: 0, y: 0 });
   };
 
+  const isPannable = zoom > initialZoom || pan.x !== 0 || pan.y !== 0;
+
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoom > initialZoom) {
+    if (isPannable) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && zoom > initialZoom) {
+    if (isDragging && isPannable) {
       setPan({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y,
@@ -210,7 +213,7 @@ function App() {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (zoom > initialZoom && e.touches.length === 1) {
+    if (isPannable && e.touches.length === 1) {
       e.preventDefault();
       setIsDragging(true);
       setDragStart({
@@ -221,7 +224,7 @@ function App() {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (isDragging && zoom > initialZoom && e.touches.length === 1) {
+    if (isDragging && isPannable && e.touches.length === 1) {
       e.preventDefault();
       setPan({
         x: e.touches[0].clientX - dragStart.x,
@@ -660,7 +663,7 @@ function App() {
             onTouchEnd={handleTouchEnd}
             style={{
               cursor:
-                zoom > initialZoom
+                isPannable
                   ? isDragging
                     ? 'grabbing'
                     : 'grab'
