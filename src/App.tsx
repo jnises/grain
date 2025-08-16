@@ -36,7 +36,7 @@ function App() {
   const imageViewerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const grainWorkerRef = useRef<GrainWorkerManager | null>(null);
-  const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize grain worker
   useEffect(() => {
@@ -85,9 +85,8 @@ function App() {
 
   // Recalculate zoom on image load and window resize
   useEffect(() => {
-    if (image && imageRef.current && imageViewerRef.current) {
-      const imageEl = imageRef.current;
-
+    const imageEl = imageRef.current;
+    if (image && imageEl && imageViewerRef.current) {
       // If the image is already loaded (e.g., from cache), calculate zoom immediately.
       // Otherwise, wait for it to load to ensure naturalWidth/Height are available.
       if (imageEl.complete) {
@@ -109,9 +108,10 @@ function App() {
     };
 
     window.addEventListener('resize', handleResize);
+
     return () => {
-      if (imageRef.current) {
-        imageRef.current.removeEventListener('load', calculateZoom);
+      if (imageEl) {
+        imageEl.removeEventListener('load', calculateZoom);
       }
       window.removeEventListener('resize', handleResize);
       if (resizeTimeoutRef.current) {
