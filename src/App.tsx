@@ -8,6 +8,9 @@ import {
 import { assertImageData, assertObject, assert } from './utils';
 import './App.css';
 
+const CONTAINER_PADDING = 32; // 2rem padding
+const RESIZE_DEBOUNCE_MS = 100;
+
 function App() {
   const [image, setImage] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
@@ -64,7 +67,6 @@ function App() {
       const containerEl = imageViewerRef.current;
 
       if (imageEl.naturalWidth > 0 && imageEl.naturalHeight > 0) {
-        const CONTAINER_PADDING = 32; // 2rem padding
         const containerWidth = containerEl.clientWidth - CONTAINER_PADDING;
         const containerHeight = containerEl.clientHeight - CONTAINER_PADDING;
         const imageWidth = imageEl.naturalWidth;
@@ -95,16 +97,23 @@ function App() {
     }
 
     // Debounced resize handler
-    let resizeTimeout: number;
+    const resizeTimeoutRef = useRef<number>();
     const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = window.setTimeout(calculateZoom, 100);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+      resizeTimeoutRef.current = window.setTimeout(
+        calculateZoom,
+        RESIZE_DEBOUNCE_MS
+      );
     };
 
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimeout);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
     };
   }, [image, calculateZoom]);
 
