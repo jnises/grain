@@ -408,12 +408,11 @@ function App() {
   };
 
   const handleDownload = () => {
-    // Only allow downloading processed images, not the original
     if (processedImage) {
       const link = document.createElement('a');
       link.href = processedImage;
 
-      // Always use PNG format to preserve grain quality without compression artifacts
+      // Use PNG format to preserve processed grain quality without compression artifacts
       const baseName = originalFileName
         ? originalFileName.replace(/\.[^/.]+$/, '')
         : 'grain-processed-image';
