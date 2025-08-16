@@ -199,6 +199,7 @@ function App() {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (zoom > initialZoom && e.touches.length === 1) {
+      e.preventDefault();
       setIsDragging(true);
       setDragStart({
         x: e.touches[0].clientX - pan.x,
@@ -209,6 +210,7 @@ function App() {
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isDragging && zoom > initialZoom && e.touches.length === 1) {
+      e.preventDefault();
       setPan({
         x: e.touches[0].clientX - dragStart.x,
         y: e.touches[0].clientY - dragStart.y,
@@ -645,7 +647,12 @@ function App() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             style={{
-              cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+              cursor:
+                zoom > initialZoom
+                  ? isDragging
+                    ? 'grabbing'
+                    : 'grab'
+                  : 'default',
             }}
           >
             <img
