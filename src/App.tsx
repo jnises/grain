@@ -58,30 +58,32 @@ function App() {
     };
   }, [processedImage]);
 
-  // Recalculate initial zoom to fit whenever the image changes
-  useEffect(() => {
+  const calculateZoom = useCallback(() => {
     if (image && imageRef.current && imageViewerRef.current) {
       const imageEl = imageRef.current;
       const containerEl = imageViewerRef.current;
 
-      const calculateZoom = () => {
-        if (imageEl.naturalWidth > 0 && imageEl.naturalHeight > 0) {
-          const CONTAINER_PADDING = 32; // 2rem padding
-          // Add padding to the container dimensions to ensure the image fits comfortably
-          const containerWidth = containerEl.clientWidth - CONTAINER_PADDING;
-          const containerHeight =
-            containerEl.clientHeight - CONTAINER_PADDING;
-          const imageWidth = imageEl.naturalWidth;
-          const imageHeight = imageEl.naturalHeight;
+      if (imageEl.naturalWidth > 0 && imageEl.naturalHeight > 0) {
+        const CONTAINER_PADDING = 32; // 2rem padding
+        const containerWidth = containerEl.clientWidth - CONTAINER_PADDING;
+        const containerHeight = containerEl.clientHeight - CONTAINER_PADDING;
+        const imageWidth = imageEl.naturalWidth;
+        const imageHeight = imageEl.naturalHeight;
 
-          const zoomX = containerWidth / imageWidth;
-          const zoomY = containerHeight / imageHeight;
-          const newZoom = Math.min(zoomX, zoomY);
+        const zoomX = containerWidth / imageWidth;
+        const zoomY = containerHeight / imageHeight;
+        const newZoom = Math.min(zoomX, zoomY);
 
-          setZoom(newZoom);
-          setInitialZoom(newZoom);
-        }
-      };
+        setZoom(newZoom);
+        setInitialZoom(newZoom);
+      }
+    }
+  }, [image]);
+
+  // Recalculate zoom on image load and window resize
+  useEffect(() => {
+    if (image && imageRef.current && imageViewerRef.current) {
+      const imageEl = imageRef.current;
 
       // If the image is already loaded (e.g., from cache), calculate zoom immediately.
       // Otherwise, wait for it to load to ensure naturalWidth/Height are available.
@@ -91,7 +93,20 @@ function App() {
         imageEl.onload = calculateZoom;
       }
     }
-  }, [image]);
+
+    // Debounced resize handler
+    let resizeTimeout: number;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(calculateZoom, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, [image, calculateZoom]);
 
   const processFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
