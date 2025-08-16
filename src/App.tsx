@@ -409,20 +409,17 @@ function App() {
   };
 
   const handleDownload = () => {
-    const imageToDownload = processedImage || image;
-    if (imageToDownload) {
+    // Only allow downloading processed images, not the original
+    if (processedImage) {
       const link = document.createElement('a');
-      link.href = imageToDownload;
+      link.href = processedImage;
 
       // Always use PNG format to preserve grain quality without compression artifacts
-      const isProcessed = !!processedImage;
       const baseName = originalFileName
         ? originalFileName.replace(/\.[^/.]+$/, '')
-        : isProcessed
-          ? 'grain-processed-image'
-          : 'original-image';
+        : 'grain-processed-image';
 
-      const suffix = isProcessed && originalFileName ? '-grain-processed' : '';
+      const suffix = originalFileName ? '-grain-processed' : '';
 
       const filename = `${baseName}${suffix}.png`;
 
@@ -554,10 +551,11 @@ function App() {
               </div>
             )}
 
-            <button onClick={handleDownload} className="btn btn-success">
-              💾 Download{' '}
-              {processedImage ? (showOriginal ? 'Original' : 'Grain') : 'Image'}
-            </button>
+            {processedImage && (
+              <button onClick={handleDownload} className="btn btn-success">
+                💾 Download Grain
+              </button>
+            )}
           </>
         )}
       </div>
