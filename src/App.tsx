@@ -8,6 +8,8 @@ import {
 import { assertImageData, assertObject, assert } from './utils';
 import './App.css';
 
+const IMAGE_CONTAINER_PADDING = 32; // 2rem padding
+
 function App() {
   const [image, setImage] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
@@ -26,11 +28,14 @@ function App() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [originalFileName, setOriginalFileName] = useState<string>('');
+  const [initialZoom, setInitialZoom] = useState(1);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const imageViewerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const grainWorkerRef = useRef<GrainWorkerManager | null>(null);
+  const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize grain worker
   useEffect(() => {
@@ -56,6 +61,66 @@ function App() {
     };
   }, [processedImage]);
 
+  const calculateZoom = useCallback(() => {
+    if (image && imageRef.current && imageViewerRef.current) {
+      const imageEl = imageRef.current;
+      const containerEl = imageViewerRef.current;
+
+      if (imageEl.naturalWidth > 0 && imageEl.naturalHeight > 0) {
+        const containerWidth = containerEl.clientWidth - IMAGE_CONTAINER_PADDING;
+        const containerHeight = containerEl.clientHeight - IMAGE_CONTAINER_PADDING;
+        const imageWidth = imageEl.naturalWidth;
+        const imageHeight = imageEl.naturalHeight;
+
+        const zoomX = containerWidth / imageWidth;
+        const zoomY = containerHeight / imageHeight;
+        const newZoom = Math.min(zoomX, zoomY);
+
+        setZoom(newZoom);
+        setInitialZoom(newZoom);
+      }
+    }
+  }, [image]);
+
+  const RESIZE_DEBOUNCE_MS = 100;
+
+  // Recalculate zoom on image load and window resize
+  useEffect(() => {
+    const imageEl = imageRef.current;
+    if (image && imageEl && imageViewerRef.current) {
+      // If the image is already loaded (e.g., from cache), calculate zoom immediately.
+      // Otherwise, wait for it to load to ensure naturalWidth/Height are available.
+      if (imageEl.complete) {
+        calculateZoom();
+      } else {
+        imageEl.addEventListener('load', calculateZoom);
+      }
+    }
+
+    // Debounced resize handler
+    const handleResize = () => {
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+      resizeTimeoutRef.current = setTimeout(
+        calculateZoom,
+        RESIZE_DEBOUNCE_MS
+      );
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      if (imageEl) {
+        imageEl.removeEventListener('load', calculateZoom);
+      }
+      window.removeEventListener('resize', handleResize);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+    };
+  }, [image, calculateZoom]);
+
   const processFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
       // Store original file name for download purposes
@@ -65,7 +130,7 @@ function App() {
       reader.onload = (e) => {
         setImage(e.target?.result as string);
         setProcessedImage(null);
-        setZoom(1);
+        // Zoom is now set in a useEffect when the image loads
         setPan({ x: 0, y: 0 });
       };
       reader.readAsDataURL(file);
@@ -121,19 +186,21 @@ function App() {
   };
 
   const handleResetZoom = () => {
-    setZoom(1);
+    setZoom(initialZoom);
     setPan({ x: 0, y: 0 });
   };
 
+  const isPannable = zoom > initialZoom || pan.x !== 0 || pan.y !== 0;
+
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoom > 1) {
+    if (isPannable) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && zoom > 1) {
+    if (isDragging && isPannable) {
       setPan({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y,
@@ -142,6 +209,31 @@ function App() {
   };
 
   const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isPannable && e.touches.length === 1) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging && isPannable && e.touches.length === 1) {
+      e.preventDefault();
+      setPan({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
     setIsDragging(false);
   };
 
@@ -560,13 +652,22 @@ function App() {
           </div>
         ) : (
           <div
+            ref={imageViewerRef}
             className={`image-viewer ${processedImage ? 'comparison-available' : ''}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             style={{
-              cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+              cursor:
+                isPannable
+                  ? isDragging
+                    ? 'grabbing'
+                    : 'grab'
+                  : 'default',
             }}
           >
             <img
