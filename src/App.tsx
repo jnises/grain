@@ -67,8 +67,10 @@ function App() {
       const containerEl = imageViewerRef.current;
 
       if (imageEl.naturalWidth > 0 && imageEl.naturalHeight > 0) {
-        const containerWidth = containerEl.clientWidth - IMAGE_CONTAINER_PADDING;
-        const containerHeight = containerEl.clientHeight - IMAGE_CONTAINER_PADDING;
+        const containerWidth =
+          containerEl.clientWidth - IMAGE_CONTAINER_PADDING;
+        const containerHeight =
+          containerEl.clientHeight - IMAGE_CONTAINER_PADDING;
         const imageWidth = imageEl.naturalWidth;
         const imageHeight = imageEl.naturalHeight;
 
@@ -102,10 +104,7 @@ function App() {
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
       }
-      resizeTimeoutRef.current = setTimeout(
-        calculateZoom,
-        RESIZE_DEBOUNCE_MS
-      );
+      resizeTimeoutRef.current = setTimeout(calculateZoom, RESIZE_DEBOUNCE_MS);
     };
 
     window.addEventListener('resize', handleResize);
@@ -660,12 +659,11 @@ function App() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             style={{
-              cursor:
-                isPannable
-                  ? isDragging
-                    ? 'grabbing'
-                    : 'grab'
-                  : 'default',
+              cursor: isPannable
+                ? isDragging
+                  ? 'grabbing'
+                  : 'grab'
+                : 'default',
             }}
           >
             <img
