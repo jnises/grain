@@ -26,9 +26,11 @@ function App() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [originalFileName, setOriginalFileName] = useState<string>('');
+  const [initialZoom, setInitialZoom] = useState(1);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const imageViewerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const grainWorkerRef = useRef<GrainWorkerManager | null>(null);
 
@@ -56,6 +58,39 @@ function App() {
     };
   }, [processedImage]);
 
+  // Recalculate initial zoom to fit whenever the image changes
+  useEffect(() => {
+    if (image && imageRef.current && imageViewerRef.current) {
+      const imageEl = imageRef.current;
+      const containerEl = imageViewerRef.current;
+
+      const calculateZoom = () => {
+        if (imageEl.naturalWidth > 0 && imageEl.naturalHeight > 0) {
+          // Add padding to the container dimensions to ensure the image fits comfortably
+          const containerWidth = containerEl.clientWidth - 32; // 2rem padding
+          const containerHeight = containerEl.clientHeight - 32; // 2rem padding
+          const imageWidth = imageEl.naturalWidth;
+          const imageHeight = imageEl.naturalHeight;
+
+          const zoomX = containerWidth / imageWidth;
+          const zoomY = containerHeight / imageHeight;
+          const newZoom = Math.min(zoomX, zoomY);
+
+          setZoom(newZoom);
+          setInitialZoom(newZoom);
+        }
+      };
+
+      // If the image is already loaded (e.g., from cache), calculate zoom immediately.
+      // Otherwise, wait for it to load to ensure naturalWidth/Height are available.
+      if (imageEl.complete) {
+        calculateZoom();
+      } else {
+        imageEl.onload = calculateZoom;
+      }
+    }
+  }, [image]);
+
   const processFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
       // Store original file name for download purposes
@@ -65,7 +100,7 @@ function App() {
       reader.onload = (e) => {
         setImage(e.target?.result as string);
         setProcessedImage(null);
-        setZoom(1);
+        // Zoom is now set in a useEffect when the image loads
         setPan({ x: 0, y: 0 });
       };
       reader.readAsDataURL(file);
@@ -121,7 +156,7 @@ function App() {
   };
 
   const handleResetZoom = () => {
-    setZoom(1);
+    setZoom(initialZoom);
     setPan({ x: 0, y: 0 });
   };
 
@@ -142,6 +177,29 @@ function App() {
   };
 
   const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (zoom > 1 && e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging && zoom > 1 && e.touches.length === 1) {
+      setPan({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
     setIsDragging(false);
   };
 
@@ -560,11 +618,15 @@ function App() {
           </div>
         ) : (
           <div
+            ref={imageViewerRef}
             className={`image-viewer ${processedImage ? 'comparison-available' : ''}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             style={{
               cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
             }}
