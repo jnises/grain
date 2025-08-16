@@ -36,6 +36,7 @@ function App() {
   const imageViewerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const grainWorkerRef = useRef<GrainWorkerManager | null>(null);
+  const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Initialize grain worker
   useEffect(() => {
@@ -92,17 +93,16 @@ function App() {
       if (imageEl.complete) {
         calculateZoom();
       } else {
-        imageEl.onload = calculateZoom;
+        imageEl.addEventListener('load', calculateZoom);
       }
     }
 
     // Debounced resize handler
-    const resizeTimeoutRef = useRef<number>();
     const handleResize = () => {
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
       }
-      resizeTimeoutRef.current = window.setTimeout(
+      resizeTimeoutRef.current = setTimeout(
         calculateZoom,
         RESIZE_DEBOUNCE_MS
       );
@@ -110,6 +110,9 @@ function App() {
 
     window.addEventListener('resize', handleResize);
     return () => {
+      if (imageRef.current) {
+        imageRef.current.removeEventListener('load', calculateZoom);
+      }
       window.removeEventListener('resize', handleResize);
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
