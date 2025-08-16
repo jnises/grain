@@ -66,9 +66,11 @@ function App() {
 
       const calculateZoom = () => {
         if (imageEl.naturalWidth > 0 && imageEl.naturalHeight > 0) {
+          const CONTAINER_PADDING = 32; // 2rem padding
           // Add padding to the container dimensions to ensure the image fits comfortably
-          const containerWidth = containerEl.clientWidth - 32; // 2rem padding
-          const containerHeight = containerEl.clientHeight - 32; // 2rem padding
+          const containerWidth = containerEl.clientWidth - CONTAINER_PADDING;
+          const containerHeight =
+            containerEl.clientHeight - CONTAINER_PADDING;
           const imageWidth = imageEl.naturalWidth;
           const imageHeight = imageEl.naturalHeight;
 
@@ -161,14 +163,14 @@ function App() {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoom > 1) {
+    if (zoom > initialZoom) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && zoom > 1) {
+    if (isDragging && zoom > initialZoom) {
       setPan({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y,
@@ -181,7 +183,7 @@ function App() {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (zoom > 1 && e.touches.length === 1) {
+    if (zoom > initialZoom && e.touches.length === 1) {
       setIsDragging(true);
       setDragStart({
         x: e.touches[0].clientX - pan.x,
@@ -191,7 +193,7 @@ function App() {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (isDragging && zoom > 1 && e.touches.length === 1) {
+    if (isDragging && zoom > initialZoom && e.touches.length === 1) {
       setPan({
         x: e.touches[0].clientX - dragStart.x,
         y: e.touches[0].clientY - dragStart.y,
