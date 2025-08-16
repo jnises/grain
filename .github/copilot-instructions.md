@@ -156,6 +156,7 @@
   ```bash
   npm run dev    # Starts in ~200ms on http://localhost:5173/
   ```
+  IMPORTANT: The human developer (user) keeps the dev server running persistently. The automated agent MUST NEVER execute `npm run dev` (or any variant) and MUST NOT kill or restart the dev server. Assume it is already running unless the user explicitly states otherwise. If a restart seems needed, instruct the user instead of running the command.
 
 ### Build Production Version
 
@@ -177,7 +178,7 @@ npm run preview  # Preview built version on http://localhost:4173/
    ```
 
 2. **Manual Testing Instructions for Users**:
-   When changes affect image processing, ask the user to verify:
+  When changes affect image processing, ask the user to verify (the agent must not start the dev server; assume the user already has it running):
    - Start dev server with `npm run dev`
    - Open http://localhost:5173/ and test image upload with `gray.png`
    - Verify grain processing works with default Kodak 400 preset
@@ -205,12 +206,9 @@ The CI pipeline (.github/workflows/ci.yml) runs these exact commands plus benchm
 
 ## Development Workflow
 
-### Server Management (CRITICAL)
+### Server Management
 
-- **ALWAYS check for running servers before starting new ones** to avoid port conflicts
-- If you need to restart the server, use `npm run dev:restart` or `npm run dev:stop` first
-- `npm run dev:stop` safely kills only processes using Vite ports (5173, 5174) without affecting other processes
-- Before running `npm run dev`, `npm start`, or any long-running command, either check existing terminals or use `npm run dev:stop` to ensure no conflicts
+NOTE: The automated agent must NEVER run `npm run dev` (the user keeps it running).
 
 ### Before Starting Work
 
