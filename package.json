@@ -20,7 +20,8 @@
     "profile:simple": "NODE_ENV=production npx tsx scripts/profiling/simple_profiler.ts",
     "profile:hotspots": "NODE_ENV=production scripts/profiling/profile_hotspots.sh",
     "profile": "npm run profile:flamegraph",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "react": "^19.1.0",
