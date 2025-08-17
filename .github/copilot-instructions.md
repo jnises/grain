@@ -178,7 +178,7 @@ npm run preview  # Preview built version on http://localhost:4173/
    ```
 
 2. **Manual Testing Instructions for Users**:
-  When changes affect image processing, ask the user to verify (the agent must not start the dev server; assume the user already has it running):
+   When changes affect image processing, ask the user to verify (the agent must not start the dev server; assume the user already has it running):
    - Start dev server with `npm run dev`
    - Open http://localhost:5173/ and test image upload with `gray.png`
    - Verify grain processing works with default Kodak 400 preset
