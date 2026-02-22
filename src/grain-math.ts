@@ -233,7 +233,7 @@ export function applyLightnessScaling(
  */
 export function convertLinearFloatToSrgb(
   floatData: Float32Array
-): Uint8ClampedArray {
+): Uint8ClampedArray<ArrayBuffer> {
   assert(floatData.length > 0, 'floatData must not be empty', {
     length: floatData.length,
   });
