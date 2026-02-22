@@ -27,9 +27,8 @@ async function createGrainGenerator(
   settings: GrainSettings
 ) {
   // Dynamically import to avoid module loading issues
-  const { GrainGenerator, SeededRandomNumberGenerator } = await import(
-    '../src/grain-generator'
-  );
+  const { GrainGenerator, SeededRandomNumberGenerator } =
+    await import('../src/grain-generator');
 
   return new GrainGenerator(
     width,
